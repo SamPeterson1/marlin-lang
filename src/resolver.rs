@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, collections::HashMap};
+use std::collections::HashMap;
 
 use crate::{environment::{Type, Value}, error::Diagnostic, expr::{AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, UnaryExpr, VarExpr}};
 
@@ -85,7 +85,6 @@ impl Resolver {
                         value_type: declaration.declaration_type.clone()
                     };
                     
-                    println!("Resolved variable {:?} to {:?}", var_expr, resolved_var);
                     found = true;
                     self.resolved.insert(VarExpr::clone(var_expr), resolved_var);
                     break;
@@ -117,14 +116,20 @@ impl ExprVisitor<()> for Resolver {
         if let Value::Function(function) = &expr.value.value {
             self.push_scope();
 
-            for arg in function.args.iter() {
-                self.declare(arg, &Type::Boolean);
-                self.define(arg);
+            if let Type::Function(function_type) = &expr.value.value_type {
+                let arg_types = &function_type.arg_types;
+
+                for (i, arg) in function.args.iter().enumerate() {                   
+                    self.declare(arg, arg_types.get(i).unwrap());
+                    self.define(arg);
+                }
+    
+                self.resolve_expr(&**function.body);
+    
+                self.pop_scope();
             }
 
-            self.resolve_expr(&**function.body);
-
-            self.pop_scope();
+            
         }
     }
 

@@ -1,7 +1,4 @@
-use core::time;
-use std::{cell::RefCell, collections::HashMap, f32::consts::E, fmt::Binary, rc::Rc};
-
-use rand::distributions::Standard;
+use std::rc::Rc;
 
 use crate::{environment::{Type, Value}, error::{Diagnostic, DiagnosticType}, token::{Position, PositionRange, Token, TokenType}};
 
@@ -69,9 +66,6 @@ impl UnaryOperator for Negative {
     }
 
     fn interpret(&self, value: Rc<Value>) -> Rc<Value> {
-        let value_tmp = value.as_ref();
-
-
         let result = match *value {
             Value::Int(x) => Value::Int(-x),
             Value::Float(x) => Value::Float(-x),
@@ -88,11 +82,11 @@ impl UnaryOperator for Negative {
 struct Semicolon;
 
 impl UnaryOperator for Semicolon {
-    fn interpret_type(&self, value_type: Type) -> Result<Type, Diagnostic> {
+    fn interpret_type(&self, _value_type: Type) -> Result<Type, Diagnostic> {
         Ok(Type::Empty)
     }
 
-    fn interpret(&self, value: Rc<Value>) -> Rc<Value> {
+    fn interpret(&self, _value: Rc<Value>) -> Rc<Value> {
         Rc::new(Value::Empty)
     }
 }
@@ -139,7 +133,7 @@ macro_rules! comparative_binary_operator {
         impl BinaryOperator for $Name {
             fn interpret_type(&self, left: Type, right: Type) -> Result<Type, Diagnostic> {
                 if left == right && left.is_numeric(){
-                    Ok(left)
+                    Ok(Type::Boolean)
                 } else {
                     Err(Diagnostic::new(0, DiagnosticType::Error, PositionRange::new(Position::new(0, 0)), "placeholder".to_string()))
                     //Err(TypeError::new_binary(&left, &right, $OperatorName))

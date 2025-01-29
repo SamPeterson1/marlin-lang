@@ -1,4 +1,4 @@
-use crate::{environment::Type, error::CompileError, expr::{AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, UnaryExpr, VarExpr}, resolver::Resolver};
+use crate::{environment::{Type, Value}, error::Diagnostic, expr::{AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, UnaryExpr, VarExpr}, resolver::Resolver};
 
 pub struct TypeChecker<'a> {
     resolver: &'a Resolver,
@@ -15,8 +15,9 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
-    pub fn check_types(&mut self, exprs: &[Box<dyn Expr>]) -> Vec<CompileError> {        
+    pub fn check_types(&mut self, exprs: &[Box<dyn Expr>]) -> Vec<Diagnostic> {        
         for expr in exprs {
+            println!("Check types");
             expr.accept_visitor(self);
         }
 
@@ -25,13 +26,16 @@ impl<'a> TypeChecker<'a> {
 }
 
 impl ExprVisitor<Type> for TypeChecker<'_> {
-    fn visit_empty(&mut self, expr: &EmptyExpr) -> Type {
+    fn visit_empty(&mut self, _expr: &EmptyExpr) -> Type {
         Type::Empty
     }
+
 
     fn visit_binary(&mut self, expr: &BinaryExpr) -> Type {
         let left_type = expr.left.accept_visitor(self);
         let right_type = expr.right.accept_visitor(self);
+
+        println!("{:?} {:?} {:?}", left_type, expr.operator, right_type);
 
         expr.operator.interpret_type(left_type, right_type).unwrap()
     }
@@ -43,6 +47,10 @@ impl ExprVisitor<Type> for TypeChecker<'_> {
     }
 
     fn visit_literal(&mut self, expr: &LiteralExpr) -> Type {
+        if let Value::Function(function) = &expr.value.value {
+            function.body.accept_visitor(self);
+        }
+
         expr.value.value_type.clone()
     }
 
@@ -62,6 +70,8 @@ impl ExprVisitor<Type> for TypeChecker<'_> {
         if let Some(fail) = &expr.fail {
             let fail_type = fail.accept_visitor(self);
 
+            println!("{:?}, {:?}", success_type, fail_type);
+            
             if success_type != fail_type {
                 panic!("Mismatched types {:?}, {:?} for if branches", success_type, fail_type);
             }
@@ -75,6 +85,8 @@ impl ExprVisitor<Type> for TypeChecker<'_> {
 
         let value_type = expr.expr.accept_visitor(self);
 
+        println!("assigning {:?} to {:?}", var_type, value_type);
+
         if *var_type != value_type {
             panic!("Mismatched types {:?}, {:?} for assignment", var_type, value_type);
         }
@@ -84,6 +96,8 @@ impl ExprVisitor<Type> for TypeChecker<'_> {
 
     fn visit_declaration(&mut self, expr: &DeclarationExpr) -> Type {
         let value_type = expr.expr.accept_visitor(self);
+
+        println!("declaring {:?} as {:?}", expr.identifier, value_type);
 
         if value_type != expr.declaration_type {
             panic!("Mismatched types {:?}, {:?} for assignment", value_type, expr.declaration_type);
@@ -103,7 +117,7 @@ impl ExprVisitor<Type> for TypeChecker<'_> {
     }
 
     fn visit_print(&mut self, expr: &PrintExpr) -> Type {
-        Type::Empty
+        expr.expr.accept_visitor(self)
     }
 
     fn visit_rand(&mut self, expr: &RandExpr) -> Type {
@@ -160,6 +174,25 @@ impl ExprVisitor<Type> for TypeChecker<'_> {
 
     fn visit_call(&mut self, expr: &CallExpr) -> Type {
         let expr_type = expr.func_expr.accept_visitor(self);
+
+        println!("calling {:?}", expr_type);
+
+        if let Type::Function(function_type) = &expr_type {
+            if function_type.arg_types.len() != expr.args.len() {
+                panic!("Mismatched number of arguments {:?}, {:?} for function call", function_type.arg_types.len(), expr.args.len());
+            }
+
+
+            expr.args.iter().enumerate().for_each(|(i, arg)| {
+
+                let arg_type = arg.accept_visitor(self);
+                println!("Function arg {:?} given {:?}", function_type.arg_types[i], arg_type);
+
+                if arg_type != function_type.arg_types[i] {
+                    panic!("Mismatched types {:?}, {:?} for function call", arg_type, function_type.arg_types[i]);
+                }
+            });
+        }
 
         match expr_type {
             Type::Function(function_type) => (*function_type.ret_type).clone(),

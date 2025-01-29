@@ -1,6 +1,3 @@
-#[macro_use]
-extern crate lazy_static;
-
 use std::env;
 use std::process;
 
@@ -17,7 +14,7 @@ mod operator;
 
 mod interpreter;
 mod resolver;
-/* mod type_checker; */
+mod type_checker;
 
 
 fn main() {

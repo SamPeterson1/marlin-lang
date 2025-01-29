@@ -1,4 +1,4 @@
-use std::{fmt, hash::Hasher, ops::Deref, rc::Rc, hash::Hash};
+use std::{hash::Hasher, rc::Rc};
 
 use crate::{environment::{Type, TypedValue, Value}, operator::{self, BinaryOperator, UnaryOperator}, token::{Position, PositionRange, Token}};
 

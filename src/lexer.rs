@@ -116,10 +116,6 @@ impl Lexer<'_> {
         self.chars.peek()
     }
 
-    fn peek_with_default(&mut self) -> char {
-        *self.chars.peek().unwrap_or(&'\0')
-    }
-
     fn end_token(&mut self, token_type: TokenType, value: Option<TokenValue>) -> Result<Token, LexerDiagnostic> {
         let token_start = self.token_start.take().expect("There is no token to end");
 

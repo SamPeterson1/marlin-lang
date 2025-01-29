@@ -33,6 +33,8 @@ impl fmt::Debug for TypeError {
 }
 */
 
+#[derive(Debug)]
+#[allow(dead_code)]
 pub enum DiagnosticType {
     Error,
     Warning
@@ -51,6 +53,8 @@ pub const LEX_ERR_UNKNOWN_SYMBOL: i32 = 1;
 pub const LEX_ERR_UNTERMINATED_STRING: i32 = 2;
 pub const LEX_ERR_DECIMAL_LITERAL_AS_INT: i32 = 3;
 
+#[derive(Debug)]
+#[allow(dead_code)]
 pub struct Diagnostic {
     pub err_code: i32,
     pub diagnostic_type: DiagnosticType,

@@ -1,6 +1,6 @@
-use std::{cell::RefCell, collections::{HashMap, VecDeque}, fmt::Display, ops::{Add, Deref, DerefMut}, rc::Rc};
+use std::{collections::HashMap, rc::Rc};
 
-use crate::{expr::{Expr, VarExpr}, resolver::Resolver, token::Token};
+use crate::{expr::{Expr, VarExpr}, resolver::Resolver};
 
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub enum Type {
@@ -84,6 +84,7 @@ impl Value {
     pub fn as_float(&self) -> f32 { let Value::Float(x) = self else { unreachable!() }; *x }
     pub fn as_double(&self) -> f64 { let Value::Double(x) = self else { unreachable!() }; *x }
     pub fn as_bool(&self) -> bool { let Value::Bool(x) = self else { unreachable!() }; *x }
+    #[allow(dead_code)]
     pub fn as_string(&self) -> &str { let Value::String(x) = self else { unreachable!() }; x }
 }
 
@@ -221,6 +222,7 @@ impl EnvRef {
         }
     }
 
+    #[allow(dead_code)]
     pub fn prev_scope(&self) -> EnvRef {
         self.as_env().parent.clone()
     }

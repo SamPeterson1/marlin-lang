@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{environment::{EnvRef, Function, FunctionType, Type, TypedValue, Value}, error::{Diagnostic, DiagnosticType}, log, token::{Position, PositionRange, Token, TokenType, TokenValue}};
+use crate::{environment::{EnvRef, Function, FunctionType, Type, TypedValue, Value}, error::{Diagnostic, DiagnosticType}, token::{Position, PositionRange, Token, TokenType, TokenValue}};
 pub use self::expr::*;
 
 pub mod expr;
@@ -163,6 +163,7 @@ impl<'a> ExprParser<'a> {
         None
     }
 
+    #[allow(dead_code)]
     fn is_type(&mut self) -> bool {
         if self.cur().is_none() {
             return false;

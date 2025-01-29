@@ -1,10 +1,10 @@
 extern crate rand;
-use std::{borrow::Borrow, cell::{Ref, RefCell}, collections::HashMap, io::{self, Write}, rc::Rc};
+use std::{io::{self, Write}, rc::Rc};
 use std::str::FromStr;
 
 use rand::Rng;
 
-use crate::{environment::{Env, EnvRef, Function, Type, TypedValue, Value}, expr::{AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, UnaryExpr, VarExpr}, resolver::Resolver};
+use crate::{environment::{Env, EnvRef, Function, Type, Value}, expr::{AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, UnaryExpr, VarExpr}, resolver::Resolver};
 
 pub struct Interpreter {
     break_value: Option<Rc<Value>>,

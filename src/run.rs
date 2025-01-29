@@ -6,6 +6,7 @@ use std::env;
 use crate::expr::{ExprParser, ParseResult};
 use crate::interpreter::Interpreter;
 use crate::resolver::Resolver;
+use crate::type_checker::TypeChecker;
 use crate::{lexer, log};
 use crate::token::Token;
 
@@ -60,26 +61,26 @@ fn run(code: String) {
 
     let tokens: Vec<Token> = lexer::parse(&code);
 
-    println!("Tokens: {:?}", tokens);
-
     
     let parser = ExprParser::new(&tokens);
 
+
     let ParseResult { exprs, diagnostics: parse_diagnostics } = parser.parse();
-    
+        
     println!("Parsed: {:?}", exprs);
-    
+
     let mut resolver = Resolver::new();
     let resolve_errors = resolver.resolve(&exprs);
-    /*
+    
     let mut type_checker = TypeChecker::new(&resolver);
     let type_errors = type_checker.check_types(&exprs);
-    */
+    
 
     let mut all_errors = Vec::new();
 
     all_errors.extend(parse_diagnostics);
     all_errors.extend(resolve_errors);
+    all_errors.extend(type_errors);
 
     if !all_errors.is_empty() {
         for error in &all_errors {
