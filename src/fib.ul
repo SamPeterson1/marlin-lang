@@ -1,0 +1,22 @@
+let double a = 0d;
+let double b = 1d;
+
+for (let int i = 0; i < 1000; i = i + 1) {
+    print a;
+
+    let double c = a + b;
+    a = b;
+    b = c;
+}
+
+let func (int) -> double fib = fn (int a) -> double {
+    if a == 0 {
+        0d
+    } else if a == 1 {
+        1d
+    } else {
+        fib(a - 1) + fib(a - 2)
+    }
+}
+
+print fib(25);

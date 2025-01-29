@@ -1,0 +1,40 @@
+let int wins = 0;
+let int losses = 0;
+
+loop {
+    let int number = rand(0, 15);
+    let bool win = false;
+
+    for (let int i = 0; i < 5; i = i + 1) {
+        let int guess = input int "Enter your guess: ";
+
+        if guess < number {
+            print "Too low!";
+        } else if guess > number {
+            print "Too high!";
+        } else {
+            print "You won!"
+            win = true;
+            break;
+        }
+    }
+
+    if !win {
+        losses = losses + 1;
+        print "You lost!";
+    } else {
+        wins = wins + 1;
+    }
+
+    print "Wins: ";
+    print wins;
+
+    print "Losses: ";
+    print losses;
+
+    let int play_again = input int "Would you like to play again? Enter 1 for yes and 0 for no: ";
+
+    if play_again == 0 {
+        break;
+    }
+}

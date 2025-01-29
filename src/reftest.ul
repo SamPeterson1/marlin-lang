@@ -1,0 +1,7 @@
+let int a = 4;
+let int b = a;
+
+a = 2;
+
+print a;
+print b;
