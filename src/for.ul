@@ -9,9 +9,11 @@ loop {
         let int guess = input int "Enter your guess: ";
 
         if guess < number {
-            print "Too low!";
+            print "Too low! Guesses remaining; ";
+            print (4 - i);
         } else if guess > number {
-            print "Too high!";
+            print "Too high! Guesses remaining: ";
+            print (4 - i);
         } else {
             print "You won!"
             win = true;

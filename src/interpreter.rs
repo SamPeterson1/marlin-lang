@@ -128,7 +128,15 @@ impl ExprVisitor<Rc<Value>> for Interpreter {
     fn visit_print(&mut self, expr: &PrintExpr) -> Rc<Value> {
         let result = self.interpret_expr(&*expr.expr);
         
-        println!("{:?}", *result.as_ref());
+        match result.as_ref() {
+            Value::Int(x) => println!("{}", x),
+            Value::Float(x) => println!("{}", x),
+            Value::Double(x) => println!("{}", x),
+            Value::String(x) => println!("{}", x),
+            Value::Bool(x) => println!("{}", x),
+            Value::Empty => (),
+            _ => panic!("Cannot print value")
+        }
     
         result
     }
