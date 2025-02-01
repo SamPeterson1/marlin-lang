@@ -1,13 +1,44 @@
-struct Foo {
-    int a;
-    int b;
+struct A {
+    B b;
+    C c;
+    D d;
 }
 
-struct Bar {
-    Foo a;
+struct B {
+    C c;
 }
 
-struct Meow {
-    Foo x;
-    Bar z;
+struct C {
+    G g;
+    F f;
+}
+
+struct D {
+    F f;
+}
+
+struct E {
+    int w;
+    bool y;
+    float abc;
+}
+
+struct F {
+    E e;
+}
+
+struct G {
+    int foo;
+    float bar;
+}
+
+struct H {
+    B b;
+    G g;
+    I i;
+}
+
+struct I {
+    double meow;
+    bool x;
 }

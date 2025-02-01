@@ -145,6 +145,8 @@ impl TypeResolver<'_> {
 
                 *n_dependencies -= 1;
 
+                println!("Struct {:?} now has {:?} dependencies after resolving {:?}", dependency, *n_dependencies, type_name);
+
                 if *n_dependencies == 0 {
                     self.resolve_struct(dependency);
                 }
@@ -187,6 +189,8 @@ impl ExprVisitor<()> for TypeResolver<'_> {
                 }
             }
         }
+
+        println!("Struct {:?} has {:?} dependencies", struct_name, n_dependencies);
 
         self.unresolved_struct_declarations.insert(struct_name.to_string(), expr.clone());
 
