@@ -5,7 +5,7 @@ use std::env;
 
 use crate::expr::{ExprParser, ParseResult};
 use crate::interpreter::Interpreter;
-use crate::resolver::Resolver;
+use crate::resolver::SymbolTable;
 use crate::type_checker::TypeChecker;
 use crate::{lexer, log};
 use crate::token::Token;
@@ -69,10 +69,10 @@ fn run(code: String) {
         
     println!("Parsed: {:?}", exprs);
 
-    let mut resolver = Resolver::new();
-    let resolve_errors = resolver.resolve(&exprs);
+    let mut symbol_table = SymbolTable::new();
+    let resolve_errors = symbol_table.resolve(&exprs);
     
-    let mut type_checker = TypeChecker::new(&resolver);
+    let mut type_checker = TypeChecker::new(&symbol_table);
     let type_errors = type_checker.check_types(&exprs);
     
 
@@ -88,7 +88,7 @@ fn run(code: String) {
         }
     }
 
-    let mut interpreter = Interpreter::new(resolver);
+    let mut interpreter = Interpreter::new(symbol_table);
 
     println!("\nRunning...");
     interpreter.interpret(&exprs);

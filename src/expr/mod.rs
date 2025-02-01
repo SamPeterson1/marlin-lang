@@ -1,6 +1,6 @@
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
-use crate::{environment::{EnvRef, Function, FunctionType, Type, TypedValue, Value}, error::{Diagnostic, DiagnosticType}, token::{Position, PositionRange, Token, TokenType, TokenValue}};
+use crate::{environment::{EnvRef, Function, FunctionType, ParsedFunctionType, ParsedType, TypedValue, Value}, error::{Diagnostic, DiagnosticType}, token::{Position, PositionRange, Token, TokenType, TokenValue}};
 pub use self::expr::*;
 
 pub mod expr;
@@ -177,16 +177,16 @@ impl<'a> ExprParser<'a> {
 
     //any primitive type
     //(type, type, ...) -> type
-    fn try_type(&mut self) -> Option<Type> {
+    fn try_type(&mut self) -> Option<ParsedType> {
         let cur = self.cur()?;
 
         match (cur.token_type, cur.value) {
-            (TokenType::Int, None) => {self.advance(); Some(Type::Integer)},
-            (TokenType::Float, None) => {self.advance(); Some(Type::Float)},
-            (TokenType::Double, None) => {self.advance(); Some(Type::Double)},
-            (TokenType::Bool, None) => {self.advance(); Some(Type::Boolean)},
-            (TokenType::String, None) => {self.advance(); Some(Type::String)},
-            (TokenType::Identifier, Some(TokenValue::String(type_name))) => {self.advance(); Some(Type::UserDefined(type_name))},
+            (TokenType::Int, None) => {self.advance(); Some(ParsedType::Integer)},
+            (TokenType::Float, None) => {self.advance(); Some(ParsedType::Float)},
+            (TokenType::Double, None) => {self.advance(); Some(ParsedType::Double)},
+            (TokenType::Bool, None) => {self.advance(); Some(ParsedType::Boolean)},
+            (TokenType::String, None) => {self.advance(); Some(ParsedType::String)},
+            (TokenType::Identifier, Some(TokenValue::String(type_name))) => {self.advance(); Some(ParsedType::TypeName(type_name))},
             (TokenType::Func, None) => {
                 self.advance();
 
@@ -210,7 +210,7 @@ impl<'a> ExprParser<'a> {
                         None
                     }?;
 
-                    Some(Type::Function(FunctionType {arg_types: Rc::new(arg_types), ret_type: Rc::new(ret_type)}))
+                    Some(ParsedType::Function(ParsedFunctionType {arg_types: Rc::new(arg_types), ret_type: Rc::new(ret_type)}))
                 } else {
                     None
                 }
@@ -245,8 +245,57 @@ impl<'a> ExprParser<'a> {
             TokenType::Input => self.input(),
             TokenType::Print => self.print(),
             TokenType::Fn => self.function(),
+            TokenType::Struct => self.struct_declaration(),
             _ => self.block(),
         }
+    }
+
+    fn struct_declaration(&mut self) -> Option<Box<dyn Expr>> {
+        println!("Struct decalaration");
+        self.advance();
+
+        let mut cur = self.cur()?;
+        let mut struct_name = None;
+
+        if let (TokenType::Identifier, Some(TokenValue::String(name))) = (cur.token_type, cur.value) {
+            println!("Parsed struct name {}", name);
+            struct_name = Some(name);
+            self.advance();
+        }
+
+        if !self.consume(TokenType::LeftCurly, None) {
+            return None;
+        }
+
+        let mut members = HashMap::new();
+
+        cur = self.cur()?;
+
+        while cur.token_type != TokenType::RightCurly {
+            let member_type = self.try_type()?;
+            cur = self.cur()?;
+
+            let mut member_name = None;
+
+            if let (TokenType::Identifier, Some(TokenValue::String(name))) = (cur.token_type, cur.value) {
+                member_name = Some(name);
+                self.advance();
+            }
+
+            println!("Parsed memeber {:?} {:?}", member_type, member_name);
+
+            members.insert(member_name?, member_type);
+
+            self.consume(TokenType::Semicolon, None);
+
+            cur = self.cur()?;
+        }
+
+        if !self.consume(TokenType::RightCurly, None) {
+            return None
+        }
+
+        Some(StructExpr::new(struct_name?, members, PositionRange::new(Position::new(0, 0))))
     }
 
     //fn (args) -> type expr
@@ -289,13 +338,11 @@ impl<'a> ExprParser<'a> {
         
         let body = self.expr()?;
 
-        let value = TypedValue {
-            value: Value::Function(Function {args: Rc::new(args), body: body.into(), env: EnvRef::new_none()}),
-            value_type: Type::Function(FunctionType {arg_types: Rc::new(arg_types), ret_type: Rc::new(ret_type)})
-        };
+        let value = Value::Function(Function {args: Rc::new(args), body: body.into(), env: EnvRef::new_none()});
+        let parsed_type = ParsedType::Function(ParsedFunctionType {arg_types: Rc::new(arg_types), ret_type: Rc::new(ret_type)});
 
         //TODO: fix position
-        Some(LiteralExpr::new(value, PositionRange::new(Position::new(0, 0))))
+        Some(LiteralExpr::new(value, parsed_type, PositionRange::new(Position::new(0, 0))))
     }
 
     //input expr
@@ -567,24 +614,24 @@ impl<'a> ExprParser<'a> {
         match (cur.token_type, cur.value) {
             (TokenType::IntLiteral, Some(TokenValue::Int(value))) => {
                 self.advance();
-                Some(LiteralExpr::new(TypedValue::new(Type::Integer, Value::Int(value)), PositionRange::new(Position::new(0, 0))))
+                Some(LiteralExpr::new(Value::Int(value), ParsedType::Integer, PositionRange::new(Position::new(0, 0))))
             },
             (TokenType::FloatLiteral, Some(TokenValue::Float(value))) => {
                 self.advance();
-                Some(LiteralExpr::new(TypedValue::new(Type::Float, Value::Float(value)), PositionRange::new(Position::new(0, 0))))
+                Some(LiteralExpr::new(Value::Float(value), ParsedType::Float, PositionRange::new(Position::new(0, 0))))
             },
             (TokenType::DoubleLiteral, Some(TokenValue::Double(value))) => {
                 self.advance();
-                Some(LiteralExpr::new(TypedValue::new(Type::Double, Value::Double(value)), PositionRange::new(Position::new(0, 0)))
-            )},
+                Some(LiteralExpr::new(Value::Double(value), ParsedType::Double, PositionRange::new(Position::new(0, 0))))
+            },
             (TokenType::BoolLiteral, Some(TokenValue::Bool(value))) => {
                 self.advance();
-                Some(LiteralExpr::new(TypedValue::new(Type::Boolean, Value::Bool(value)), PositionRange::new(Position::new(0, 0))))
+                Some(LiteralExpr::new(Value::Bool(value), ParsedType::Boolean, PositionRange::new(Position::new(0, 0))))
             },
             (TokenType::StringLiteral, Some(TokenValue::String(value))) => {
                 self.advance();
-                Some(LiteralExpr::new(TypedValue::new(Type::String, Value::String(value)), PositionRange::new(Position::new(0, 0)))
-            )},
+                Some(LiteralExpr::new(Value::String(value), ParsedType::String, PositionRange::new(Position::new(0, 0))))
+            },
             (TokenType::Identifier, Some(TokenValue::String(identifier))) => {
                 let token = self.cur()?;
                 self.advance();

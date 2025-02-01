@@ -366,6 +366,7 @@ impl Lexer<'_> {
             "print" => self.end_token(TokenType::Print, None),
             "rand" => self.end_token(TokenType::Rand, None),
             "input" => self.end_token(TokenType::Input, None),
+            "struct" => self.end_token(TokenType::Struct, None),
             _ => self.end_token(TokenType::Identifier, Some(TokenValue::String(word))),
         }
     }

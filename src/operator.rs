@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{environment::{Type, Value}, error::{Diagnostic, DiagnosticType}, token::{Position, PositionRange, Token, TokenType}};
+use crate::{environment::{ResolvedType, Value}, error::{Diagnostic, DiagnosticType}, token::{Position, PositionRange, Token, TokenType}};
 
 pub fn as_binary_operator(token: &Token) -> Box<dyn BinaryOperator> {
     match token.token_type {
@@ -30,7 +30,7 @@ pub fn as_unary_operator(token: &Token) -> Box<dyn UnaryOperator> {
 }
 
 pub trait UnaryOperator : std::fmt::Debug {
-    fn interpret_type(&self, value_type: Type) -> Result<Type, Diagnostic>;
+    fn interpret_type(&self, value_type: ResolvedType) -> Result<ResolvedType, Diagnostic>;
     fn interpret(&self, value: Rc<Value>) -> Rc<Value>;
 }
 
@@ -38,8 +38,8 @@ pub trait UnaryOperator : std::fmt::Debug {
 struct Not;
 
 impl UnaryOperator for Not {
-    fn interpret_type(&self, value_type: Type) -> Result<Type, Diagnostic> {
-        if value_type == Type::Boolean {
+    fn interpret_type(&self, value_type: ResolvedType) -> Result<ResolvedType, Diagnostic> {
+        if value_type == ResolvedType::Boolean {
             Ok(value_type)
         } else {
             Err(Diagnostic::new(0, DiagnosticType::Error, PositionRange::new(Position::new(0, 0)), "placeholder".to_string()))
@@ -56,7 +56,7 @@ impl UnaryOperator for Not {
 struct Negative;
 
 impl UnaryOperator for Negative {
-    fn interpret_type(&self, value_type: Type) -> Result<Type, Diagnostic> {
+    fn interpret_type(&self, value_type: ResolvedType) -> Result<ResolvedType, Diagnostic> {
         if value_type.is_numeric() {
             Ok(value_type)
         } else {
@@ -82,8 +82,8 @@ impl UnaryOperator for Negative {
 struct Semicolon;
 
 impl UnaryOperator for Semicolon {
-    fn interpret_type(&self, _value_type: Type) -> Result<Type, Diagnostic> {
-        Ok(Type::Empty)
+    fn interpret_type(&self, _value_type: ResolvedType) -> Result<ResolvedType, Diagnostic> {
+        Ok(ResolvedType::Empty)
     }
 
     fn interpret(&self, _value: Rc<Value>) -> Rc<Value> {
@@ -92,7 +92,7 @@ impl UnaryOperator for Semicolon {
 }
 
 pub trait BinaryOperator : std::fmt::Debug {
-    fn interpret_type(&self, left: Type, right: Type) -> Result<Type, Diagnostic>;
+    fn interpret_type(&self, left: ResolvedType, right: ResolvedType) -> Result<ResolvedType, Diagnostic>;
     fn interpret(&self, left: Rc<Value>, right: Rc<Value>) -> Rc<Value>;
 }
 
@@ -102,7 +102,7 @@ macro_rules! arithmetic_binary_operator {
         struct $Name;
 
         impl BinaryOperator for $Name {
-            fn interpret_type(&self, left: Type, right: Type) -> Result<Type, Diagnostic> {
+            fn interpret_type(&self, left: ResolvedType, right: ResolvedType) -> Result<ResolvedType, Diagnostic> {
                 if left == right && left.is_numeric(){
                     Ok(left)
                 } else {
@@ -131,9 +131,9 @@ macro_rules! comparative_binary_operator {
         struct $Name;
 
         impl BinaryOperator for $Name {
-            fn interpret_type(&self, left: Type, right: Type) -> Result<Type, Diagnostic> {
+            fn interpret_type(&self, left: ResolvedType, right: ResolvedType) -> Result<ResolvedType, Diagnostic> {
                 if left == right && left.is_numeric(){
-                    Ok(Type::Boolean)
+                    Ok(ResolvedType::Boolean)
                 } else {
                     Err(Diagnostic::new(0, DiagnosticType::Error, PositionRange::new(Position::new(0, 0)), "placeholder".to_string()))
                     //Err(TypeError::new_binary(&left, &right, $OperatorName))
@@ -160,8 +160,8 @@ macro_rules! boolean_binary_operator {
         struct $Name;
 
         impl BinaryOperator for $Name {
-            fn interpret_type(&self, left: Type, right: Type) -> Result<Type, Diagnostic> {
-                if left == right && left == Type::Boolean {
+            fn interpret_type(&self, left: ResolvedType, right: ResolvedType) -> Result<ResolvedType, Diagnostic> {
+                if left == right && left == ResolvedType::Boolean {
                     Ok(left)
                 } else {
                     Err(Diagnostic::new(0, DiagnosticType::Error, PositionRange::new(Position::new(0, 0)), "placeholder".to_string()))

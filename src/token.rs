@@ -104,6 +104,7 @@ pub enum TokenType {
     This, While, Loop, Break, Print, Input,
 
     Int, Float, Double, Bool, String, Func,
+    Struct,
 
     IntLiteral, FloatLiteral, DoubleLiteral, BoolLiteral, StringLiteral,
     Identifier,

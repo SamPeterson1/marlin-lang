@@ -1,25 +1,44 @@
 use std::{collections::HashMap, rc::Rc};
 
-use crate::{expr::{Expr, VarExpr}, resolver::Resolver};
+use crate::{expr::{Expr, VarExpr}, resolver::SymbolTable};
 
 #[derive(PartialEq, Eq, Debug, Clone)]
-pub enum Type {
+pub enum ParsedType {
+    Integer, Float, Double, 
+    Boolean, String, Empty,
+    TypeName(String),
+    Function(ParsedFunctionType)
+}
+
+#[derive(PartialEq, Eq, Debug, Clone)]
+pub struct ParsedFunctionType {
+    pub arg_types: Rc<Vec<ParsedType>>,
+    pub ret_type: Rc<ParsedType>
+}
+
+#[derive(PartialEq, Eq, Debug, Clone)]
+pub enum ResolvedType {
     Integer, Float, Double, 
     Boolean, String, Empty,
     Function(FunctionType),
-    UserDefined(String)
+    Struct(StructType),
 }
 
-impl Type {
+impl ResolvedType {
     pub fn is_numeric(&self) -> bool {
-        *self == Type::Integer || *self == Type::Float || *self == Type::Double
+        *self == ResolvedType::Integer || *self == ResolvedType::Float || *self == ResolvedType::Double
     }
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
+pub struct StructType {
+    pub member_types: Rc<HashMap<String, ResolvedType>>
+}
+
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct FunctionType {
-    pub arg_types: Rc<Vec<Type>>,
-    pub ret_type: Rc<Type>
+    pub arg_types: Rc<Vec<ResolvedType>>,
+    pub ret_type: Rc<ResolvedType>
 }
 
 #[derive(Debug)]
@@ -68,11 +87,11 @@ impl Clone for Value {
 impl Into<TypedValue> for Value {
     fn into(self) -> TypedValue {
         match self {
-            Value::Int(_) => TypedValue::new(Type::Integer, self),
-            Value::Float(_) => TypedValue::new(Type::Float, self),
-            Value::Double(_) => TypedValue::new(Type::Double, self),
-            Value::Bool(_) => TypedValue::new(Type::Boolean, self),
-            Value::String(_) => TypedValue::new(Type::String, self),
+            Value::Int(_) => TypedValue::new(ResolvedType::Integer, self),
+            Value::Float(_) => TypedValue::new(ResolvedType::Float, self),
+            Value::Double(_) => TypedValue::new(ResolvedType::Double, self),
+            Value::Bool(_) => TypedValue::new(ResolvedType::Boolean, self),
+            Value::String(_) => TypedValue::new(ResolvedType::String, self),
             Value::Function(_) => panic!("Cannot infer type from function value"),
             Value::Empty => TypedValue::empty()
         }
@@ -90,12 +109,12 @@ impl Value {
 
 #[derive(Debug)]
 pub struct TypedValue {
-    pub value_type: Type,
+    pub value_type: ResolvedType,
     pub value: Value
 }
 
 impl TypedValue {
-    pub fn new(value_type: Type, value: Value) -> TypedValue {
+    pub fn new(value_type: ResolvedType, value: Value) -> TypedValue {
         TypedValue {
             value_type,
             value
@@ -104,7 +123,7 @@ impl TypedValue {
 
     pub fn empty() -> TypedValue {
         TypedValue {
-            value_type: Type::Empty,
+            value_type: ResolvedType::Empty,
             value: Value::Empty
         }
     }
@@ -237,10 +256,10 @@ impl EnvRef {
         }
     }
 
-    pub fn get_value(&self, var_expr: &VarExpr, resolver: &Resolver) -> Rc<Value> {
+    pub fn get_value(&self, var_expr: &VarExpr, symbol_table: &SymbolTable) -> Rc<Value> {
         let mut env = self.as_env();
     
-        for _ in 0..resolver.get_dist(var_expr) {
+        for _ in 0..symbol_table.get_variable_dist(var_expr) {
             env = env.parent.as_env();
         }
 

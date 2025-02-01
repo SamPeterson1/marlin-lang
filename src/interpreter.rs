@@ -4,19 +4,18 @@ use std::str::FromStr;
 
 use rand::Rng;
 
-use crate::{environment::{Env, EnvRef, Function, Type, Value}, expr::{AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, UnaryExpr, VarExpr}, resolver::Resolver};
-
+use crate::{environment::{Env, EnvRef, Function, ParsedType, Value}, expr::{AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, UnaryExpr, VarExpr}, resolver::SymbolTable};
 pub struct Interpreter {
     break_value: Option<Rc<Value>>,
-    resolver: Resolver,
+    symbol_table: SymbolTable,
     env: EnvRef
 }
 
 impl Interpreter {
-    pub fn new(resolver: Resolver) -> Interpreter {
+    pub fn new(symbol_table: SymbolTable) -> Interpreter {
         Interpreter {
             break_value: None, 
-            resolver,
+            symbol_table,
             env: Env::new()
         }
     }
@@ -56,19 +55,19 @@ impl ExprVisitor<Rc<Value>> for Interpreter {
     }
 
     fn visit_literal(&mut self, expr: &LiteralExpr) -> Rc<Value> {
-        if let Value::Function(function) = &expr.value.value {
+        if let Value::Function(function) = &*expr.value {
             let mut function = Function::clone(&function);
 
             function.env = self.env.clone();
 
             Rc::new(Value::Function(function))
         } else {
-            Rc::new(expr.value.value.clone())
+            expr.value.clone()
         }
     }
 
     fn visit_var(&mut self, expr: &VarExpr) -> Rc<Value> {
-        self.env.get_value(expr, &self.resolver)
+        self.env.get_value(expr, &self.symbol_table)
     }
 
     fn visit_if(&mut self, expr: &IfExpr) -> Rc<Value> {
@@ -211,11 +210,11 @@ impl ExprVisitor<Rc<Value>> for Interpreter {
 
             let input_trim = input.trim();
 
-            match &expr.return_type {
-                Type::Integer => Rc::new(Value::Int(i32::from_str(input_trim).unwrap())),
-                Type::Float => Rc::new(Value::Float(f32::from_str(input_trim).unwrap())),
-                Type::Double => Rc::new(Value::Double(f64::from_str(input_trim).unwrap())),
-                Type::String => Rc::new(Value::String(String::from_str(input_trim).unwrap())),
+            match expr.return_type {
+                ParsedType::Integer => Rc::new(Value::Int(i32::from_str(input_trim).unwrap())),
+                ParsedType::Float => Rc::new(Value::Float(f32::from_str(input_trim).unwrap())),
+                ParsedType::Double => Rc::new(Value::Double(f64::from_str(input_trim).unwrap())),
+                ParsedType::String => Rc::new(Value::String(String::from_str(input_trim).unwrap())),
                 _ => panic!("Invalid input type")
             }
         } else {
@@ -257,6 +256,10 @@ impl ExprVisitor<Rc<Value>> for Interpreter {
 
 
         value
+    }
+
+    fn visit_struct(&mut self, expr: &crate::expr::StructExpr) -> Rc<Value> {
+        Rc::new(Value::Empty)
     }
 
 }

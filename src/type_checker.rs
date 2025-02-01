@@ -1,15 +1,15 @@
-use crate::{environment::{Type, Value}, error::Diagnostic, expr::{AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, UnaryExpr, VarExpr}, resolver::Resolver};
+use crate::{environment::{ResolvedType, Value}, error::Diagnostic, expr::{AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, UnaryExpr, VarExpr}, resolver::SymbolTable};
 
 pub struct TypeChecker<'a> {
-    resolver: &'a Resolver,
-    loop_types: Vec<Option<Type>>,
+    symbol_table: &'a SymbolTable,
+    loop_types: Vec<Option<ResolvedType>>,
     current_loop_idx: Option<usize>
 }
 
 impl<'a> TypeChecker<'a> {
-    pub fn new(resolver: &'a Resolver) -> TypeChecker {
+    pub fn new(symbol_table: &'a SymbolTable) -> TypeChecker {
         TypeChecker {
-            resolver,
+            symbol_table,
             loop_types: Vec::new(),
             current_loop_idx: None
         }
@@ -25,13 +25,13 @@ impl<'a> TypeChecker<'a> {
     }
 }
 
-impl ExprVisitor<Type> for TypeChecker<'_> {
-    fn visit_empty(&mut self, _expr: &EmptyExpr) -> Type {
-        Type::Empty
+impl ExprVisitor<ResolvedType> for TypeChecker<'_> {
+    fn visit_empty(&mut self, _expr: &EmptyExpr) -> ResolvedType {
+        ResolvedType::Empty
     }
 
 
-    fn visit_binary(&mut self, expr: &BinaryExpr) -> Type {
+    fn visit_binary(&mut self, expr: &BinaryExpr) -> ResolvedType {
         let left_type = expr.left.accept_visitor(self);
         let right_type = expr.right.accept_visitor(self);
 
@@ -40,28 +40,28 @@ impl ExprVisitor<Type> for TypeChecker<'_> {
         expr.operator.interpret_type(left_type, right_type).unwrap()
     }
 
-    fn visit_unary(&mut self, expr: &UnaryExpr) -> Type {
+    fn visit_unary(&mut self, expr: &UnaryExpr) -> ResolvedType {
         let operand_type = expr.expr.accept_visitor(self);
 
         expr.operator.interpret_type(operand_type).unwrap()
     }
 
-    fn visit_literal(&mut self, expr: &LiteralExpr) -> Type {
-        if let Value::Function(function) = &expr.value.value {
+    fn visit_literal(&mut self, expr: &LiteralExpr) -> ResolvedType {
+        if let Value::Function(function) = &*expr.value {
             function.body.accept_visitor(self);
         }
 
-        expr.value.value_type.clone()
+        self.symbol_table.get_resolved_type(&expr.parsed_type)
     }
 
-    fn visit_var(&mut self, expr: &VarExpr) -> Type {
-        self.resolver.get_type(expr).clone()
+    fn visit_var(&mut self, expr: &VarExpr) -> ResolvedType {
+        self.symbol_table.get_variable_type(expr).clone()
     }
 
-    fn visit_if(&mut self, expr: &IfExpr) -> Type {
+    fn visit_if(&mut self, expr: &IfExpr) -> ResolvedType {
         let condition_type = expr.condition.accept_visitor(self);
 
-        if condition_type != Type::Boolean {
+        if condition_type != ResolvedType::Boolean {
             panic!("Invalid type {:?} for if condition", condition_type);
         }
 
@@ -80,8 +80,8 @@ impl ExprVisitor<Type> for TypeChecker<'_> {
         success_type
     }
 
-    fn visit_assignment(&mut self, expr: &AssignmentExpr) -> Type {
-        let var_type = self.resolver.get_type(&expr.asignee);
+    fn visit_assignment(&mut self, expr: &AssignmentExpr) -> ResolvedType {
+        let var_type = self.symbol_table.get_variable_type(&expr.asignee);
 
         let value_type = expr.expr.accept_visitor(self);
 
@@ -94,20 +94,20 @@ impl ExprVisitor<Type> for TypeChecker<'_> {
         var_type.clone()
     }
 
-    fn visit_declaration(&mut self, expr: &DeclarationExpr) -> Type {
+    fn visit_declaration(&mut self, expr: &DeclarationExpr) -> ResolvedType {
         let value_type = expr.expr.accept_visitor(self);
 
         println!("declaring {:?} as {:?}", expr.identifier, value_type);
 
-        if value_type != expr.declaration_type {
+        if value_type != self.symbol_table.get_resolved_type(&expr.declaration_type) {
             panic!("Mismatched types {:?}, {:?} for assignment", value_type, expr.declaration_type);
         }
 
         value_type
     }
 
-    fn visit_block(&mut self, expr: &BlockExpr) -> Type {
-        let mut block_type = Type::Empty;
+    fn visit_block(&mut self, expr: &BlockExpr) -> ResolvedType {
+        let mut block_type = ResolvedType::Empty;
 
         for expr in &expr.exprs {
             block_type = expr.accept_visitor(self);
@@ -116,22 +116,22 @@ impl ExprVisitor<Type> for TypeChecker<'_> {
         block_type
     }
 
-    fn visit_print(&mut self, expr: &PrintExpr) -> Type {
+    fn visit_print(&mut self, expr: &PrintExpr) -> ResolvedType {
         expr.expr.accept_visitor(self)
     }
 
-    fn visit_rand(&mut self, expr: &RandExpr) -> Type {
+    fn visit_rand(&mut self, expr: &RandExpr) -> ResolvedType {
         let min_type = expr.min.accept_visitor(self);
         let max_type = expr.max.accept_visitor(self);
 
-        if min_type != Type::Integer || max_type != Type::Integer {
+        if min_type != ResolvedType::Integer || max_type != ResolvedType::Integer {
             panic!("Invalid types {:?}, {:?} for rand expression", min_type, max_type);
         }
 
-        Type::Integer
+        ResolvedType::Integer
     }
 
-    fn visit_loop(&mut self, expr: &LoopExpr) -> Type {
+    fn visit_loop(&mut self, expr: &LoopExpr) -> ResolvedType {
         let loop_idx = self.loop_types.len();
         self.current_loop_idx = Some(loop_idx);
         self.loop_types.push(None);
@@ -140,11 +140,11 @@ impl ExprVisitor<Type> for TypeChecker<'_> {
 
         return match &self.loop_types[loop_idx] {
             Some(t) => t.clone(),
-            None => Type::Empty
+            None => ResolvedType::Empty
         }
     }
 
-    fn visit_break(&mut self, expr: &BreakExpr) -> Type {
+    fn visit_break(&mut self, expr: &BreakExpr) -> ResolvedType {
         let expr_type = expr.expr.accept_visitor(self);
 
         if self.current_loop_idx.is_none() {
@@ -168,16 +168,16 @@ impl ExprVisitor<Type> for TypeChecker<'_> {
         }
     }
 
-    fn visit_input(&mut self, expr: &InputExpr) -> Type {
-        expr.return_type.clone()
+    fn visit_input(&mut self, expr: &InputExpr) -> ResolvedType {
+        self.symbol_table.get_resolved_type(&expr.return_type).clone()
     }
 
-    fn visit_call(&mut self, expr: &CallExpr) -> Type {
+    fn visit_call(&mut self, expr: &CallExpr) -> ResolvedType {
         let expr_type = expr.func_expr.accept_visitor(self);
 
         println!("calling {:?}", expr_type);
 
-        if let Type::Function(function_type) = &expr_type {
+        if let ResolvedType::Function(function_type) = &expr_type {
             if function_type.arg_types.len() != expr.args.len() {
                 panic!("Mismatched number of arguments {:?}, {:?} for function call", function_type.arg_types.len(), expr.args.len());
             }
@@ -195,8 +195,12 @@ impl ExprVisitor<Type> for TypeChecker<'_> {
         }
 
         match expr_type {
-            Type::Function(function_type) => (*function_type.ret_type).clone(),
+            ResolvedType::Function(function_type) => (*function_type.ret_type).clone(),
             _ => panic!("Invalid type {:?} for function call", &expr_type)
         }
+    }
+
+    fn visit_struct(&mut self, expr: &crate::expr::StructExpr) -> ResolvedType {
+        ResolvedType::Empty
     }
 }

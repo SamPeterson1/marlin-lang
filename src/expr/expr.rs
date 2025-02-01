@@ -1,12 +1,12 @@
-use std::{hash::Hasher, rc::Rc};
+use std::{collections::HashMap, hash::Hasher, rc::Rc};
 
-use crate::{environment::{Type, TypedValue, Value}, operator::{self, BinaryOperator, UnaryOperator}, token::{Position, PositionRange, Token}};
+use crate::{environment::{ParsedType, ResolvedType, Value}, operator::{self, BinaryOperator, UnaryOperator}, token::{Position, PositionRange, Token}};
 
 pub trait ExprVisitable<T> {
     fn accept_visitor(&self, visitor: &mut dyn ExprVisitor<T>) -> T;
 }
 
-pub trait Expr: ExprVisitable<Rc<Value>> + ExprVisitable<Type> + ExprVisitable<()> + std::fmt::Debug {
+pub trait Expr: ExprVisitable<Rc<Value>> + ExprVisitable<ResolvedType> + ExprVisitable<()> + std::fmt::Debug {
     fn get_position(&self) -> &PositionRange;
 }
 
@@ -26,6 +26,7 @@ pub trait ExprVisitor<T> {
     fn visit_break(&mut self, expr: &BreakExpr) -> T;
     fn visit_input(&mut self, expr: &InputExpr) -> T;
     fn visit_call(&mut self, expr: &CallExpr) -> T;
+    fn visit_struct(&mut self, expr: &StructExpr) -> T;
 }
 
 macro_rules! impl_expr {
@@ -107,14 +108,16 @@ impl_expr!(UnaryExpr, visit_unary);
 
 #[derive(Debug)]
 pub struct LiteralExpr {
-    pub value: Rc<TypedValue>,
-    pub position: PositionRange
+    pub value: Rc<Value>,
+    pub parsed_type: ParsedType,
+    pub position: PositionRange,
 }
 
 impl LiteralExpr {
-    pub fn new(value: TypedValue, position: PositionRange) -> Box<dyn Expr> {
+    pub fn new(value: Value, parsed_type: ParsedType, position: PositionRange) -> Box<dyn Expr> {
         Box::new(LiteralExpr {
             value: Rc::new(value),
+            parsed_type,
             position
         })
     }
@@ -201,13 +204,13 @@ impl_expr!(IfExpr, visit_if);
 #[derive(Debug)]
 pub struct DeclarationExpr {
     pub identifier: String,
-    pub declaration_type: Type,
+    pub declaration_type: ParsedType,
     pub expr: Box<dyn Expr>,
     pub position: PositionRange
 }
 
 impl DeclarationExpr {
-    pub fn new(identifier: String, declaration_type: Type, expr: Box<dyn Expr>) -> Box<dyn Expr> {
+    pub fn new(identifier: String, declaration_type: ParsedType, expr: Box<dyn Expr>) -> Box<dyn Expr> {
         Box::new(DeclarationExpr {
             identifier,
             declaration_type,
@@ -367,12 +370,12 @@ impl_expr!(BreakExpr, visit_break);
 #[derive(Debug)]
 pub struct InputExpr {
     pub prompt: Box<dyn Expr>,
-    pub return_type: Type,
+    pub return_type: ParsedType,
     pub position: PositionRange
 }
 
 impl InputExpr {
-    pub fn new(prompt: Box<dyn Expr>, return_type: Type) -> Box<dyn Expr> {
+    pub fn new(prompt: Box<dyn Expr>, return_type: ParsedType) -> Box<dyn Expr> {
         Box::new(InputExpr {
             prompt,
             return_type,
@@ -405,3 +408,22 @@ impl CallExpr {
 }
 
 impl_expr!(CallExpr, visit_call);
+
+#[derive(Debug, Clone)]
+pub struct StructExpr {
+    pub name: Rc<String>,
+    pub members: HashMap<String, ParsedType>,
+    pub position: PositionRange,
+}
+
+impl StructExpr {
+    pub fn new(name: String, members: HashMap<String, ParsedType>, position: PositionRange) -> Box<dyn Expr> {
+        Box::new(StructExpr {
+            name: Rc::new(name),
+            members,
+            position
+        })
+    }
+}
+
+impl_expr!(StructExpr, visit_struct);

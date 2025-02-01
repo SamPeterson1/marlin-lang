@@ -1,0 +1,13 @@
+struct Foo {
+    int a;
+    int b;
+}
+
+struct Bar {
+    Foo a;
+}
+
+struct Meow {
+    Foo x;
+    Bar z;
+}
