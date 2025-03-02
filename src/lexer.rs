@@ -297,10 +297,6 @@ impl Lexer<'_> {
         let peek = self.peek().cloned();
 
         match peek {
-            Some('f') => {
-                self.next();
-                self.end_token(TokenType::FloatLiteral, Some(TokenValue::Float(value as f32)))
-            },
             Some('d') => {
                 self.next();
                 self.end_token(TokenType::DoubleLiteral, Some(TokenValue::Double(value)))
@@ -317,7 +313,7 @@ impl Lexer<'_> {
                 if !is_decimal {
                     self.end_token(TokenType::IntLiteral, Some(TokenValue::Int(value as i64)))
                 } else {
-                    self.end_token(TokenType::FloatLiteral, Some(TokenValue::Float(value as f32)))
+                    self.end_token(TokenType::FloatLiteral, Some(TokenValue::Double(value)))
                 }
             },
         }
@@ -357,7 +353,6 @@ impl Lexer<'_> {
             "break" => self.end_token(TokenType::Break, None),
             "loop" => self.end_token(TokenType::Loop, None),
             "int" => self.end_token(TokenType::Int, None),
-            "float" => self.end_token(TokenType::Float, None),
             "double" => self.end_token(TokenType::Double, None),
             "bool" => self.end_token(TokenType::Bool, None),
             "str" => self.end_token(TokenType::String, None),

@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 
-use crate::{environment::{ResolvedType, StructType, Value}, error::Diagnostic, expr::{AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, StructExpr, StructInitializerExpr, UnaryExpr, VarExpr}, resolver::SymbolTable};
+use crate::{environment::{ResolvedType, StructType}, error::Diagnostic, expr::{AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, StructExpr, StructInitializerExpr, UnaryExpr, VarExpr}, resolver::SymbolTable};
 
 pub struct TypeChecker<'a> {
     symbol_table: &'a SymbolTable,
@@ -49,10 +49,6 @@ impl ExprVisitor<ResolvedType> for TypeChecker<'_> {
     }
 
     fn visit_literal(&mut self, expr: &LiteralExpr) -> ResolvedType {
-        if let Value::Function(function) = &*expr.value.as_ref() {
-            function.body.accept_visitor(self);
-        }
-
         self.symbol_table.get_resolved_type(&expr.parsed_type)
     }
 

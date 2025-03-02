@@ -14,8 +14,6 @@ mod opcodes;
 mod environment;
 
 mod operator;
-
-mod interpreter;
 mod resolver;
 mod type_checker;
 

@@ -1,6 +1,4 @@
-use std::rc::Rc;
-
-use crate::{environment::{ResolvedType, Value, ValueRef}, error::{Diagnostic, DiagnosticType}, instruction::InstructionBuilder, token::{Position, PositionRange, Token, TokenType}};
+use crate::{environment::ResolvedType, error::{Diagnostic, DiagnosticType}, instruction::InstructionBuilder, token::{Position, PositionRange, Token, TokenType}};
 
 pub fn as_binary_operator(token: &Token) -> Box<dyn BinaryOperator> {
     match token.token_type {
@@ -31,7 +29,6 @@ pub fn as_unary_operator(token: &Token) -> Box<dyn UnaryOperator> {
 
 pub trait UnaryOperator : std::fmt::Debug {
     fn interpret_type(&self, value_type: ResolvedType) -> Result<ResolvedType, Diagnostic>;
-    fn interpret(&self, value: ValueRef) -> ValueRef;
     fn compile(&self, dr: u8, sr1: u8, operation_type: ResolvedType) -> Vec<u64>;
 }
 
@@ -46,10 +43,6 @@ impl UnaryOperator for Not {
             Err(Diagnostic::new(0, DiagnosticType::Error, PositionRange::new(Position::new(0, 0)), "placeholder".to_string()))
             //Err(TypeError::new_unary(&value_type, "!"))
         }
-    }
-
-    fn interpret(&self, value: ValueRef) -> ValueRef {
-        ValueRef::new(Value::Bool(!value.as_ref().as_bool()))
     }
 
     fn compile(&self, dr: u8, sr1: u8, operation_type: ResolvedType) -> Vec<u64> {
@@ -77,17 +70,6 @@ impl UnaryOperator for Negative {
         }
     }
 
-    fn interpret(&self, value: ValueRef) -> ValueRef {
-        let result = match *value.as_ref() {
-            Value::Int(x) => Value::Int(-x),
-            Value::Float(x) => Value::Float(-x),
-            Value::Double(x) => Value::Double(-x),
-            _ => unreachable!()
-        };
-
-        ValueRef::new(result)
-    }
-
     fn compile(&self, dr: u8, sr1: u8, operation_type: ResolvedType) -> Vec<u64> {
         let mut instructions = Vec::new();
         
@@ -111,10 +93,6 @@ impl UnaryOperator for Semicolon {
         Ok(ResolvedType::Empty)
     }
 
-    fn interpret(&self, _value: ValueRef) -> ValueRef {
-        ValueRef::new(Value::Empty)
-    }
-
     fn compile(&self, dr: u8, sr1: u8, operation_type: ResolvedType) -> Vec<u64> {
         Vec::new()
     }
@@ -122,7 +100,6 @@ impl UnaryOperator for Semicolon {
 
 pub trait BinaryOperator : std::fmt::Debug {
     fn interpret_type(&self, left: ResolvedType, right: ResolvedType) -> Result<ResolvedType, Diagnostic>;
-    fn interpret(&self, left: ValueRef, right: ValueRef) -> ValueRef;
     fn compile(&self, dr: u8, sr1: u8, sr2: u8, operation_type: ResolvedType) -> Vec<u64>;
 }
 
@@ -139,17 +116,6 @@ macro_rules! arithmetic_binary_operator {
                     Err(Diagnostic::new(0, DiagnosticType::Error, PositionRange::new(Position::new(0, 0)), "placeholder".to_string()))
                     //Err(TypeError::new_binary(&left, &right, $OperatorName))
                 }
-            }
-
-            fn interpret(&self, left: ValueRef, right: ValueRef) -> ValueRef {
-                let result = match *left.as_ref() {
-                    Value::Int(x) => Value::Int(x $Operator right.as_ref().as_int()),
-                    Value::Float(x) => Value::Float(x $Operator right.as_ref().as_float()),
-                    Value::Double(x) => Value::Double(x $Operator right.as_ref().as_double()),
-                    _ => unreachable!()
-                };
-
-                ValueRef::new(result)
             }
 
             $Compile
@@ -172,17 +138,6 @@ macro_rules! comparative_binary_operator {
                 }
             }
 
-            fn interpret(&self, left: ValueRef, right: ValueRef) -> ValueRef {
-                let result = match *left.as_ref() {
-                    Value::Int(x) => Value::Bool(x $Operator right.as_ref().as_int()),
-                    Value::Float(x) => Value::Bool(x $Operator right.as_ref().as_float()),
-                    Value::Double(x) => Value::Bool(x $Operator right.as_ref().as_double()),
-                    _ => unreachable!()
-                };
-
-                ValueRef::new(result)
-            }
-
             $Compile
         }
     };
@@ -201,15 +156,6 @@ macro_rules! boolean_binary_operator {
                     Err(Diagnostic::new(0, DiagnosticType::Error, PositionRange::new(Position::new(0, 0)), "placeholder".to_string()))
                     //Err(TypeError::new_binary(&left, &right, $OperatorName))
                 }
-            }
-
-            fn interpret(&self, left: ValueRef, right: ValueRef) -> ValueRef {
-                let result = match *left.as_ref() {
-                    Value::Bool(x) => Value::Bool(x $Operator right.as_ref().as_bool()),
-                    _ => unreachable!()
-                };
-
-                ValueRef::new(result)
             }
 
             $Compile

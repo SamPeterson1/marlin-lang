@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{environment::{Function, Value}, expr::{CallExpr, Expr, ExprVisitable, ExprVisitor}, instruction::InstructionBuilder, resolver::SymbolTable, type_checker::TypeChecker};
+use crate::{environment::Literal, expr::{Expr, ExprVisitor}, instruction::InstructionBuilder, resolver::SymbolTable, type_checker::TypeChecker};
 
 /*
 R0 stores result of previous operation
@@ -142,18 +142,14 @@ impl ExprVisitor<()> for Compiler<'_> {
 
     fn visit_literal(&mut self, expr: &crate::expr::LiteralExpr) -> () {
         println!("Literal");
-        self.current_function.push_instructions(match &*expr.value.as_ref() {
-            Value::Int(x) => [
+        self.current_function.push_instructions(match &expr.value {
+            Literal::Int(x) => [
                 InstructionBuilder::and_imm(0, 0, 0),
-                InstructionBuilder::addi_imm(0, 0, *x as i32),
+                InstructionBuilder::addi_imm(0, 0,*x as i32),
             ],
-            Value::Float(_) => todo!(),
-            Value::Double(_) => todo!(),
-            Value::Bool(_) => todo!(),
-            Value::String(_) => todo!(),
-            Value::Function(function) => todo!(),
-            Value::Struct(_) => todo!(),
-            Value::Empty => todo!(),
+            Literal::Double(_) => todo!(),
+            Literal::Bool(_) => todo!(),
+            Literal::String(_) => todo!(),
         }.into_iter().collect());
     }
 

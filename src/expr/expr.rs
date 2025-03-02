@@ -1,12 +1,12 @@
 use std::{collections::HashMap, hash::Hasher, rc::Rc};
 
-use crate::{environment::{ParsedType, ResolvedType, Value, ValueRef}, operator::{self, BinaryOperator, UnaryOperator}, token::{Position, PositionRange, Token}};
+use crate::{environment::{Literal, ParsedType, ResolvedType}, operator::{self, BinaryOperator, UnaryOperator}, token::{Position, PositionRange, Token}};
 
 pub trait ExprVisitable<T> {
     fn accept_visitor(&self, visitor: &mut dyn ExprVisitor<T>) -> T;
 }
 
-pub trait Expr: ExprVisitable<ValueRef> + ExprVisitable<ResolvedType> + ExprVisitable<()> + std::fmt::Debug {
+pub trait Expr: ExprVisitable<ResolvedType> + ExprVisitable<()> + std::fmt::Debug {
     fn get_position(&self) -> &PositionRange;
 }
 
@@ -109,15 +109,15 @@ impl_expr!(UnaryExpr, visit_unary);
 
 #[derive(Debug)]
 pub struct LiteralExpr {
-    pub value: ValueRef,
+    pub value: Literal,
     pub parsed_type: ParsedType,
     pub position: PositionRange,
 }
 
 impl LiteralExpr {
-    pub fn new(value: Value, parsed_type: ParsedType, position: PositionRange) -> Box<dyn Expr> {
+    pub fn new(value: Literal, parsed_type: ParsedType, position: PositionRange) -> Box<dyn Expr> {
         Box::new(LiteralExpr {
-            value: ValueRef::new(value),
+            value,
             parsed_type,
             position
         })

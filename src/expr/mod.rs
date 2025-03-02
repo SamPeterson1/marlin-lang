@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 
-use crate::{environment::{EnvRef, Function, ParsedFunctionType, ParsedType, Value}, error::{Diagnostic, DiagnosticType}, token::{Position, PositionRange, Token, TokenType, TokenValue}};
+use crate::{environment::{Literal, ParsedFunctionType, ParsedType}, error::{Diagnostic, DiagnosticType}, token::{Position, PositionRange, Token, TokenType, TokenValue}};
 pub use self::expr::*;
 
 pub mod expr;
@@ -166,7 +166,7 @@ impl<'a> ExprParser<'a> {
         }
 
         match self.cur().unwrap().token_type {
-            TokenType::Bool | TokenType::Int | TokenType::Float | TokenType::Double | TokenType::String | TokenType::Func | TokenType::Identifier => true,
+            TokenType::Bool | TokenType::Int  | TokenType::Double | TokenType::String | TokenType::Func | TokenType::Identifier => true,
             _ => false
         }
     }
@@ -178,7 +178,6 @@ impl<'a> ExprParser<'a> {
 
         match (cur.token_type, cur.value) {
             (TokenType::Int, None) => {self.advance(); Some(ParsedType::Integer)},
-            (TokenType::Float, None) => {self.advance(); Some(ParsedType::Float)},
             (TokenType::Double, None) => {self.advance(); Some(ParsedType::Double)},
             (TokenType::Bool, None) => {self.advance(); Some(ParsedType::Boolean)},
             (TokenType::String, None) => {self.advance(); Some(ParsedType::String)},
@@ -239,7 +238,6 @@ impl<'a> ExprParser<'a> {
             TokenType::Rand => self.rand(),
             TokenType::Input => self.input(),
             TokenType::Print => self.print(),
-            TokenType::Fn => self.function(),
             TokenType::Struct => self.struct_declaration(),
             _ => self.block(),
         }
@@ -287,53 +285,6 @@ impl<'a> ExprParser<'a> {
         }
 
         Some(StructExpr::new(struct_name?, members, PositionRange::new(Position::new(0, 0))))
-    }
-
-    //fn (args) -> type expr
-    fn function(&mut self) -> Option<Box<dyn Expr>> {
-        self.advance();
-
-        //TODO: add identifier thing
-
-        let mut args = Vec::new();
-        let mut arg_types = Vec::new();
-
-        self.consume(TokenType::LeftParen, None);
-
-        let peek = self.peek().unwrap();
-        
-        if let (TokenType::Identifier, Some(TokenValue::String(identifier))) = (peek.token_type, peek.value) {
-            arg_types.push(self.try_type()?);
-            args.push(identifier);
-            self.advance();
-        }
-
-        while self.try_match(&[TokenType::Comma]) {
-            let peek = self.peek().unwrap();
-
-            if let (TokenType::Identifier, Some(TokenValue::String(identifier))) = (peek.token_type, peek.value) {
-                arg_types.push(self.try_type()?);
-                args.push(identifier);
-                self.advance();
-            } else {
-                self.advance();
-                self.diagnostics.push(self.err_expected_identifier());
-            }
-        }
-
-        self.consume(TokenType::RightParen, None);
-
-        self.consume(TokenType::Arrow, None);
-
-        let ret_type = self.try_type()?;
-        
-        let body = self.expr()?;
-
-        let value = Value::Function(Function {args: Rc::new(args), body: body.into(), env: EnvRef::new_none()});
-        let parsed_type = ParsedType::Function(ParsedFunctionType {arg_types: Rc::new(arg_types), ret_type: Rc::new(ret_type)});
-
-        //TODO: fix position
-        Some(LiteralExpr::new(value, parsed_type, PositionRange::new(Position::new(0, 0))))
     }
 
     //input expr
@@ -686,25 +637,21 @@ impl<'a> ExprParser<'a> {
         match (cur.token_type, cur.value) {
             (TokenType::IntLiteral, Some(TokenValue::Int(value))) => {
                 self.advance();
-                Some(LiteralExpr::new(Value::Int(value), ParsedType::Integer, PositionRange::new(Position::new(0, 0))))
-            },
-            (TokenType::FloatLiteral, Some(TokenValue::Float(value))) => {
-                self.advance();
-                Some(LiteralExpr::new(Value::Float(value), ParsedType::Float, PositionRange::new(Position::new(0, 0))))
+                Some(LiteralExpr::new(Literal::Int(value), ParsedType::Integer, PositionRange::new(Position::new(0, 0))))
             },
             (TokenType::DoubleLiteral, Some(TokenValue::Double(value))) => {
                 self.advance();
-                Some(LiteralExpr::new(Value::Double(value), ParsedType::Double, PositionRange::new(Position::new(0, 0))))
+                Some(LiteralExpr::new(Literal::Double(value), ParsedType::Double, PositionRange::new(Position::new(0, 0))))
             },
             (TokenType::BoolLiteral, Some(TokenValue::Bool(value))) => {
                 self.advance();
-                Some(LiteralExpr::new(Value::Bool(value), ParsedType::Boolean, PositionRange::new(Position::new(0, 0))))
+                Some(LiteralExpr::new(Literal::Bool(value), ParsedType::Boolean, PositionRange::new(Position::new(0, 0))))
             },
             (TokenType::StringLiteral, Some(TokenValue::String(value))) => {
                 self.advance();
-                Some(LiteralExpr::new(Value::String(value), ParsedType::String, PositionRange::new(Position::new(0, 0))))
+                Some(LiteralExpr::new(Literal::String(value), ParsedType::String, PositionRange::new(Position::new(0, 0))))
             },
-            (TokenType::Identifier, Some(TokenValue::String(identifier))) => {
+            (TokenType::Identifier, Some(TokenValue::String(_))) => {
                 Some(Box::new(self.var()?))
             },
             (TokenType::LeftParen, None) => {

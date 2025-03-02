@@ -77,7 +77,6 @@ pub struct Token {
 #[derive(Debug, PartialEq, Clone)]
 pub enum TokenValue {
     Int(i64),
-    Float(f32),
     Double(f64),
     Bool(bool),
     String(String)
@@ -103,7 +102,7 @@ pub enum TokenType {
     If, Else, For, Return, Fn, Rand,
     This, While, Loop, Break, Print, Input,
 
-    Int, Float, Double, Bool, String, Func,
+    Int, Double, Bool, String, Func,
     Struct,
 
     IntLiteral, FloatLiteral, DoubleLiteral, BoolLiteral, StringLiteral,

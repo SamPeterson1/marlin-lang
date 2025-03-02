@@ -1,6 +1,6 @@
-use std::{any::type_name, collections::{HashMap, HashSet}, rc::Rc};
+use std::{collections::HashMap, rc::Rc};
 
-use crate::{environment::{FunctionType, ParsedType, ResolvedType, StructType, Value}, error::Diagnostic, expr::{AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, StructExpr, StructInitializerExpr, UnaryExpr, VarExpr}};
+use crate::{environment::{FunctionType, ParsedType, ResolvedType, StructType}, error::Diagnostic, expr::{AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, StructExpr, StructInitializerExpr, UnaryExpr, VarExpr}};
 
 struct VarDeclaration {
     is_defined: bool,
@@ -81,7 +81,6 @@ impl SymbolTable {
     pub fn get_resolved_type(&self, parsed_type: &ParsedType) -> ResolvedType {
         match parsed_type {
             ParsedType::Integer => ResolvedType::Integer,
-            ParsedType::Float => ResolvedType::Float,
             ParsedType::Double => ResolvedType::Double,
             ParsedType::Boolean => ResolvedType::Boolean,
             ParsedType::String => ResolvedType::String,
@@ -301,26 +300,7 @@ impl ExprVisitor<()> for VariableResolver<'_> {
         self.resolve_expr(&*expr.expr);
     }
 
-    fn visit_literal(&mut self, expr: &LiteralExpr) {
-        if let Value::Function(function) = &*expr.value.as_ref() {
-            self.push_scope();
-
-            if let ResolvedType::Function(function_type) = &self.symbol_table.get_resolved_type(&expr.parsed_type) {
-                let arg_types = &function_type.arg_types;
-
-                for (i, arg) in function.args.iter().enumerate() {                   
-                    self.declare(-(i as i32), arg, arg_types.get(i).unwrap());
-                    self.define(arg);
-                }
-    
-                self.resolve_expr(&**function.body);
-    
-                self.pop_scope();
-            }
-
-            
-        }
-    }
+    fn visit_literal(&mut self, expr: &LiteralExpr) { }
 
     fn visit_var(&mut self, expr: &VarExpr) {
         self.resolve_var(expr)

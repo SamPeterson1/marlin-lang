@@ -5,7 +5,6 @@ use std::env;
 
 use crate::compiler::Compiler;
 use crate::expr::{ExprParser, ParseResult};
-use crate::interpreter::Interpreter;
 use crate::resolver::SymbolTable;
 use crate::type_checker::TypeChecker;
 use crate::{lexer, log};
@@ -96,10 +95,4 @@ fn run(code: String) {
     let instructions = compiler.compile(&exprs);
     
     println!("Compiler result: {:?}", instructions);
-
-    let mut interpreter = Interpreter::new(symbol_table);
-
-    println!("\nRunning...");
-    interpreter.interpret(&exprs);
-
 }
