@@ -76,7 +76,7 @@ pub struct Token {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum TokenValue {
-    Int(i32),
+    Int(i64),
     Float(f32),
     Double(f64),
     Bool(bool),

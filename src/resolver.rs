@@ -1,16 +1,18 @@
 use std::{any::type_name, collections::{HashMap, HashSet}, rc::Rc};
 
-use crate::{environment::{FunctionType, ParsedType, ResolvedType, StructType, Value}, error::Diagnostic, expr::{AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, StructExpr, UnaryExpr, VarExpr}};
+use crate::{environment::{FunctionType, ParsedType, ResolvedType, StructType, Value}, error::Diagnostic, expr::{AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, StructExpr, StructInitializerExpr, UnaryExpr, VarExpr}};
 
 struct VarDeclaration {
     is_defined: bool,
     declaration_type: ResolvedType,
+    id: i32,
 }
 
 #[derive(Debug)]
 struct ResolvedVar {
     dist: usize,
-    value_type: ResolvedType
+    value_type: ResolvedType,
+    id: i32,
 }
 
 pub struct SymbolTable {
@@ -48,13 +50,15 @@ impl SymbolTable {
         self.variables.get(expr).unwrap().dist
     }
 
+    pub fn get_variable_id(&self, expr: &VarExpr) -> i32 {
+        self.variables.get(expr).unwrap().id
+    }
+
     pub fn get_variable_type(&self, expr: &VarExpr) -> &ResolvedType {
         &self.variables.get(expr).unwrap().value_type
     }
 
     pub fn insert_type(&mut self, type_name: String, resolved_type: ResolvedType) {
-        println!("Resolved type name {:?} to {:?}", type_name, resolved_type);
-
         self.types.insert(type_name, resolved_type);
     }
 
@@ -131,8 +135,6 @@ impl TypeResolver<'_> {
     }
 
     fn resolve_struct(&mut self, type_name: String) {
-        println!("resolving {:?}", type_name);
-
         let struct_expr = self.unresolved_struct_declarations.remove(&type_name).unwrap();
             
         let resolved_type = self.symbol_table.resolve_struct_expr(&struct_expr);
@@ -200,6 +202,8 @@ impl ExprVisitor<()> for TypeResolver<'_> {
             self.resolve_struct(struct_name.to_string());
         }
     }
+
+    fn visit_struct_initializer(&mut self, expr: &StructInitializerExpr) { }
 }
 
 pub struct VariableResolver<'a> {
@@ -218,6 +222,8 @@ impl VariableResolver<'_> {
     }
 
     pub fn resolve(&mut self, exprs: &[Box<dyn Expr>]) -> Vec<Diagnostic> {
+        println!("Resolving");
+
         for expr in exprs {
             self.resolve_expr(&**expr);
         }
@@ -231,9 +237,10 @@ impl VariableResolver<'_> {
 }
 
 impl VariableResolver<'_> {
-    fn declare(&mut self, name: &str, value_type: &ResolvedType) {
+    fn declare(&mut self, id: i32, name: &str, value_type: &ResolvedType) {
         let declaration = VarDeclaration {
             is_defined: false,
+            id,
             declaration_type: value_type.clone()
         };
 
@@ -263,6 +270,7 @@ impl VariableResolver<'_> {
                 if declaration.is_defined {
                     let resolved_var = ResolvedVar {
                         dist: self.num_scopes - i - 1,
+                        id: declaration.id,
                         value_type: declaration.declaration_type.clone()
                     };
                     
@@ -276,7 +284,7 @@ impl VariableResolver<'_> {
         }
 
         if !found {
-        panic!("Unknown variable name {:?}", var_expr.identifier);
+            panic!("Unknown variable name {:?}", var_expr.identifier);
         }
     }
 }
@@ -294,14 +302,14 @@ impl ExprVisitor<()> for VariableResolver<'_> {
     }
 
     fn visit_literal(&mut self, expr: &LiteralExpr) {
-        if let Value::Function(function) = &*expr.value {
+        if let Value::Function(function) = &*expr.value.as_ref() {
             self.push_scope();
 
             if let ResolvedType::Function(function_type) = &self.symbol_table.get_resolved_type(&expr.parsed_type) {
                 let arg_types = &function_type.arg_types;
 
                 for (i, arg) in function.args.iter().enumerate() {                   
-                    self.declare(arg, arg_types.get(i).unwrap());
+                    self.declare(-(i as i32), arg, arg_types.get(i).unwrap());
                     self.define(arg);
                 }
     
@@ -319,12 +327,8 @@ impl ExprVisitor<()> for VariableResolver<'_> {
     }
 
     fn visit_if(&mut self, expr: &IfExpr) {
-        println!("Depth before if: {:?}", self.num_scopes);
         self.resolve_expr(&*expr.condition);
-        println!("Depth after condition: {:?}", self.num_scopes);
         self.resolve_expr(&*expr.success);
-
-        println!("Depth after if: {:?}", self.num_scopes);
 
         if let Some(fail) = &expr.fail {
             self.resolve_expr(&**fail);
@@ -337,7 +341,7 @@ impl ExprVisitor<()> for VariableResolver<'_> {
     }
 
     fn visit_declaration(&mut self, expr: &DeclarationExpr) {
-        self.declare(&expr.identifier, &self.symbol_table.get_resolved_type(&expr.declaration_type));
+        self.declare(expr.id, &expr.identifier, &self.symbol_table.get_resolved_type(&expr.declaration_type));
 
         //Allow recursive funtions
         if let ParsedType::Function(_) = &expr.declaration_type {
@@ -401,7 +405,11 @@ impl ExprVisitor<()> for VariableResolver<'_> {
         }
     }
 
-    fn visit_struct(&mut self, expr: &StructExpr) {
+    fn visit_struct(&mut self, _expr: &StructExpr) { }
 
+    fn visit_struct_initializer(&mut self, expr: &StructInitializerExpr) {
+        for (_, value) in expr.member_inits.iter() {
+            value.accept_visitor(self);
+        }
     }
 }

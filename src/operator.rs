@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{environment::{ResolvedType, Value}, error::{Diagnostic, DiagnosticType}, token::{Position, PositionRange, Token, TokenType}};
+use crate::{environment::{ResolvedType, Value, ValueRef}, error::{Diagnostic, DiagnosticType}, instruction::InstructionBuilder, token::{Position, PositionRange, Token, TokenType}};
 
 pub fn as_binary_operator(token: &Token) -> Box<dyn BinaryOperator> {
     match token.token_type {
@@ -31,7 +31,8 @@ pub fn as_unary_operator(token: &Token) -> Box<dyn UnaryOperator> {
 
 pub trait UnaryOperator : std::fmt::Debug {
     fn interpret_type(&self, value_type: ResolvedType) -> Result<ResolvedType, Diagnostic>;
-    fn interpret(&self, value: Rc<Value>) -> Rc<Value>;
+    fn interpret(&self, value: ValueRef) -> ValueRef;
+    fn compile(&self, dr: u8, sr1: u8, operation_type: ResolvedType) -> Vec<u64>;
 }
 
 #[derive(Debug)]
@@ -47,8 +48,19 @@ impl UnaryOperator for Not {
         }
     }
 
-    fn interpret(&self, value: Rc<Value>) -> Rc<Value> {
-        Rc::new(Value::Bool(!value.as_bool()))
+    fn interpret(&self, value: ValueRef) -> ValueRef {
+        ValueRef::new(Value::Bool(!value.as_ref().as_bool()))
+    }
+
+    fn compile(&self, dr: u8, sr1: u8, operation_type: ResolvedType) -> Vec<u64> {
+        let mut instructions = Vec::new();
+        
+        instructions.push(match operation_type {
+            ResolvedType::Boolean => InstructionBuilder::notb(dr, sr1),
+            _ => panic!("Unsupported type for operator '!'")
+        });
+
+        instructions
     }
 }
 
@@ -65,16 +77,29 @@ impl UnaryOperator for Negative {
         }
     }
 
-    fn interpret(&self, value: Rc<Value>) -> Rc<Value> {
-        let result = match *value {
+    fn interpret(&self, value: ValueRef) -> ValueRef {
+        let result = match *value.as_ref() {
             Value::Int(x) => Value::Int(-x),
             Value::Float(x) => Value::Float(-x),
             Value::Double(x) => Value::Double(-x),
             _ => unreachable!()
         };
 
-        Rc::new(result)
+        ValueRef::new(result)
     }
+
+    fn compile(&self, dr: u8, sr1: u8, operation_type: ResolvedType) -> Vec<u64> {
+        let mut instructions = Vec::new();
+        
+        instructions.push(match operation_type {
+            ResolvedType::Integer => InstructionBuilder::negi(dr, sr1),
+            ResolvedType::Double => InstructionBuilder::negd(dr, sr1),
+            _ => panic!("Unsupported type for operator '-'")
+        });
+
+        instructions
+    }
+
 }
 
 #[derive(Debug)]
@@ -86,18 +111,23 @@ impl UnaryOperator for Semicolon {
         Ok(ResolvedType::Empty)
     }
 
-    fn interpret(&self, _value: Rc<Value>) -> Rc<Value> {
-        Rc::new(Value::Empty)
+    fn interpret(&self, _value: ValueRef) -> ValueRef {
+        ValueRef::new(Value::Empty)
+    }
+
+    fn compile(&self, dr: u8, sr1: u8, operation_type: ResolvedType) -> Vec<u64> {
+        Vec::new()
     }
 }
 
 pub trait BinaryOperator : std::fmt::Debug {
     fn interpret_type(&self, left: ResolvedType, right: ResolvedType) -> Result<ResolvedType, Diagnostic>;
-    fn interpret(&self, left: Rc<Value>, right: Rc<Value>) -> Rc<Value>;
+    fn interpret(&self, left: ValueRef, right: ValueRef) -> ValueRef;
+    fn compile(&self, dr: u8, sr1: u8, sr2: u8, operation_type: ResolvedType) -> Vec<u64>;
 }
 
 macro_rules! arithmetic_binary_operator {
-    ($Name:ident, $Operator:tt, $OperatorName:expr) => {
+    ($Name:ident, $Operator:tt, $OperatorName:expr, $Compile:item) => {
         #[derive(Debug)]
         struct $Name;
 
@@ -111,22 +141,24 @@ macro_rules! arithmetic_binary_operator {
                 }
             }
 
-            fn interpret(&self, left: Rc<Value>, right: Rc<Value>) -> Rc<Value> {
-                let result = match *left {
-                    Value::Int(x) => Value::Int(x $Operator right.as_int()),
-                    Value::Float(x) => Value::Float(x $Operator right.as_float()),
-                    Value::Double(x) => Value::Double(x $Operator right.as_double()),
+            fn interpret(&self, left: ValueRef, right: ValueRef) -> ValueRef {
+                let result = match *left.as_ref() {
+                    Value::Int(x) => Value::Int(x $Operator right.as_ref().as_int()),
+                    Value::Float(x) => Value::Float(x $Operator right.as_ref().as_float()),
+                    Value::Double(x) => Value::Double(x $Operator right.as_ref().as_double()),
                     _ => unreachable!()
                 };
 
-                Rc::new(result)
+                ValueRef::new(result)
             }
+
+            $Compile
         }
     };
 }
 
 macro_rules! comparative_binary_operator {
-    ($Name:ident, $Operator:tt, $OperatorName:expr) => {
+    ($Name:ident, $Operator:tt, $OperatorName:expr, $Compile:item) => {
         #[derive(Debug)]
         struct $Name;
 
@@ -140,22 +172,24 @@ macro_rules! comparative_binary_operator {
                 }
             }
 
-            fn interpret(&self, left: Rc<Value>, right: Rc<Value>) -> Rc<Value> {
-                let result = match *left {
-                    Value::Int(x) => Value::Bool(x $Operator right.as_int()),
-                    Value::Float(x) => Value::Bool(x $Operator right.as_float()),
-                    Value::Double(x) => Value::Bool(x $Operator right.as_double()),
+            fn interpret(&self, left: ValueRef, right: ValueRef) -> ValueRef {
+                let result = match *left.as_ref() {
+                    Value::Int(x) => Value::Bool(x $Operator right.as_ref().as_int()),
+                    Value::Float(x) => Value::Bool(x $Operator right.as_ref().as_float()),
+                    Value::Double(x) => Value::Bool(x $Operator right.as_ref().as_double()),
                     _ => unreachable!()
                 };
 
-                Rc::new(result)
+                ValueRef::new(result)
             }
+
+            $Compile
         }
     };
 }
 
 macro_rules! boolean_binary_operator {
-    ($Name:ident, $Operator:tt, $OperatorName:expr) => {
+    ($Name:ident, $Operator:tt, $OperatorName:expr, $Compile:item) => {
         #[derive(Debug)]
         struct $Name;
 
@@ -169,27 +203,158 @@ macro_rules! boolean_binary_operator {
                 }
             }
 
-            fn interpret(&self, left: Rc<Value>, right: Rc<Value>) -> Rc<Value> {
-                let result = match *left {
-                    Value::Bool(x) => Value::Bool(x $Operator right.as_bool()),
+            fn interpret(&self, left: ValueRef, right: ValueRef) -> ValueRef {
+                let result = match *left.as_ref() {
+                    Value::Bool(x) => Value::Bool(x $Operator right.as_ref().as_bool()),
                     _ => unreachable!()
                 };
 
-                Rc::new(result)
+                ValueRef::new(result)
             }
+
+            $Compile
         }
     };
 }
 
-arithmetic_binary_operator!(Plus, +, "+");
-arithmetic_binary_operator!(Minus, -, "-");
-arithmetic_binary_operator!(Times, *, "*");
-arithmetic_binary_operator!(Divide, /, "/");
-comparative_binary_operator!(Greater, >, ">");
-comparative_binary_operator!(GreaterEqual, >=, ">=");
-comparative_binary_operator!(Less, <, "<");
-comparative_binary_operator!(LessEqual, <=, "<=");
-comparative_binary_operator!(Equal, ==, "==");
-comparative_binary_operator!(NotEqual, !=, "!=");
-boolean_binary_operator!(And, &&, "&&");
-boolean_binary_operator!(Or, ||, "||");
+arithmetic_binary_operator!(Plus, +, "+", fn compile(&self, dr: u8, sr1: u8, sr2: u8, operation_type: ResolvedType) -> Vec<u64> {
+    let mut instructions = Vec::new();
+
+    instructions.push(match operation_type {
+        ResolvedType::Integer => InstructionBuilder::addi(dr, sr1, sr2),
+        ResolvedType::Double => InstructionBuilder::addd(dr, sr1, sr2),
+        _ => panic!("Unsupported type for operator '+'")
+    });
+
+    instructions
+});
+
+arithmetic_binary_operator!(Minus, -, "-", fn compile(&self, dr: u8, sr1: u8, sr2: u8, operation_type: ResolvedType) -> Vec<u64> {
+    let mut instructions = Vec::new();
+
+    instructions.push(match operation_type {
+        ResolvedType::Integer => InstructionBuilder::subi(dr, sr1, sr2),
+        ResolvedType::Double => InstructionBuilder::subd(dr, sr1, sr2),
+        _ => panic!("Unsupported type for operator '-'")
+    });
+
+    instructions
+});
+
+arithmetic_binary_operator!(Times, *, "*", fn compile(&self, dr: u8, sr1: u8, sr2: u8, operation_type: ResolvedType) -> Vec<u64> {
+    let mut instructions = Vec::new();
+
+    instructions.push(match operation_type {
+        ResolvedType::Integer => InstructionBuilder::multi(dr, sr1, sr2),
+        ResolvedType::Double => InstructionBuilder::multd(dr, sr1, sr2),
+        _ => panic!("Unsupported type for operator '*'")
+    });
+
+    instructions
+});
+
+arithmetic_binary_operator!(Divide, /, "/",  fn compile(&self, dr: u8, sr1: u8, sr2: u8, operation_type: ResolvedType) -> Vec<u64> {
+    let mut instructions = Vec::new();
+
+    instructions.push(match operation_type {
+        ResolvedType::Integer => InstructionBuilder::divi(dr, sr1, sr2),
+        ResolvedType::Double => InstructionBuilder::divd(dr, sr1, sr2),
+        _ => panic!("Unsupported type for operator '/'")
+    });
+
+    instructions
+});
+
+comparative_binary_operator!(Greater, >, ">",  fn compile(&self, dr: u8, sr1: u8, sr2: u8, operation_type: ResolvedType) -> Vec<u64> {
+    let mut instructions = Vec::new();
+
+    instructions.push(match operation_type {
+        ResolvedType::Integer => InstructionBuilder::cmpi(dr, false, false, true, sr1, sr2),
+        ResolvedType::Double => InstructionBuilder::cmpd(dr, false, false, true, sr1, sr2),
+        _ => panic!("Unsupported type for operator '+'")
+    });
+
+    instructions
+});
+
+comparative_binary_operator!(GreaterEqual, >=, ">=",  fn compile(&self, dr: u8, sr1: u8, sr2: u8, operation_type: ResolvedType) -> Vec<u64> {
+    let mut instructions = Vec::new();
+
+    instructions.push(match operation_type {
+        ResolvedType::Integer => InstructionBuilder::cmpi(dr, false, true, true, sr1, sr2),
+        ResolvedType::Double => InstructionBuilder::cmpd(dr, false, true, true, sr1, sr2),
+        _ => panic!("Unsupported type for operator '+'")
+    });
+
+    instructions
+});
+
+comparative_binary_operator!(Less, <, "<",  fn compile(&self, dr: u8, sr1: u8, sr2: u8, operation_type: ResolvedType) -> Vec<u64> {
+    let mut instructions = Vec::new();
+
+    instructions.push(match operation_type {
+        ResolvedType::Integer => InstructionBuilder::cmpi(dr, true, false, false, sr1, sr2),
+        ResolvedType::Double => InstructionBuilder::cmpd(dr, true, false, false, sr1, sr2),
+        _ => panic!("Unsupported type for operator '+'")
+    });
+
+    instructions
+});
+
+comparative_binary_operator!(LessEqual, <=, "<=",  fn compile(&self, dr: u8, sr1: u8, sr2: u8, operation_type: ResolvedType) -> Vec<u64> {
+    let mut instructions = Vec::new();
+
+    instructions.push(match operation_type {
+        ResolvedType::Integer => InstructionBuilder::cmpi(dr, true, true, false, sr1, sr2),
+        ResolvedType::Double => InstructionBuilder::cmpd(dr, true, true, false, sr1, sr2),
+        _ => panic!("Unsupported type for operator '+'")
+    });
+
+    instructions
+});
+
+comparative_binary_operator!(Equal, ==, "==",  fn compile(&self, dr: u8, sr1: u8, sr2: u8, operation_type: ResolvedType) -> Vec<u64> {
+    let mut instructions = Vec::new();
+
+    instructions.push(match operation_type {
+        ResolvedType::Integer => InstructionBuilder::cmpi(dr, false, true, false, sr1, sr2),
+        ResolvedType::Double => InstructionBuilder::cmpd(dr, false, true, false, sr1, sr2),
+        _ => panic!("Unsupported type for operator '+'")
+    });
+
+    instructions
+});
+
+comparative_binary_operator!(NotEqual, !=, "!=",  fn compile(&self, dr: u8, sr1: u8, sr2: u8, operation_type: ResolvedType) -> Vec<u64> {
+    let mut instructions = Vec::new();
+
+    instructions.push(match operation_type {
+        ResolvedType::Integer => InstructionBuilder::cmpi(dr, true, false, true, sr1, sr2),
+        ResolvedType::Double => InstructionBuilder::cmpd(dr, true, false, true, sr1, sr2),
+        _ => panic!("Unsupported type for operator '+'")
+    });
+
+    instructions
+});
+
+boolean_binary_operator!(And, &&, "&&",  fn compile(&self, dr: u8, sr1: u8, sr2: u8, operation_type: ResolvedType) -> Vec<u64> {
+    let mut instructions = Vec::new();
+
+    instructions.push(match operation_type {
+        ResolvedType::Boolean => InstructionBuilder::and(dr, sr1, sr2),
+        _ => panic!("Unsupported type for operator '&&'")
+    });
+
+    instructions
+});
+
+boolean_binary_operator!(Or, ||, "||",  fn compile(&self, dr: u8, sr1: u8, sr2: u8, operation_type: ResolvedType) -> Vec<u64> {
+    let mut instructions = Vec::new();
+
+    instructions.push(match operation_type {
+        ResolvedType::Boolean => InstructionBuilder::and(dr, sr1, sr2),
+        _ => panic!("Unsupported type for operator '||'")
+    });
+
+    instructions
+});

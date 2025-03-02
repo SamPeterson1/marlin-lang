@@ -1,0 +1,8 @@
+let int foo = 12492190;
+let int bar = 7179;
+let int baz = 1008;
+
+let int meow = (foo + bar) / baz * 10 - 56; //meow = 123944
+bar = meow - foo; //bar = -12368246 
+bar = bar + 1; //bar = -12368245
+bar //R0 should be -12368245

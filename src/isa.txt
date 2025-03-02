@@ -1,0 +1,29 @@
+addi, addf, addd
+subi, subf, subd
+multi, multf, multd
+divi, divf, divd
+
+and, or, xor, not, 
+lshift, rshift, rshiftu
+
+cmpi, cmpf, cmpd
+
+jmpn <pc offset>
+jmpz <pc offset>
+jmpp <pc offset>
+jmpnz <pc offset>
+jmpzp <pc offset>
+jmpnp <pc offset>
+jmpnzp <pc offset>
+
+ld <DR> <pc offset>
+ldr <DR> <SR1> <SR2>
+
+st <DR> <pc offset>
+str <DR> <SR1> <SR2>
+
+push <SR>
+pop <DR>
+
+call <SR>
+ret

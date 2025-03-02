@@ -1,12 +1,12 @@
 use std::{collections::HashMap, hash::Hasher, rc::Rc};
 
-use crate::{environment::{ParsedType, ResolvedType, Value}, operator::{self, BinaryOperator, UnaryOperator}, token::{Position, PositionRange, Token}};
+use crate::{environment::{ParsedType, ResolvedType, Value, ValueRef}, operator::{self, BinaryOperator, UnaryOperator}, token::{Position, PositionRange, Token}};
 
 pub trait ExprVisitable<T> {
     fn accept_visitor(&self, visitor: &mut dyn ExprVisitor<T>) -> T;
 }
 
-pub trait Expr: ExprVisitable<Rc<Value>> + ExprVisitable<ResolvedType> + ExprVisitable<()> + std::fmt::Debug {
+pub trait Expr: ExprVisitable<ValueRef> + ExprVisitable<ResolvedType> + ExprVisitable<()> + std::fmt::Debug {
     fn get_position(&self) -> &PositionRange;
 }
 
@@ -27,6 +27,7 @@ pub trait ExprVisitor<T> {
     fn visit_input(&mut self, expr: &InputExpr) -> T;
     fn visit_call(&mut self, expr: &CallExpr) -> T;
     fn visit_struct(&mut self, expr: &StructExpr) -> T;
+    fn visit_struct_initializer(&mut self, expr: &StructInitializerExpr) -> T;
 }
 
 macro_rules! impl_expr {
@@ -108,7 +109,7 @@ impl_expr!(UnaryExpr, visit_unary);
 
 #[derive(Debug)]
 pub struct LiteralExpr {
-    pub value: Rc<Value>,
+    pub value: ValueRef,
     pub parsed_type: ParsedType,
     pub position: PositionRange,
 }
@@ -116,7 +117,7 @@ pub struct LiteralExpr {
 impl LiteralExpr {
     pub fn new(value: Value, parsed_type: ParsedType, position: PositionRange) -> Box<dyn Expr> {
         Box::new(LiteralExpr {
-            value: Rc::new(value),
+            value: ValueRef::new(value),
             parsed_type,
             position
         })
@@ -129,6 +130,7 @@ impl_expr!(LiteralExpr, visit_literal);
 pub struct VarExpr {
     pub id: i32,
     pub identifier: Rc<String>,
+    pub member_accesses: Rc<Vec<String>>,
     pub position: PositionRange
 }
 
@@ -147,18 +149,21 @@ impl std::hash::Hash for VarExpr {
 }
 
 impl VarExpr {
-    pub fn new_unboxed(id: i32, identifier: String) -> VarExpr {
+    pub fn new_unboxed(id: i32, identifier: String, member_accesses: Vec<String>) -> VarExpr {
         VarExpr {
             id,
             identifier: Rc::new(identifier),
+            member_accesses: Rc::new(member_accesses),
             position: PositionRange::new(Position::new(0, 0))
         }
     }
 
-    pub fn new(id: i32, identifier: String, position: PositionRange) -> Box<dyn Expr> {
+    #[allow(dead_code)]
+    pub fn new(id: i32, identifier: String, member_accesses: Vec<String>, position: PositionRange) -> Box<dyn Expr> {
         Box::new(VarExpr {
             id,
             identifier: Rc::new(identifier),
+            member_accesses: Rc::new(member_accesses),
             position
         })
     }
@@ -167,6 +172,7 @@ impl VarExpr {
         VarExpr {
             id: var_expr.id,
             identifier: Rc::clone(&var_expr.identifier),
+            member_accesses: Rc::clone(&var_expr.member_accesses),
             position: var_expr.position
         }
     }
@@ -203,15 +209,32 @@ impl_expr!(IfExpr, visit_if);
 
 #[derive(Debug)]
 pub struct DeclarationExpr {
+    pub id: i32,
     pub identifier: String,
     pub declaration_type: ParsedType,
     pub expr: Box<dyn Expr>,
     pub position: PositionRange
 }
 
+impl Eq for DeclarationExpr {}
+
+impl PartialEq for DeclarationExpr {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl std::hash::Hash for DeclarationExpr {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+    }
+}
+
+
 impl DeclarationExpr {
-    pub fn new(identifier: String, declaration_type: ParsedType, expr: Box<dyn Expr>) -> Box<dyn Expr> {
+    pub fn new(id: i32, identifier: String, declaration_type: ParsedType, expr: Box<dyn Expr>) -> Box<dyn Expr> {
         Box::new(DeclarationExpr {
+            id,
             identifier,
             declaration_type,
             expr,
@@ -231,11 +254,11 @@ pub struct AssignmentExpr {
 
 //Consider splitting assignment and declaration expressions
 impl AssignmentExpr {
-    pub fn new(asignee: Rc<VarExpr>, expr: Box<dyn Expr>) -> Box<dyn Expr> {
+    pub fn new(asignee: VarExpr, expr: Box<dyn Expr>) -> Box<dyn Expr> {
         let position = PositionRange::concat(asignee.get_position(), expr.get_position());
 
         Box::new(AssignmentExpr {
-            asignee,
+            asignee: Rc::new(asignee),
             expr,
             position
         })
@@ -427,3 +450,22 @@ impl StructExpr {
 }
 
 impl_expr!(StructExpr, visit_struct);
+
+#[derive(Debug, Clone)]
+pub struct StructInitializerExpr {
+    pub type_name: Rc<String>,
+    pub member_inits: Rc<HashMap<String, Box<dyn Expr>>>,
+    pub position: PositionRange
+}
+
+impl StructInitializerExpr {
+    pub fn new(type_name: String, member_inits: HashMap<String, Box<dyn Expr>>, position: PositionRange) -> Box<dyn Expr> {
+        Box::new(StructInitializerExpr {
+            type_name: Rc::new(type_name),
+            member_inits: Rc::new(member_inits),
+            position
+        })
+    }
+}
+
+impl_expr!(StructInitializerExpr, visit_struct_initializer);

@@ -3,6 +3,7 @@ use std::io::prelude::*;
 use std::path::Path;
 use std::env;
 
+use crate::compiler::Compiler;
 use crate::expr::{ExprParser, ParseResult};
 use crate::interpreter::Interpreter;
 use crate::resolver::SymbolTable;
@@ -67,7 +68,10 @@ fn run(code: String) {
 
     let ParseResult { exprs, diagnostics: parse_diagnostics } = parser.parse();
         
-    println!("Parsed: {:?}", exprs);
+    for expr in &exprs {
+        println!("{:?}", expr);
+        println!("");
+    }
 
     let mut symbol_table = SymbolTable::new();
     let resolve_errors = symbol_table.resolve(&exprs);
@@ -88,8 +92,14 @@ fn run(code: String) {
         }
     }
 
+    let mut compiler = Compiler::new(&symbol_table);
+    let instructions = compiler.compile(&exprs);
+    
+    println!("Compiler result: {:?}", instructions);
+
     let mut interpreter = Interpreter::new(symbol_table);
 
     println!("\nRunning...");
     interpreter.interpret(&exprs);
+
 }

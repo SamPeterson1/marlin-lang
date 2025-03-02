@@ -7,6 +7,9 @@ mod log;
 mod lexer;
 mod token;
 mod expr;
+mod instruction;
+mod compiler;
+mod opcodes;
 
 mod environment;
 

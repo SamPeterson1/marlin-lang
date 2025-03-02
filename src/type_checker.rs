@@ -1,4 +1,6 @@
-use crate::{environment::{ResolvedType, Value}, error::Diagnostic, expr::{AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, UnaryExpr, VarExpr}, resolver::SymbolTable};
+use std::{collections::HashMap, rc::Rc};
+
+use crate::{environment::{ResolvedType, StructType, Value}, error::Diagnostic, expr::{AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, StructExpr, StructInitializerExpr, UnaryExpr, VarExpr}, resolver::SymbolTable};
 
 pub struct TypeChecker<'a> {
     symbol_table: &'a SymbolTable,
@@ -47,7 +49,7 @@ impl ExprVisitor<ResolvedType> for TypeChecker<'_> {
     }
 
     fn visit_literal(&mut self, expr: &LiteralExpr) -> ResolvedType {
-        if let Value::Function(function) = &*expr.value {
+        if let Value::Function(function) = &*expr.value.as_ref() {
             function.body.accept_visitor(self);
         }
 
@@ -81,11 +83,23 @@ impl ExprVisitor<ResolvedType> for TypeChecker<'_> {
     }
 
     fn visit_assignment(&mut self, expr: &AssignmentExpr) -> ResolvedType {
-        let var_type = self.symbol_table.get_variable_type(&expr.asignee);
+        let mut var_type = self.symbol_table.get_variable_type(&expr.asignee);
+        
+        for member_access in expr.asignee.member_accesses.iter() {
+            let member_type;
+
+            if let ResolvedType::Struct(struct_type) = var_type {
+                member_type = struct_type.member_types.get(member_access);
+            } else {
+                panic!("Cannot access member of non-struct type");
+            }
+
+            var_type = member_type.unwrap();
+        }
 
         let value_type = expr.expr.accept_visitor(self);
 
-        println!("assigning {:?} to {:?}", var_type, value_type);
+        //println!("assigning {:?} to {:?}", var_type, value_type);
 
         if *var_type != value_type {
             panic!("Mismatched types {:?}, {:?} for assignment", var_type, value_type);
@@ -200,7 +214,19 @@ impl ExprVisitor<ResolvedType> for TypeChecker<'_> {
         }
     }
 
-    fn visit_struct(&mut self, expr: &crate::expr::StructExpr) -> ResolvedType {
+    fn visit_struct(&mut self, expr: &StructExpr) -> ResolvedType {
         ResolvedType::Empty
+    }
+
+    fn visit_struct_initializer(&mut self, expr: &StructInitializerExpr) -> ResolvedType {
+        let mut member_types = HashMap::new();
+
+        for entry in expr.member_inits.iter() {
+            member_types.insert(entry.0.clone(), entry.1.accept_visitor(self));
+        }
+
+        ResolvedType::Struct(StructType {
+            member_types: Rc::new(member_types)
+        })
     }
 }

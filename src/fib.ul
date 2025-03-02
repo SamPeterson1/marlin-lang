@@ -1,12 +1,12 @@
 let double a = 0d;
 let double b = 1d;
 
-for (let int i = 0; i < 1000; i = i + 1) {
-    print a;
-
+for (let int i = 0; i < 200; i = i + 1) {
     let double c = a + b;
     a = b;
     b = c;
+
+    print c;
 }
 
 let func (int) -> double fib = fn (int a) -> double {

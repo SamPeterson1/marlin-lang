@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 
-use crate::{environment::{EnvRef, Function, FunctionType, ParsedFunctionType, ParsedType, TypedValue, Value}, error::{Diagnostic, DiagnosticType}, token::{Position, PositionRange, Token, TokenType, TokenValue}};
+use crate::{environment::{EnvRef, Function, ParsedFunctionType, ParsedType, Value}, error::{Diagnostic, DiagnosticType}, token::{Position, PositionRange, Token, TokenType, TokenValue}};
 pub use self::expr::*;
 
 pub mod expr;
@@ -10,6 +10,7 @@ pub struct ExprParser<'a> {
     tokens: &'a[Token],
     diagnostics: Vec<Diagnostic>,
     var_expr_id_counter: i32,
+    declaration_expr_id_counter: i32,
 }
 
 pub struct ParseResult {
@@ -19,7 +20,7 @@ pub struct ParseResult {
 
 impl<'a> ExprParser<'a> {
     pub fn new(tokens: &[Token]) -> ExprParser {
-        ExprParser {ptr: 0, tokens, diagnostics: Vec::new(), var_expr_id_counter: 0}
+        ExprParser {ptr: 0, tokens, diagnostics: Vec::new(), var_expr_id_counter: 0, declaration_expr_id_counter: 0}
     }
 
     fn err_expected_identifier(&self) -> Diagnostic {
@@ -146,21 +147,16 @@ impl<'a> ExprParser<'a> {
         }
     }
 
-    fn try_assignment(&mut self) -> Option<Rc<VarExpr>> {
-        let cur = self.cur()?;
+    fn try_assignment(&mut self) -> Option<VarExpr> {
+        let ptr = self.ptr;
+        let var_expr = self.var();
 
-        if let (TokenType::Identifier, Some(TokenValue::String(identifier))) = (cur.token_type, cur.value) {
-            if let TokenType::Assignment = self.peek()?.token_type {
-                self.ptr += 2;
-                
-                self.var_expr_id_counter += 1;
-                let asignee = VarExpr::new_unboxed(self.var_expr_id_counter, identifier);
-
-                return Some(Rc::new(asignee))
-            }
+        if var_expr.is_none() || !self.consume(TokenType::Assignment, None) {
+            self.ptr = ptr;
+            return None;
         }
 
-        None
+        var_expr
     }
 
     #[allow(dead_code)]
@@ -194,7 +190,6 @@ impl<'a> ExprParser<'a> {
                     let mut arg_types = Vec::new();
 
                     while let Some(arg_type) = self.try_type() {
-                        println!("pushed arg {:?}, cur: {:?}", &arg_type, self.cur()?.token_type);
 
                         arg_types.push(arg_type);
                         if !self.try_match(&[TokenType::Comma]) {
@@ -251,14 +246,12 @@ impl<'a> ExprParser<'a> {
     }
 
     fn struct_declaration(&mut self) -> Option<Box<dyn Expr>> {
-        println!("Struct decalaration");
         self.advance();
 
         let mut cur = self.cur()?;
         let mut struct_name = None;
 
         if let (TokenType::Identifier, Some(TokenValue::String(name))) = (cur.token_type, cur.value) {
-            println!("Parsed struct name {}", name);
             struct_name = Some(name);
             self.advance();
         }
@@ -281,8 +274,6 @@ impl<'a> ExprParser<'a> {
                 member_name = Some(name);
                 self.advance();
             }
-
-            println!("Parsed memeber {:?} {:?}", member_type, member_name);
 
             members.insert(member_name?, member_type);
 
@@ -383,7 +374,6 @@ impl<'a> ExprParser<'a> {
         let expr = self.expr()?;
 
         self.consume(TokenType::Semicolon, Some(self.err_expected_semicolon()));
-        println!("done parsing break; cur: {:?}", self.cur()?.token_type);
         Some(BreakExpr::new(expr))
     }
 
@@ -408,6 +398,7 @@ impl<'a> ExprParser<'a> {
 
     //for (expr; expr; expr) block
     fn for_loop(&mut self) -> Option<Box<dyn Expr>> {
+        println!("PARSING FOR");
         self.advance();
 
         let has_parenthesis = self.consume(TokenType::LeftParen, Some(self.err_expected_parenthesis_after_for()));
@@ -429,17 +420,33 @@ impl<'a> ExprParser<'a> {
 
         self.consume(TokenType::RightParen, err);
 
+        println!("Parsing body: {:?}", self.cur());
+
         let body = self.block();
 
-        Some(LoopExpr::new_for(initial?, condition?, increment?, body?, PositionRange::new(Position::new(0, 0))))
+        println!("Initial {:?}", initial);
+        println!("Condition {:?}", condition);
+        println!("Increment {:?}", increment);
+        println!("Body {:?}", body);
+        
+        let result = Some(LoopExpr::new_for(initial?, condition?, increment?, body?, PositionRange::new(Position::new(0, 0))));
+        
+        result
     }
 
     //if assignment block else if_block
     fn if_block(&mut self) -> Option<Box<dyn Expr>> {
+        println!("Parsing if");
         self.advance();
         
         let condition = self.assignment()?;
+
+        println!("If Condition: {:?}", condition);
+        println!("If Next token: {:?}", self.cur());
+
         let success = self.block()?;
+
+        println!("If Success: {:?}",success);
 
         let fail = if self.try_match(&[TokenType::Else]) {
             Some(match self.cur()?.token_type {
@@ -450,22 +457,23 @@ impl<'a> ExprParser<'a> {
             None
         };
 
+        println!("Whee");
+
         Some(IfExpr::new(condition, success, fail))
     }
 
     //{ statement* } | declaration
     fn block(&mut self) -> Option<Box<dyn Expr>> {
         if self.try_match(&[TokenType::LeftCurly]) {
-            println!("parsing block");
             let mut exprs: Vec<Box<dyn Expr>> = Vec::new();
 
             while self.cur()?.token_type != TokenType::RightCurly {
-                println!("cur: {:?}", self.cur()?.token_type);
                 exprs.push(self.statement()?);
+                println!("Parsed block statement {:?}", exprs.get(exprs.len()-1));
+                println!("Next token: {:?}", self.cur());
             }
 
             self.advance();
-            println!("done parsing block");
             Some(BlockExpr::new(exprs))
         } else {
             self.declaration()
@@ -492,20 +500,90 @@ impl<'a> ExprParser<'a> {
             
             self.consume(TokenType::Assignment, Some(self.err_expected_equals()));
 
-            Some(DeclarationExpr::new(identifier?, declaration_type?, self.expr()?))
+            let expr = self.expr()?;
+            self.declaration_expr_id_counter += 1;
+            Some(DeclarationExpr::new(self.declaration_expr_id_counter, identifier?, declaration_type?, expr))
         } else {
             self.assignment()
         }
     }
 
     //(IDENTIFIER =)* expr
-    fn assignment(&mut self) -> Option<Box<dyn Expr>> {        
+    fn assignment(&mut self) -> Option<Box<dyn Expr>> {  
+        println!("Trying assignment {:?}", self.cur());      
         match self.try_assignment() {
             Some(asignee) => {
                 Some(AssignmentExpr::new(asignee, self.expr()?))
             },
-            None => self.equality()
+            None => self.struct_initializer()
         }
+    }
+
+    //identifier.field.field ...
+    fn var(&mut self) -> Option<VarExpr> {
+        let identifier;
+        let mut cur = self.cur()?;
+
+        if let (TokenType::Identifier, Some(TokenValue::String(value))) = (cur.token_type, cur.value) {
+            identifier = Some(value);
+            self.advance();
+        } else {
+            return None;
+        }
+
+        let mut member_accesses = Vec::new();
+
+        while self.consume(TokenType::Dot, None) {
+            cur = self.cur()?;
+
+            if let (TokenType::Identifier, Some(TokenValue::String(value))) = (cur.token_type, cur.value) {
+                member_accesses.push(value);
+            } else {
+                //TODO: throw error
+                return None;
+            }
+
+            self.advance();
+        }
+
+        self.var_expr_id_counter += 1;
+
+        Some(VarExpr::new_unboxed(self.var_expr_id_counter, identifier?, member_accesses))
+    }
+
+    fn struct_initializer(&mut self) -> Option<Box<dyn Expr>> {
+        let cur = self.cur()?;
+
+        if let (TokenType::Identifier, Some(TokenValue::String(type_name))) = (cur.token_type, cur.value) {
+            if let Some(TokenType::LeftCurly) = self.peek().map(|token| token.token_type) {
+                self.advance();
+                self.advance();
+
+                let mut member_inits = HashMap::new();
+
+                while !self.consume(TokenType::RightCurly, None) {
+                    let cur = self.cur()?;
+                    let mut member_name = None;
+                    
+                    if let (TokenType::Identifier, Some(TokenValue::String(value))) = (cur.token_type, cur.value) {
+                        member_name = Some(value);
+                        self.advance();
+                    }
+
+                    self.consume(TokenType::Colon, None);
+
+                    let expr = self.expr()?;
+
+                    self.consume(TokenType::Comma, None);
+
+                    member_inits.insert(member_name?, expr);
+                }
+
+                return Some(StructInitializerExpr::new(type_name, member_inits, PositionRange::new(Position::new(0, 0))))
+            }
+        }
+
+        self.equality()
     }
 
     //comparison (( "!=" | "==") comparison)*
@@ -571,7 +649,7 @@ impl<'a> ExprParser<'a> {
     //(("!" | "-") unary) | call
     fn unary(&mut self) -> Option<Box<dyn Expr>> {
         let matches = [TokenType::Not, TokenType::Minus];
-        
+
         if self.try_match(&matches) {
             let operator = self.prev()?;
             Some(UnaryExpr::new(self.unary()?, &operator))
@@ -582,24 +660,19 @@ impl<'a> ExprParser<'a> {
 
     //identifier(args)* | primary
     fn call(&mut self) -> Option<Box<dyn Expr>> {
-        let identifier_token = self.cur()?;
-
-        if let (TokenType::Identifier, Some(TokenValue::String(identifier))) = (identifier_token.token_type, identifier_token.value) {
-            if self.peek().unwrap().token_type == TokenType::LeftParen {
-                println!("parsing fn {:?}", self.cur());
-                self.advance(); self.advance();
-                let mut args = Vec::new();
+        if let Some(var_expr) = self.var() {
+            if self.consume(TokenType::LeftParen, None) {
+                let mut args: Vec<Box<dyn Expr>> = Vec::new();
 
                 while !self.try_match(&[TokenType::RightParen]) {
                     args.push(self.equality()?);
                     self.consume(TokenType::Comma, None);
                 }
-                println!("parsed ars {:?}", self.cur());
 
                 self.var_expr_id_counter += 1;
-                Some(CallExpr::new(VarExpr::new(self.var_expr_id_counter, identifier, PositionRange::new(Position::new(0, 0))), args))
+                Some(CallExpr::new(Box::new(var_expr), args))
             } else {
-                self.primary()
+                Some(Box::new(var_expr))
             }
         } else {
             self.primary()
@@ -608,7 +681,6 @@ impl<'a> ExprParser<'a> {
 
     //IDENTIFIER | LITERAL | "(" expr ")"
     fn primary(&mut self) -> Option<Box<dyn Expr>> {
-        println!("Parsing primary {:?}", self.cur());
         let cur = self.cur()?;
 
         match (cur.token_type, cur.value) {
@@ -633,11 +705,7 @@ impl<'a> ExprParser<'a> {
                 Some(LiteralExpr::new(Value::String(value), ParsedType::String, PositionRange::new(Position::new(0, 0))))
             },
             (TokenType::Identifier, Some(TokenValue::String(identifier))) => {
-                let token = self.cur()?;
-                self.advance();
-
-                self.var_expr_id_counter += 1;
-                Some(VarExpr::new(self.var_expr_id_counter, identifier, token.position))
+                Some(Box::new(self.var()?))
             },
             (TokenType::LeftParen, None) => {
                 self.advance();

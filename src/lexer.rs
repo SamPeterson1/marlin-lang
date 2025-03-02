@@ -255,8 +255,8 @@ impl Lexer<'_> {
     }
 
     fn parse_numeric(&mut self) -> Result<Token, LexerDiagnostic> {
-        let mut whole_part: u32 = 0;
-        let mut frac_part: u32 = 0;
+        let mut whole_part: u64 = 0;
+        let mut frac_part: u64 = 0;
     
         let mut is_decimal = false;
         let mut decimal_places = 0;
@@ -265,10 +265,10 @@ impl Lexer<'_> {
             let cur = self.cur.unwrap();
 
             if is_decimal {
-                frac_part = 10 * frac_part + cur.to_digit(10).unwrap();
+                frac_part = 10 * frac_part + cur.to_digit(10).unwrap() as u64;
                 decimal_places += 1;
             } else {
-                whole_part = 10 * whole_part + cur.to_digit(10).unwrap();
+                whole_part = 10 * whole_part + cur.to_digit(10).unwrap() as u64;
             }
     
             if let Some(&peek) = self.peek() {
@@ -308,14 +308,14 @@ impl Lexer<'_> {
             Some('i') => {
                 self.next();
                 if !is_decimal {
-                    self.end_token(TokenType::IntLiteral, Some(TokenValue::Int(value as i32)))
+                    self.end_token(TokenType::IntLiteral, Some(TokenValue::Int(value as i64)))
                 } else {
                     Result::Err(self.err_decimal_literal_as_int())
                 }
             },
             _ => {
                 if !is_decimal {
-                    self.end_token(TokenType::IntLiteral, Some(TokenValue::Int(value as i32)))
+                    self.end_token(TokenType::IntLiteral, Some(TokenValue::Int(value as i64)))
                 } else {
                     self.end_token(TokenType::FloatLiteral, Some(TokenValue::Float(value as f32)))
                 }

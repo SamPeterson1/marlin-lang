@@ -1,4 +1,4 @@
-use std::{collections::HashMap, rc::Rc};
+use std::{cell::{Ref, RefCell, RefMut}, collections::HashMap, rc::Rc};
 
 use crate::{expr::{Expr, VarExpr}, resolver::SymbolTable};
 
@@ -28,11 +28,30 @@ impl ResolvedType {
     pub fn is_numeric(&self) -> bool {
         *self == ResolvedType::Integer || *self == ResolvedType::Float || *self == ResolvedType::Double
     }
+
+    pub fn n_bytes(&self) -> usize {
+        match self {
+            ResolvedType::Integer => 8,
+            ResolvedType::Float => 0,
+            ResolvedType::Double => 8,
+            ResolvedType::Boolean => 8,
+            ResolvedType::String => 8,
+            ResolvedType::Function(_) => 8,
+            ResolvedType::Struct(struct_type) => struct_type.n_bytes(),
+            ResolvedType::Empty => 0
+        }
+    }
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub struct StructType {
     pub member_types: Rc<HashMap<String, ResolvedType>>
+}
+
+impl StructType {
+    pub fn n_bytes(&self) -> usize {
+        self.member_types.iter().fold(0, |acc, (_, t)| acc + t.n_bytes())
+    }
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
@@ -48,6 +67,11 @@ pub struct Function {
     pub env: EnvRef
 }
 
+#[derive(Debug)]
+pub struct Struct {
+    pub member_values: HashMap<String, ValueRef>
+}
+
 impl Clone for Function {
     fn clone(&self) -> Function {
         Function {
@@ -60,28 +84,14 @@ impl Clone for Function {
 
 #[derive(Debug)]
 pub enum Value {
-    Int (i32),
+    Int (i64),
     Float (f32),
     Double (f64),
     Bool (bool),
     String (String),
     Function (Function),
+    Struct (Struct),
     Empty
-}
-
-impl Clone for Value {
-    fn clone(&self) -> Value {
-        match self {
-            Value::Int(x) => Value::Int(*x),
-            Value::Float(x) => Value::Float(*x),
-            Value::Double(x) => Value::Double(*x),
-            Value::Bool(x) => Value::Bool(*x),
-            Value::String(x) => Value::String(x.clone()),
-            Value::Function(x) => Value::Function(x.clone()),
-            Value::Empty => Value::Empty
-        }
-    }
-
 }
 
 impl Into<TypedValue> for Value {
@@ -93,13 +103,14 @@ impl Into<TypedValue> for Value {
             Value::Bool(_) => TypedValue::new(ResolvedType::Boolean, self),
             Value::String(_) => TypedValue::new(ResolvedType::String, self),
             Value::Function(_) => panic!("Cannot infer type from function value"),
+            Value::Struct(_) => panic!("Cannot infer type from struct value"),
             Value::Empty => TypedValue::empty()
         }
     }
 }
 
 impl Value {
-    pub fn as_int(&self) -> i32 { let Value::Int(x) = self else { unreachable!() }; *x }
+    pub fn as_int(&self) -> i64 { let Value::Int(x) = self else { unreachable!() }; *x }
     pub fn as_float(&self) -> f32 { let Value::Float(x) = self else { unreachable!() }; *x }
     pub fn as_double(&self) -> f64 { let Value::Double(x) = self else { unreachable!() }; *x }
     pub fn as_bool(&self) -> bool { let Value::Bool(x) = self else { unreachable!() }; *x }
@@ -130,8 +141,8 @@ impl TypedValue {
 
 }
 
-impl AsRef<i32> for Value {
-    fn as_ref(&self) -> &i32 {
+impl AsRef<i64> for Value {
+    fn as_ref(&self) -> &i64 {
         match &self {
             Value::Int(x) => x,
             _ => panic!("Tried to borrow non-integer value as integer")
@@ -139,8 +150,8 @@ impl AsRef<i32> for Value {
     }
 }
 
-impl AsMut<i32> for Value {
-    fn as_mut(&mut self) -> &mut i32 {
+impl AsMut<i64> for Value {
+    fn as_mut(&mut self) -> &mut i64 {
         match self {
             Value::Int(x) => x,
             _ => panic!("Tried to borrow non-integer value as integer")
@@ -202,8 +213,29 @@ impl AsMut<Function> for Value {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct ValueRef {
+    ptr: Rc<RefCell<Value>>,
+}
+
+impl ValueRef {
+    pub fn new(value: Value) -> ValueRef {
+        ValueRef {
+            ptr: Rc::new(RefCell::new(value))
+        }
+    }
+
+    pub fn as_ref(&self) -> Ref<'_, Value> {
+        (*self.ptr).borrow()
+    }
+
+    pub fn as_mut(&self) -> RefMut<'_, Value> {
+        (*self.ptr).borrow_mut()
+    }
+}
+
 pub struct Env {
-    pub vars: HashMap<String, Rc<Value>>,
+    pub vars: HashMap<String, ValueRef>,
     parent: EnvRef,
 }
 
@@ -246,17 +278,21 @@ impl EnvRef {
         self.as_env().parent.clone()
     }
 
-    pub fn put_value(&mut self, identifier: &str, value: &Rc<Value>, is_declaration: bool) {
+    pub fn put_value_ref(&mut self, identifier: &str, value: ValueRef, is_declaration: bool) {
         if is_declaration || self.as_env().vars.contains_key(identifier) {
-            self.as_env_mut().vars.insert(identifier.to_string(), value.clone());
+            self.as_env_mut().vars.insert(identifier.to_string(), value);
         } else if self.as_env().parent.is_some() {
-            self.as_env_mut().parent.put_value(identifier, value, is_declaration);
+            self.as_env_mut().parent.put_value_ref(identifier, value, is_declaration);
         } else {
             panic!("Unknown variable name {:?}", identifier);
         }
     }
 
-    pub fn get_value(&self, var_expr: &VarExpr, symbol_table: &SymbolTable) -> Rc<Value> {
+    pub fn put_value(&mut self, identifier: &str, value: Value, is_declaration: bool) {
+        self.put_value_ref(identifier, ValueRef::new(value), is_declaration)
+    }
+
+    pub fn get_value(&self, var_expr: &VarExpr, symbol_table: &SymbolTable) -> ValueRef {
         let mut env = self.as_env();
     
         for _ in 0..symbol_table.get_variable_dist(var_expr) {
