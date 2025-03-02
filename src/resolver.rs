@@ -1,43 +1,46 @@
 use std::{collections::HashMap, rc::Rc};
 
-use crate::{environment::{FunctionType, ParsedType, ResolvedType, StructType}, error::Diagnostic, expr::{AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, StructExpr, StructInitializerExpr, UnaryExpr, VarExpr}};
+use crate::{environment::{FunctionType, ParsedFunctionType, ParsedType, ResolvedType, StructType}, error::Diagnostic, expr::{item::{FunctionItem, Item, ItemVisitor, StructItem}, AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitable, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, StructInitializerExpr, UnaryExpr, VarExpr}};
 
 struct VarDeclaration {
     is_defined: bool,
+    is_argument: bool,
     declaration_type: ResolvedType,
     id: i32,
 }
 
 #[derive(Debug)]
-struct ResolvedVar {
-    dist: usize,
-    value_type: ResolvedType,
-    id: i32,
+pub struct ResolvedVar {
+    pub value_type: ResolvedType,
+    pub is_argument: bool,
+    pub id: i32,
 }
 
 pub struct SymbolTable {
     pub types: HashMap<String, ResolvedType>,
     pub variables: HashMap<VarExpr, ResolvedVar>,
+    pub functions: HashMap<String, ResolvedType>,
 }
 
 impl SymbolTable {
     pub fn new() -> SymbolTable {
         SymbolTable {
             types: HashMap::new(),
-            variables: HashMap::new()
+            variables: HashMap::new(),
+            functions: HashMap::new(),
         }
     }
 
-    pub fn resolve(&mut self, exprs: &[Box<dyn Expr>]) -> Vec<Diagnostic> {
+    pub fn resolve(&mut self, items: &[Box<dyn Item>]) -> Vec<Diagnostic> {
         let mut errors = Vec::new();
 
         let mut type_resolver = TypeResolver::new(self);
 
-        errors.append(&mut type_resolver.resolve(exprs));
+        errors.append(&mut type_resolver.resolve(items));
 
         let mut variable_resolver = VariableResolver::new(self);
 
-        errors.append(&mut variable_resolver.resolve(exprs));
+        errors.append(&mut variable_resolver.resolve(items));
         
         errors
     }
@@ -45,31 +48,31 @@ impl SymbolTable {
     pub fn insert_variable(&mut self, expr: VarExpr, var: ResolvedVar) {
         self.variables.insert(expr, var);
     }
-    
-    pub fn get_variable_dist(&self, expr: &VarExpr) -> usize {
-        self.variables.get(expr).unwrap().dist
+
+    pub fn get_variable(&self, expr: &VarExpr) -> &ResolvedVar {
+        self.variables.get(expr).unwrap()
     }
 
-    pub fn get_variable_id(&self, expr: &VarExpr) -> i32 {
-        self.variables.get(expr).unwrap().id
-    }
-
-    pub fn get_variable_type(&self, expr: &VarExpr) -> &ResolvedType {
-        &self.variables.get(expr).unwrap().value_type
+    pub fn get_function(&self, name: &str) -> &ResolvedType {
+        self.functions.get(name).unwrap()
     }
 
     pub fn insert_type(&mut self, type_name: String, resolved_type: ResolvedType) {
         self.types.insert(type_name, resolved_type);
     }
 
+    pub fn insert_function(&mut self, function_name: String, resolved_type: ResolvedType) {
+        self.functions.insert(function_name, resolved_type);
+    }
+
     pub fn has_type_name(&self, type_name: &str) -> bool {
         self.types.contains_key(type_name)
     }
 
-    pub fn resolve_struct_expr(&self, struct_expr: &StructExpr) -> ResolvedType {
+    pub fn resolve_struct_item(&self, struct_item: &StructItem) -> ResolvedType {
         let mut member_types = HashMap::new();
 
-        for (member_name, member_type) in struct_expr.members.iter() {
+        for (member_name, member_type) in struct_item.members.iter() {
             member_types.insert(member_name.to_string(), self.get_resolved_type(member_type));
         }
 
@@ -108,7 +111,7 @@ pub struct TypeResolver<'a> {
     symbol_table: &'a mut SymbolTable,
     unresolved_types: HashMap<String, i32>,
     type_dependencies: HashMap<String, Vec<String>>,
-    unresolved_struct_declarations: HashMap<String, StructExpr>,
+    unresolved_struct_declarations: HashMap<String, StructItem>,
 }
 
 impl TypeResolver<'_> {
@@ -121,9 +124,9 @@ impl TypeResolver<'_> {
         }
     }
 
-    pub fn resolve(&mut self, exprs: &[Box<dyn Expr>]) -> Vec<Diagnostic> {
-        for expr in exprs {
-            expr.accept_visitor(self);
+    pub fn resolve(&mut self, items: &[Box<dyn Item>]) -> Vec<Diagnostic> {
+        for item in items {
+            item.accept_visitor(self);
         }
 
         println!("Unresolved types: {:?}", self.unresolved_types);
@@ -136,7 +139,7 @@ impl TypeResolver<'_> {
     fn resolve_struct(&mut self, type_name: String) {
         let struct_expr = self.unresolved_struct_declarations.remove(&type_name).unwrap();
             
-        let resolved_type = self.symbol_table.resolve_struct_expr(&struct_expr);
+        let resolved_type = self.symbol_table.resolve_struct_item(&struct_expr);
 
         self.symbol_table.insert_type(type_name.clone(), resolved_type);
 
@@ -156,24 +159,8 @@ impl TypeResolver<'_> {
     }
 }
 
-impl ExprVisitor<()> for TypeResolver<'_> {
-    fn visit_empty(&mut self, _expr: &EmptyExpr) -> () { }
-    fn visit_binary(&mut self, _expr: &BinaryExpr) -> () { }
-    fn visit_unary(&mut self, _expr: &UnaryExpr) -> () { }
-    fn visit_literal(&mut self, _expr: &LiteralExpr) -> () { }
-    fn visit_var(&mut self, _expr: &VarExpr) -> () { }
-    fn visit_if(&mut self, _expr: &IfExpr) -> () { }
-    fn visit_assignment(&mut self, _expr: &AssignmentExpr) -> () { }
-    fn visit_declaration(&mut self, _expr: &DeclarationExpr) -> () { }
-    fn visit_block(&mut self, _expr: &BlockExpr) -> () { }
-    fn visit_print(&mut self, _expr: &PrintExpr) -> () { }
-    fn visit_rand(&mut self, _expr: &RandExpr) -> () { }
-    fn visit_loop(&mut self, _expr: &LoopExpr) -> () { }
-    fn visit_break(&mut self, _expr: &BreakExpr) -> () { }
-    fn visit_input(&mut self, _expr: &InputExpr) -> () { }
-    fn visit_call(&mut self, _expr: &CallExpr) -> () { }
-
-    fn visit_struct(&mut self, expr: &StructExpr) -> () {
+impl ItemVisitor<()> for TypeResolver<'_> {
+    fn visit_struct(&mut self, expr: &StructItem) -> () {
         let mut n_dependencies = 0;
 
         let struct_name = expr.name.clone();
@@ -201,8 +188,15 @@ impl ExprVisitor<()> for TypeResolver<'_> {
             self.resolve_struct(struct_name.to_string());
         }
     }
+    
+    fn visit_function(&mut self, item: &crate::expr::item::FunctionItem) -> () { 
+        let resolved_type = self.symbol_table.get_resolved_type(&ParsedType::Function(ParsedFunctionType {
+            arg_types: Rc::new(item.args.values().cloned().collect()),
+            ret_type: Rc::new(item.ret_type.clone())
+        }));
 
-    fn visit_struct_initializer(&mut self, expr: &StructInitializerExpr) { }
+        self.symbol_table.insert_function(item.name.to_string(), resolved_type);
+    }
 }
 
 pub struct VariableResolver<'a> {
@@ -220,26 +214,29 @@ impl VariableResolver<'_> {
         }
     }
 
-    pub fn resolve(&mut self, exprs: &[Box<dyn Expr>]) -> Vec<Diagnostic> {
+    pub fn resolve(&mut self, items: &[Box<dyn Item>]) -> Vec<Diagnostic> {
         println!("Resolving");
 
-        for expr in exprs {
-            self.resolve_expr(&**expr);
+        for item in items {
+            item.accept_visitor(self);
         }
 
         Vec::new()
     }
 
-    fn resolve_expr(&mut self, expr: &(impl Expr + ?Sized)) {
-        expr.accept_visitor(self)
+    fn clear_scopes(&mut self) {
+        self.num_scopes = 1;
+        self.scopes = vec![HashMap::new()];
     }
+
 }
 
 impl VariableResolver<'_> {
-    fn declare(&mut self, id: i32, name: &str, value_type: &ResolvedType) {
+    fn declare(&mut self, id: i32, is_argument: bool, name: &str, value_type: &ResolvedType) {
         let declaration = VarDeclaration {
             is_defined: false,
             id,
+            is_argument,
             declaration_type: value_type.clone()
         };
 
@@ -268,8 +265,8 @@ impl VariableResolver<'_> {
             if let Some(declaration) = self.scopes[i].get(&*var_expr.identifier) {
                 if declaration.is_defined {
                     let resolved_var = ResolvedVar {
-                        dist: self.num_scopes - i - 1,
                         id: declaration.id,
+                        is_argument: declaration.is_argument,
                         value_type: declaration.declaration_type.clone()
                     };
                     
@@ -288,16 +285,31 @@ impl VariableResolver<'_> {
     }
 }
 
+impl ItemVisitor<()> for VariableResolver<'_> {
+    fn visit_struct(&mut self, item: &StructItem) {}
+
+    fn visit_function(&mut self, item: &FunctionItem) {
+        self.clear_scopes();
+
+        for (i, (arg_name, arg_type)) in item.args.iter().enumerate() {
+            self.declare( i as i32, true, arg_name, &self.symbol_table.get_resolved_type(arg_type));
+            self.define(arg_name);
+        }
+
+        item.expr.accept_visitor(self);
+    }
+}
+
 impl ExprVisitor<()> for VariableResolver<'_> {
     fn visit_empty(&mut self, _expr: &EmptyExpr) {}
 
     fn visit_binary(&mut self, expr: &BinaryExpr) {
-        self.resolve_expr(&*expr.left);
-        self.resolve_expr(&*expr.right);
+        expr.left.accept_visitor(self);
+        expr.right.accept_visitor(self);
     }
 
     fn visit_unary(&mut self, expr: &UnaryExpr) {
-        self.resolve_expr(&*expr.expr);
+        expr.expr.accept_visitor(self);
     }
 
     fn visit_literal(&mut self, expr: &LiteralExpr) { }
@@ -307,28 +319,28 @@ impl ExprVisitor<()> for VariableResolver<'_> {
     }
 
     fn visit_if(&mut self, expr: &IfExpr) {
-        self.resolve_expr(&*expr.condition);
-        self.resolve_expr(&*expr.success);
-
+        expr.condition.accept_visitor(self);
+        expr.success.accept_visitor(self);
+        
         if let Some(fail) = &expr.fail {
-            self.resolve_expr(&**fail);
+            fail.accept_visitor(self);
         }
     }
 
     fn visit_assignment(&mut self, expr: &AssignmentExpr) {
-        self.resolve_expr(&*expr.asignee);
-        self.resolve_expr(&*expr.expr);
+        expr.asignee.accept_visitor(self);
+        expr.expr.accept_visitor(self);
     }
 
     fn visit_declaration(&mut self, expr: &DeclarationExpr) {
-        self.declare(expr.id, &expr.identifier, &self.symbol_table.get_resolved_type(&expr.declaration_type));
+        self.declare(expr.id, false, &expr.identifier, &self.symbol_table.get_resolved_type(&expr.declaration_type));
 
         //Allow recursive funtions
         if let ParsedType::Function(_) = &expr.declaration_type {
             self.define(&expr.identifier);
         }
 
-        self.resolve_expr(&*expr.expr);
+        expr.expr.accept_visitor(self);
 
         self.define(&expr.identifier);
     }
@@ -336,56 +348,56 @@ impl ExprVisitor<()> for VariableResolver<'_> {
     fn visit_block(&mut self, expr: &BlockExpr) {
         self.push_scope();
         for expr in &expr.exprs {
-            self.resolve_expr(&**expr);
+            expr.accept_visitor(self);
         }
         self.pop_scope();
     }
 
     fn visit_print(&mut self, expr: &PrintExpr) {
-        self.resolve_expr(&*expr.expr);
+        expr.expr.accept_visitor(self);
     }
 
     fn visit_rand(&mut self, expr: &RandExpr) {
-        self.resolve_expr(&*expr.min);
-        self.resolve_expr(&*expr.max);
+        expr.min.accept_visitor(self);
+        expr.max.accept_visitor(self);
     }
 
     fn visit_loop(&mut self, expr: &LoopExpr) {
         self.push_scope();
         
         if let Some(initial) = &expr.initial {
-            self.resolve_expr(&**initial);
+            initial.accept_visitor(self);
         }
         
         if let Some(condition) = &expr.condition {
-            self.resolve_expr(&**condition);
+            condition.accept_visitor(self);
         }
 
         if let Some(increment) = &expr.increment {
-            self.resolve_expr(&**increment);
+            increment.accept_visitor(self);
         }
 
-        self.resolve_expr(&*expr.body);
+        expr.body.accept_visitor(self);
         self.pop_scope();
     }
 
     fn visit_break(&mut self, expr: &BreakExpr) {
-        self.resolve_expr(&*expr.expr);
+        expr.expr.accept_visitor(self);
     }
 
     fn visit_input(&mut self, expr: &InputExpr) {
-        self.resolve_expr(&*expr.prompt);
+        expr.prompt.accept_visitor(self);
     }
 
     fn visit_call(&mut self, expr: &CallExpr) {
-        self.resolve_expr(&*expr.func_expr);
+        if !self.symbol_table.functions.contains_key(&*expr.function.identifier) {
+            panic!("Unknown function name {:?}", &*expr.function.identifier);
+        }
 
         for arg in &expr.args {
-            self.resolve_expr(&**arg);
+            arg.accept_visitor(self);
         }
     }
-
-    fn visit_struct(&mut self, _expr: &StructExpr) { }
 
     fn visit_struct_initializer(&mut self, expr: &StructInitializerExpr) {
         for (_, value) in expr.member_inits.iter() {

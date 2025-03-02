@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{environment::Literal, expr::{Expr, ExprVisitor}, instruction::InstructionBuilder, resolver::SymbolTable, type_checker::TypeChecker};
+use crate::{environment::Literal, expr::{item::{FunctionItem, Item, ItemVisitor, StructItem}, Expr, ExprVisitor}, instruction::InstructionBuilder, resolver::SymbolTable, type_checker::TypeChecker};
 
 /*
 R0 stores result of previous operation
@@ -59,6 +59,8 @@ impl CompilerFunction {
 
         instructions.append(&mut self.body_instructions);
 
+        instructions.push(InstructionBuilder::stfp(0, -2));
+
         for i in (0..12).rev() {
             instructions.push(InstructionBuilder::pop(i));
         }
@@ -68,19 +70,26 @@ impl CompilerFunction {
         instructions.push(InstructionBuilder::pop(FRAME_PTR_REG));
         instructions.push(InstructionBuilder::pop(RET_ADDR_REG));
 
+        
+        instructions.push(InstructionBuilder::ret());
+
         instructions
     }
 }
 
 pub struct Compiler<'a> {
     instructions: Vec<u64>,
-    function_address_locations: HashMap<i32, u32>,
+    function_address_locations: HashMap<String, u32>,
     current_function: CompilerFunction,
     symbol_table: &'a SymbolTable,
     type_checker: TypeChecker<'a>,
-    local_vars: HashMap<i32, u32>,
-    constant_pool: Vec<Vec<u64>>,
+    constant_pool: Vec<u64>,
     constant_pool_size: usize,
+}
+
+pub struct CompilerResult {
+    pub instructions: Vec<u64>,
+    pub constant_pool: Vec<u64>,
 }
 
 impl Compiler<'_> {
@@ -90,33 +99,71 @@ impl Compiler<'_> {
             function_address_locations: HashMap::new(),
             current_function: CompilerFunction::new(),
             type_checker: TypeChecker::new(symbol_table),
-            local_vars: HashMap::new(),
             constant_pool: Vec::new(),
             constant_pool_size: 0,
             symbol_table
         }
     }
 
-    fn push_constant(&mut self, bytes: Vec<u64>) -> usize {
+    fn push_constant(&mut self, bytes: u64) -> usize {
         let index = self.constant_pool_size;
-        self.constant_pool_size += bytes.len();
+        self.constant_pool_size += 1;
         self.constant_pool.push(bytes);
 
         index
     }
 
-    pub fn compile(mut self, exprs: &[Box<dyn Expr>]) -> Vec<u64> {
-        self.instructions.push(InstructionBuilder::and_imm(12, 12, 0));
-        self.instructions.push(InstructionBuilder::addi_imm(12, 12, 1000));
+    pub fn compile(mut self, items: &[Box<dyn Item>]) -> CompilerResult {
+        self.instructions.push(InstructionBuilder::and_imm(STACK_PTR_REG, STACK_PTR_REG, 0));
+        self.instructions.push(InstructionBuilder::addi_imm(STACK_PTR_REG, STACK_PTR_REG, 1000));
 
+        self.instructions.push(InstructionBuilder::and(CONSTANT_POOL_REG, CONSTANT_POOL_REG, 0));
+        self.instructions.push(InstructionBuilder::addi_imm(CONSTANT_POOL_REG, CONSTANT_POOL_REG, 3000));
+        
+        let function_address_location = self.push_constant(0) as u32;
+        self.function_address_locations.insert("main".to_string(), function_address_location);
 
-        for expr in exprs {
-            expr.accept_visitor(&mut self);
-        }
+        self.instructions.push(InstructionBuilder::ldr_imm(0, CONSTANT_POOL_REG, function_address_location as i32));
+
+        self.instructions.push(InstructionBuilder::call(0));
+
+        self.instructions.push(InstructionBuilder::pop(0));
 
         self.instructions.push(InstructionBuilder::halt());
 
-        self.instructions    
+        for item in items {
+            item.accept_visitor(&mut self);
+        }
+
+        CompilerResult {
+            instructions: self.instructions,
+            constant_pool: self.constant_pool,
+        }
+    }
+}
+
+impl ItemVisitor<()> for Compiler<'_> {
+    fn visit_struct(&mut self, item: &StructItem) -> () { }
+
+    fn visit_function(&mut self, item: &FunctionItem) -> () {
+        item.expr.accept_visitor(self);
+
+        let mut current_function_swap = CompilerFunction::new();
+        std::mem::swap(&mut self.current_function, &mut current_function_swap);
+        let function_instructions = current_function_swap.to_instructions();
+
+        let function_address = self.instructions.len() as u64;
+        self.instructions.extend(function_instructions);
+
+        let function_name = &*item.name;
+
+        if !self.function_address_locations.contains_key(function_name) {
+            let function_address_location = self.push_constant(function_address); // Placeholder for function address
+            self.function_address_locations.insert(function_name.clone(), function_address_location as u32);
+        } else {
+            let function_address_location: &u32 = self.function_address_locations.get(function_name).unwrap();
+            self.constant_pool[*function_address_location as usize] = function_address;
+        }
     }
 }
 
@@ -154,10 +201,15 @@ impl ExprVisitor<()> for Compiler<'_> {
     }
 
     fn visit_var(&mut self, expr: &crate::expr::VarExpr) -> () {
-        let id = self.symbol_table.get_variable_id(expr);
-        let stack_index = *self.local_vars.get(&id).unwrap() as i32;
-
-        self.current_function.push_instruction(InstructionBuilder::ldap(0, -stack_index));
+        let resolved_var = self.symbol_table.get_variable(expr);
+        
+        if resolved_var.is_argument {
+            let arg_index = resolved_var.id as i32;
+            self.current_function.push_instruction(InstructionBuilder::ldfp(0, -arg_index - 3));
+        } else {
+            let stack_index = *self.current_function.local_vars.get(&resolved_var.id).unwrap() as i32;
+            self.current_function.push_instruction(InstructionBuilder::ldfp(0, stack_index + 1));
+        }
     }
 
     /*
@@ -174,7 +226,7 @@ impl ExprVisitor<()> for Compiler<'_> {
         self.current_function.push_instruction(InstructionBuilder::nop()); // Placeholder for JMP instruction 
         expr.success.accept_visitor(self);
 
-        let jmp_end_instruction_index = self.instructions.len() as i32;
+        let jmp_end_instruction_index = self.current_function.n_instructions() as i32;
         self.current_function.push_instruction(InstructionBuilder::nop()); // Placeholder for JMP instruction
 
         let jmp_else_pc_offset = self.current_function.n_instructions() as i32 - jmp_else_instruction_index - 1;
@@ -185,26 +237,31 @@ impl ExprVisitor<()> for Compiler<'_> {
             fail.accept_visitor(self);
         }
 
-        let jmp_end_pc_offset = self.instructions.len() as i32 - jmp_end_instruction_index - 1;
+        let jmp_end_pc_offset = self.current_function.n_instructions() as i32 - jmp_end_instruction_index - 1;
         self.current_function.set_instruction(jmp_end_instruction_index as usize, InstructionBuilder::jmp(true, true, true, jmp_end_pc_offset));
     }
 
     fn visit_assignment(&mut self, expr: &crate::expr::AssignmentExpr) -> () {
-        let id = self.symbol_table.get_variable_id(&expr.asignee);
-        let stack_index = *self.local_vars.get(&id).unwrap() as i32;
-
+        let resolved_var = self.symbol_table.get_variable(&expr.asignee);
+        
         expr.expr.accept_visitor(self);
 
-        self.current_function.push_instruction(InstructionBuilder::stap(0, -stack_index));
+        if resolved_var.is_argument {
+            let arg_index = resolved_var.id as i32;
+            self.current_function.push_instruction(InstructionBuilder::stfp(0, -arg_index - 3));
+        } else {
+            let stack_index = *self.current_function.local_vars.get(&resolved_var.id).unwrap() as i32;
+            self.current_function.push_instruction(InstructionBuilder::stfp(0, stack_index + 1));
+        }
     }
 
     fn visit_declaration(&mut self, expr: &crate::expr::DeclarationExpr) -> () {
-        let stack_index = self.local_vars.len() as u32;
-        self.local_vars.insert(expr.id, stack_index);
+        let stack_index = self.current_function.local_vars.len() as i32;
+        self.current_function.local_vars.insert(expr.id, stack_index as u32);
 
         expr.expr.accept_visitor(self);
 
-        self.current_function.push_instruction(InstructionBuilder::stap(0, -(stack_index as i32)))
+        self.current_function.push_instruction(InstructionBuilder::stfp(0, stack_index + 1))
     }
 
     fn visit_block(&mut self, expr: &crate::expr::BlockExpr) -> () {
@@ -247,12 +304,12 @@ impl ExprVisitor<()> for Compiler<'_> {
             increment.accept_visitor(self);
         }
 
-        let jmp_start_instruction_index = self.instructions.len() as i32;
+        let jmp_start_instruction_index = self.current_function.n_instructions() as i32;
         let jmp_start_pc_offset = start_loop_instruction_index - jmp_start_instruction_index - 1;
         self.current_function.push_instruction(InstructionBuilder::jmp(true, true, true, jmp_start_pc_offset));
 
         if let Some(jmp_end_instruction_index) = jmp_end_instruction_index {
-            let jmp_end_pc_offset = self.instructions.len() as i32 - jmp_end_instruction_index - 1;
+            let jmp_end_pc_offset = self.current_function.n_instructions() as i32 - jmp_end_instruction_index - 1;
             self.current_function.set_instruction(jmp_end_instruction_index as usize, InstructionBuilder::jmp(false, true, false, jmp_end_pc_offset));
         }
     }
@@ -266,11 +323,27 @@ impl ExprVisitor<()> for Compiler<'_> {
     }
 
     fn visit_call(&mut self, expr: &crate::expr::CallExpr) -> () {
-        todo!()
-    }
+        let function_name = &*expr.function.identifier;
+        let function_address_location = if self.function_address_locations.contains_key(function_name) {
+            *self.function_address_locations.get(function_name).unwrap()
+        } else {
+            let function_address_location = self.push_constant(0) as u32; // Placeholder for function address
+            self.function_address_locations.insert(function_name.clone(), function_address_location);
+            function_address_location
+        };
 
-    fn visit_struct(&mut self, expr: &crate::expr::StructExpr) -> () {
-        todo!()
+        for arg in &expr.args {
+            arg.accept_visitor(self);
+            self.current_function.push_instruction(InstructionBuilder::push(0));
+        }
+        
+        self.current_function.push_instruction(InstructionBuilder::addi_imm(STACK_PTR_REG, STACK_PTR_REG, 1));
+
+        self.current_function.push_instruction(InstructionBuilder::ldr_imm(0, CONSTANT_POOL_REG, function_address_location as i32));
+        self.current_function.push_instruction(InstructionBuilder::call(0));
+
+        self.current_function.push_instruction(InstructionBuilder::pop(0));
+        self.current_function.push_instruction(InstructionBuilder::addi_imm(STACK_PTR_REG, STACK_PTR_REG, -(expr.args.len() as i32)));
     }
 
     fn visit_struct_initializer(&mut self, expr: &crate::expr::StructInitializerExpr) -> () {

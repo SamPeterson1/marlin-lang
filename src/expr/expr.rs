@@ -26,7 +26,6 @@ pub trait ExprVisitor<T> {
     fn visit_break(&mut self, expr: &BreakExpr) -> T;
     fn visit_input(&mut self, expr: &InputExpr) -> T;
     fn visit_call(&mut self, expr: &CallExpr) -> T;
-    fn visit_struct(&mut self, expr: &StructExpr) -> T;
     fn visit_struct_initializer(&mut self, expr: &StructInitializerExpr) -> T;
 }
 
@@ -411,19 +410,17 @@ impl_expr!(InputExpr, visit_input);
 
 #[derive(Debug)]
 pub struct CallExpr {
-    pub func_expr: Box<dyn Expr>,
+    pub function: VarExpr,
     pub args: Vec<Box<dyn Expr>>,
     pub position: PositionRange
 }
 
 impl CallExpr {
-    pub fn new(func_expr: Box<dyn Expr>, args: Vec<Box<dyn Expr>>) -> Box<dyn Expr> {
-        let position = args.iter().fold(func_expr.get_position().clone(), |acc, expr| {
-            PositionRange::concat(&acc, expr.get_position())
-        });
+    pub fn new(function: VarExpr, args: Vec<Box<dyn Expr>>) -> Box<dyn Expr> {
+        let position = PositionRange::new(Position::new(0, 0));
 
         Box::new(CallExpr {
-            func_expr,
+            function,
             args,
             position
         })
@@ -431,25 +428,6 @@ impl CallExpr {
 }
 
 impl_expr!(CallExpr, visit_call);
-
-#[derive(Debug, Clone)]
-pub struct StructExpr {
-    pub name: Rc<String>,
-    pub members: HashMap<String, ParsedType>,
-    pub position: PositionRange,
-}
-
-impl StructExpr {
-    pub fn new(name: String, members: HashMap<String, ParsedType>, position: PositionRange) -> Box<dyn Expr> {
-        Box::new(StructExpr {
-            name: Rc::new(name),
-            members,
-            position
-        })
-    }
-}
-
-impl_expr!(StructExpr, visit_struct);
 
 #[derive(Debug, Clone)]
 pub struct StructInitializerExpr {

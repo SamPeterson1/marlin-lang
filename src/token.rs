@@ -102,7 +102,7 @@ pub enum TokenType {
     If, Else, For, Return, Fn, Rand,
     This, While, Loop, Break, Print, Input,
 
-    Int, Double, Bool, String, Func,
+    Int, Double, Bool, String,
     Struct,
 
     IntLiteral, FloatLiteral, DoubleLiteral, BoolLiteral, StringLiteral,

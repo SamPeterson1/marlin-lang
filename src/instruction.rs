@@ -12,7 +12,6 @@ impl ConditionCode {
         ConditionCode { n, z, p }
     }
 }
-
 pub struct InstructionBuilder {
     pub instruction: u64,
 }
@@ -338,6 +337,7 @@ impl InstructionBuilder {
     pub fn ldr_imm(dr: u8, sr1: u8, imm32: i32) -> u64 {
         InstructionBuilder::new()
             .with_opcode(opcodes::OP_LDR)
+            .with_sr1(sr1)
             .with_dr(dr)
             .with_imm32i(imm32).instruction
     }
@@ -451,6 +451,12 @@ impl InstructionBuilder {
             .with_opcode(opcodes::OP_STI)
             .with_sr1(sr1)
             .with_pcOffset32(pcOffset32).instruction
+    }
+
+    pub fn call(sr1: u8) -> u64 {
+        InstructionBuilder::new()
+            .with_opcode(opcodes::OP_CALL)
+            .with_sr1(sr1).instruction
     }
 
     pub fn ret() -> u64 {

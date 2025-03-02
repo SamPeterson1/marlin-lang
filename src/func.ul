@@ -1,34 +1,24 @@
-let func (int, int) -> int foo = fn (int a, int b) -> int {
-    if (a == 0) {
-        b
+fn int factorial(int n) {
+    if n == 0 {
+        1
     } else {
-        foo(a - 1, b * a)
+        n * factorial(n - 1)
     }
-};
-
-let func (int) -> int factorial = fn (int a) -> int {
-    foo(a, 1)
-};
-
-print factorial(10);
-
-let func () -> func (int) -> int getCounter = fn () -> func (int) -> int {
-    let int counter = 0;
-
-    let func (int) -> int result = fn (int increment) -> int {
-        counter = counter + increment
-    }
-
-    counter = 1000;
-
-    result
 }
 
-let func (int) -> int counter1 = getCounter();
-let func (int) -> int counter2 = getCounter();
+fn int fib(int n) {
+    if n == 0 {
+        0
+    } else if n == 1 {
+        1
+    } else {
+        let int a = fib(n - 1);
+        let int b = fib(n - 2);
 
-print counter1(10);
-print counter2(-8);
-print counter1(-2);
-print counter2(100);
-print counter1(500);
+        a + b
+    }
+}
+
+fn int main() {
+    fib(40) + factorial(12)
+}

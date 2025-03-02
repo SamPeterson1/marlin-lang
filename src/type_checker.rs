@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 
-use crate::{environment::{ResolvedType, StructType}, error::Diagnostic, expr::{AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, StructExpr, StructInitializerExpr, UnaryExpr, VarExpr}, resolver::SymbolTable};
+use crate::{environment::{FunctionType, ResolvedType, StructType}, error::Diagnostic, expr::{item::{FunctionItem, Item, ItemVisitor, StructItem}, AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, StructInitializerExpr, UnaryExpr, VarExpr}, resolver::SymbolTable};
 
 pub struct TypeChecker<'a> {
     symbol_table: &'a SymbolTable,
@@ -17,13 +17,25 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
-    pub fn check_types(&mut self, exprs: &[Box<dyn Expr>]) -> Vec<Diagnostic> {        
-        for expr in exprs {
+    pub fn check_types(&mut self, items: &[Box<dyn Item>]) -> Vec<Diagnostic> {        
+        for item in items {
             println!("Check types");
-            expr.accept_visitor(self);
+            item.accept_visitor(self);
         }
 
         Vec::new()
+    }
+}
+
+impl ItemVisitor<()> for TypeChecker<'_> {
+    fn visit_struct(&mut self, item: &StructItem) {  }
+
+    fn visit_function(&mut self, item: &FunctionItem) {
+        let return_type = item.expr.accept_visitor(self);
+
+        if return_type != self.symbol_table.get_resolved_type(&item.ret_type) {
+            panic!("Mismatched types {:?}, {:?} for function return", return_type, item.ret_type);
+        }
     }
 }
 
@@ -53,7 +65,7 @@ impl ExprVisitor<ResolvedType> for TypeChecker<'_> {
     }
 
     fn visit_var(&mut self, expr: &VarExpr) -> ResolvedType {
-        self.symbol_table.get_variable_type(expr).clone()
+        self.symbol_table.get_variable(expr).value_type.clone()
     }
 
     fn visit_if(&mut self, expr: &IfExpr) -> ResolvedType {
@@ -79,7 +91,7 @@ impl ExprVisitor<ResolvedType> for TypeChecker<'_> {
     }
 
     fn visit_assignment(&mut self, expr: &AssignmentExpr) -> ResolvedType {
-        let mut var_type = self.symbol_table.get_variable_type(&expr.asignee);
+        let mut var_type = &self.symbol_table.get_variable(&expr.asignee).value_type;
         
         for member_access in expr.asignee.member_accesses.iter() {
             let member_type;
@@ -183,7 +195,7 @@ impl ExprVisitor<ResolvedType> for TypeChecker<'_> {
     }
 
     fn visit_call(&mut self, expr: &CallExpr) -> ResolvedType {
-        let expr_type = expr.func_expr.accept_visitor(self);
+        let expr_type = self.symbol_table.get_function(&expr.function.identifier);
 
         println!("calling {:?}", expr_type);
 
@@ -208,10 +220,6 @@ impl ExprVisitor<ResolvedType> for TypeChecker<'_> {
             ResolvedType::Function(function_type) => (*function_type.ret_type).clone(),
             _ => panic!("Invalid type {:?} for function call", &expr_type)
         }
-    }
-
-    fn visit_struct(&mut self, expr: &StructExpr) -> ResolvedType {
-        ResolvedType::Empty
     }
 
     fn visit_struct_initializer(&mut self, expr: &StructInitializerExpr) -> ResolvedType {

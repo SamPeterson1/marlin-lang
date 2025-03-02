@@ -356,7 +356,6 @@ impl Lexer<'_> {
             "double" => self.end_token(TokenType::Double, None),
             "bool" => self.end_token(TokenType::Bool, None),
             "str" => self.end_token(TokenType::String, None),
-            "func" => self.end_token(TokenType::Func, None),
             "let" => self.end_token(TokenType::Let, None),
             "print" => self.end_token(TokenType::Print, None),
             "rand" => self.end_token(TokenType::Rand, None),

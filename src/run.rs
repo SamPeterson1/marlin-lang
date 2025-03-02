@@ -3,7 +3,7 @@ use std::io::prelude::*;
 use std::path::Path;
 use std::env;
 
-use crate::compiler::Compiler;
+use crate::compiler::{Compiler, CompilerResult};
 use crate::expr::{ExprParser, ParseResult};
 use crate::resolver::SymbolTable;
 use crate::type_checker::TypeChecker;
@@ -65,18 +65,18 @@ fn run(code: String) {
     let parser = ExprParser::new(&tokens);
 
 
-    let ParseResult { exprs, diagnostics: parse_diagnostics } = parser.parse();
-        
-    for expr in &exprs {
-        println!("{:?}", expr);
+    let ParseResult { items, diagnostics: parse_diagnostics } = parser.parse();
+
+    for item in &items {
+        println!("{:?}", item);
         println!("");
     }
 
     let mut symbol_table = SymbolTable::new();
-    let resolve_errors = symbol_table.resolve(&exprs);
+    let resolve_errors = symbol_table.resolve(&items);
     
     let mut type_checker = TypeChecker::new(&symbol_table);
-    let type_errors = type_checker.check_types(&exprs);
+    let type_errors = type_checker.check_types(&items);
     
 
     let mut all_errors = Vec::new();
@@ -92,7 +92,11 @@ fn run(code: String) {
     }
 
     let mut compiler = Compiler::new(&symbol_table);
-    let instructions = compiler.compile(&exprs);
+    let CompilerResult {instructions, constant_pool} = compiler.compile(&items);
+
+    println!("Instructions: {:?}", instructions);
+    println!("Number of instructions: {}", instructions.len());
     
-    println!("Compiler result: {:?}", instructions);
+    println!("Constant pool: {:?}", constant_pool);
+    println!("Number of constants: {}", constant_pool.len());
 }

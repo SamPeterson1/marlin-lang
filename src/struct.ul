@@ -20,7 +20,7 @@ struct D {
 struct E {
     int w;
     bool y;
-    float abc;
+    double abc;
 }
 
 struct F {
@@ -29,7 +29,7 @@ struct F {
 
 struct G {
     int foo;
-    float bar;
+    double bar;
 }
 
 struct H {
@@ -42,21 +42,4 @@ struct I {
     double meow;
     bool x;
 }
-
-let F foobar = F {
-    e: E {
-        w: 1,
-        y: false,
-        abc: 15.17f,
-    }
-}
-
-print foobar;
-print foobar.e.w;
-
-let F barfoo = foobar;
-
-print barfoo.e.w;
-foobar.e.w = 10;
-print barfoo.e.w;
 

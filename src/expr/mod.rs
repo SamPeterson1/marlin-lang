@@ -1,9 +1,12 @@
 use std::{collections::HashMap, rc::Rc};
 
+use item::{FunctionItem, Item, StructItem};
+
 use crate::{environment::{Literal, ParsedFunctionType, ParsedType}, error::{Diagnostic, DiagnosticType}, token::{Position, PositionRange, Token, TokenType, TokenValue}};
 pub use self::expr::*;
 
 pub mod expr;
+pub mod item;
 
 pub struct ExprParser<'a> {
     ptr: usize,
@@ -14,7 +17,7 @@ pub struct ExprParser<'a> {
 }
 
 pub struct ParseResult {
-    pub exprs: Vec<Box<dyn Expr>>,
+    pub items: Vec<Box<dyn Item>>,
     pub diagnostics: Vec<Diagnostic>
 }
 
@@ -65,16 +68,18 @@ impl<'a> ExprParser<'a> {
         Diagnostic::new(1, DiagnosticType::Error, prev.position, msg)}
 
     pub fn parse(mut self) -> ParseResult {
-        let mut exprs = Vec::new();
+        let mut items = Vec::new();
         
         while !self.is_at_end() {
-            if let Some(expr) = self.statement() {
-                exprs.push(expr);
+            println!("donw: {:?}", self.tokens[self.ptr]);
+
+            if let Some(expr) = self.item() {
+                items.push(expr);
             }
         }
 
         ParseResult {
-            exprs,
+            items,
             diagnostics: self.diagnostics
         }
     }
@@ -105,7 +110,7 @@ impl<'a> ExprParser<'a> {
     }
 
     fn is_at_end(&self) -> bool {
-        self.ptr == self.tokens.len()
+        self.ptr == self.tokens.len() || self.tokens[self.ptr].token_type == TokenType::EOF
     }
 
     fn peek(&self) -> Option<Token> {
@@ -166,7 +171,7 @@ impl<'a> ExprParser<'a> {
         }
 
         match self.cur().unwrap().token_type {
-            TokenType::Bool | TokenType::Int  | TokenType::Double | TokenType::String | TokenType::Func | TokenType::Identifier => true,
+            TokenType::Bool | TokenType::Int  | TokenType::Double | TokenType::String | TokenType::Identifier => true,
             _ => false
         }
     }
@@ -182,68 +187,21 @@ impl<'a> ExprParser<'a> {
             (TokenType::Bool, None) => {self.advance(); Some(ParsedType::Boolean)},
             (TokenType::String, None) => {self.advance(); Some(ParsedType::String)},
             (TokenType::Identifier, Some(TokenValue::String(type_name))) => {self.advance(); Some(ParsedType::TypeName(type_name))},
-            (TokenType::Func, None) => {
-                self.advance();
-
-                if self.try_match(&[TokenType::LeftParen]) {
-                    let mut arg_types = Vec::new();
-
-                    while let Some(arg_type) = self.try_type() {
-
-                        arg_types.push(arg_type);
-                        if !self.try_match(&[TokenType::Comma]) {
-                            break;
-                        }
-                    }                 
-
-                    self.consume(TokenType::RightParen, None);
-                    
-                    let ret_type = if self.try_match(&[TokenType::Arrow]) {
-                        Some(self.try_type()?)
-                    } else {
-                        None
-                    }?;
-
-                    Some(ParsedType::Function(ParsedFunctionType {arg_types: Rc::new(arg_types), ret_type: Rc::new(ret_type)}))
-                } else {
-                    None
-                }
-            },
             _ => None
         }    
     }
 
-    //expr;
-    fn statement(&mut self) -> Option<Box<dyn Expr>> {
-        let mut expr = self.expr()?;
+    fn item(&mut self) -> Option<Box<dyn Item>> {
+        let cur = self.cur()?;
 
-        if self.try_match(&[TokenType::Semicolon]) {
-            expr = UnaryExpr::new(expr, self.prev().as_ref().unwrap());
-        } else {
-            //TODO: Throw error if semicolon is needed
-        }
-
-        Some(expr)
-    }
-
-    //if_block | block
-    fn expr(&mut self) -> Option<Box<dyn Expr>> {
-        match self.cur()?.token_type {
-            TokenType::Semicolon => {self.advance(); Some(EmptyExpr::new(self.cur()?.position))}
-            TokenType::If => self.if_block(),
-            TokenType::For => self.for_loop(),
-            TokenType::While => self.while_loop(),
-            TokenType::Loop => self.loop_expr(),
-            TokenType::Break => self.break_expr(),
-            TokenType::Rand => self.rand(),
-            TokenType::Input => self.input(),
-            TokenType::Print => self.print(),
-            TokenType::Struct => self.struct_declaration(),
-            _ => self.block(),
+        match cur.token_type {
+            TokenType::Struct => self.struct_item(),
+            TokenType::Fn => self.function_item(),
+            _ => None
         }
     }
 
-    fn struct_declaration(&mut self) -> Option<Box<dyn Expr>> {
+    fn struct_item(&mut self) -> Option<Box<dyn Item>> {
         self.advance();
 
         let mut cur = self.cur()?;
@@ -284,7 +242,84 @@ impl<'a> ExprParser<'a> {
             return None
         }
 
-        Some(StructExpr::new(struct_name?, members, PositionRange::new(Position::new(0, 0))))
+        Some(StructItem::new(struct_name?, members, PositionRange::new(Position::new(0, 0))))
+    }
+
+    //fn type identifier(type identifier, type identifier, ...) block
+    fn function_item(&mut self) -> Option<Box<dyn Item>> {
+        self.advance();
+
+        let return_type = if self.peek()?.token_type == TokenType::LeftParen {
+            ParsedType::Empty
+        } else {
+            self.try_type()?
+        };
+
+        let cur = self.cur()?;
+
+        println!("Parsing functio name, cur token = {:?}", cur);
+
+        let mut function_name = None;
+
+        if let (TokenType::Identifier, Some(TokenValue::String(name))) = (cur.token_type, cur.value) {
+            function_name = Some(name);
+            self.advance();
+        }
+
+        self.consume(TokenType::LeftParen, None);
+
+        let mut args = HashMap::new();
+
+        while !self.try_match(&[TokenType::RightParen]) {
+            let arg_type = self.try_type()?;
+            let cur = self.cur()?;
+
+            let mut arg_name = None;
+
+            if let (TokenType::Identifier, Some(TokenValue::String(name))) = (cur.token_type, cur.value) {
+                arg_name = Some(name);
+                self.advance();
+            }
+
+            args.insert(arg_name?, arg_type);
+
+            self.consume(TokenType::Comma, None);
+            println!("Parsing arg");
+        }
+
+        println!("Parsing block");
+        let block = self.block()?;
+        println!("Parsed block, {:?}", function_name);
+        Some(FunctionItem::new(function_name?, args, block, return_type, PositionRange::new(Position::new(0, 0))))
+    }
+
+    //expr;
+    fn statement(&mut self) -> Option<Box<dyn Expr>> {
+        let mut expr = self.expr()?;
+
+        if self.try_match(&[TokenType::Semicolon]) {
+            expr = UnaryExpr::new(expr, self.prev().as_ref().unwrap());
+        } else {
+            //TODO: Throw error if semicolon is needed
+        }
+
+        Some(expr)
+    }
+
+    //if_block | block
+    fn expr(&mut self) -> Option<Box<dyn Expr>> {
+        match self.cur()?.token_type {
+            TokenType::Semicolon => {self.advance(); Some(EmptyExpr::new(self.cur()?.position))}
+            TokenType::If => self.if_block(),
+            TokenType::For => self.for_loop(),
+            TokenType::While => self.while_loop(),
+            TokenType::Loop => self.loop_expr(),
+            TokenType::Break => self.break_expr(),
+            TokenType::Rand => self.rand(),
+            TokenType::Input => self.input(),
+            TokenType::Print => self.print(),
+            _ => self.block(),
+        }
     }
 
     //input expr
@@ -620,8 +655,7 @@ impl<'a> ExprParser<'a> {
                     self.consume(TokenType::Comma, None);
                 }
 
-                self.var_expr_id_counter += 1;
-                Some(CallExpr::new(Box::new(var_expr), args))
+                Some(CallExpr::new(var_expr, args))
             } else {
                 Some(Box::new(var_expr))
             }
