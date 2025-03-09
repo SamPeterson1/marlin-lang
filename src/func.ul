@@ -10,15 +10,17 @@ fn int fib(int n) {
     if n == 0 {
         0
     } else if n == 1 {
-        1
+        1  
     } else {
-        let int a = fib(n - 1);
-        let int b = fib(n - 2);
-
-        a + b
+        fib(n - 1) + fib(n - 2)
     }
 }
 
+fn int add(*int a, int b) {
+    *a + b
+}
+
 fn int main() {
-    fib(40) + factorial(12)
+    let int a = 1;
+    add(&a, 3)
 }

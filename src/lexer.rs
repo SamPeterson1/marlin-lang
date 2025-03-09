@@ -184,6 +184,7 @@ impl Lexer<'_> {
             '>' => self.parse_pair('=', TokenType::Greater, TokenType::GreaterEqual),
             '<' => self.parse_pair('=', TokenType::Less, TokenType::LessEqual),
             '=' => self.parse_pair('=', TokenType::Assignment, TokenType::Equal),
+            '&' => self.end_token(TokenType::Ampersand, None),
             '\"' => self.parse_string(),
             _ => self.parse_other(),
         }

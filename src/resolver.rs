@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 
-use crate::{environment::{FunctionType, ParsedFunctionType, ParsedType, ResolvedType, StructType}, error::Diagnostic, expr::{item::{FunctionItem, Item, ItemVisitor, StructItem}, AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitable, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, StructInitializerExpr, UnaryExpr, VarExpr}};
+use crate::{environment::{FunctionType, ParsedFunctionType, ParsedType, PointerType, ResolvedType, StructType}, error::Diagnostic, expr::{item::{FunctionItem, Item, ItemVisitor, StructItem}, AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitable, ExprVisitor, GetAddressExpr, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, StructInitializerExpr, UnaryExpr, VarExpr}};
 
 struct VarDeclaration {
     is_defined: bool,
@@ -70,15 +70,13 @@ impl SymbolTable {
     }
 
     pub fn resolve_struct_item(&self, struct_item: &StructItem) -> ResolvedType {
-        let mut member_types = HashMap::new();
+        let mut member_types = Vec::new();
 
         for (member_name, member_type) in struct_item.members.iter() {
-            member_types.insert(member_name.to_string(), self.get_resolved_type(member_type));
+            member_types.push((member_name.to_string(), self.get_resolved_type(member_type)));
         }
 
-        ResolvedType::Struct(StructType {
-            member_types: Rc::new(member_types)
-        })
+        ResolvedType::Struct(StructType::new(member_types))
     }
 
     pub fn get_resolved_type(&self, parsed_type: &ParsedType) -> ResolvedType {
@@ -102,7 +100,10 @@ impl SymbolTable {
                     arg_types: Rc::new(arg_types),
                     ret_type: Rc::new(ret_type)
                 })
-            }
+            },
+            ParsedType::Pointer(pointer_type) => ResolvedType::Pointer(PointerType {
+                pointee: Rc::new(self.get_resolved_type(&pointer_type.pointee))
+            })
         }
     }
 }
@@ -266,6 +267,7 @@ impl VariableResolver<'_> {
                 if declaration.is_defined {
                     let resolved_var = ResolvedVar {
                         id: declaration.id,
+
                         is_argument: declaration.is_argument,
                         value_type: declaration.declaration_type.clone()
                     };
@@ -403,5 +405,9 @@ impl ExprVisitor<()> for VariableResolver<'_> {
         for (_, value) in expr.member_inits.iter() {
             value.accept_visitor(self);
         }
+    }
+
+    fn visit_get_address(&mut self, expr: &GetAddressExpr) -> () {
+        expr.var_expr.accept_visitor(self);
     }
 }

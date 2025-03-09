@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 
-use crate::{environment::{FunctionType, ResolvedType, StructType}, error::Diagnostic, expr::{item::{FunctionItem, Item, ItemVisitor, StructItem}, AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, StructInitializerExpr, UnaryExpr, VarExpr}, resolver::SymbolTable};
+use crate::{environment::{FunctionType, PointerType, ResolvedType, StructType}, error::Diagnostic, expr::{item::{FunctionItem, Item, ItemVisitor, StructItem}, AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, GetAddressExpr, IfExpr, InputExpr, LiteralExpr, LoopExpr, MemberAccess, PrintExpr, RandExpr, StructInitializerExpr, UnaryExpr, VarExpr}, resolver::SymbolTable};
 
 pub struct TypeChecker<'a> {
     symbol_table: &'a SymbolTable,
@@ -65,7 +65,40 @@ impl ExprVisitor<ResolvedType> for TypeChecker<'_> {
     }
 
     fn visit_var(&mut self, expr: &VarExpr) -> ResolvedType {
-        self.symbol_table.get_variable(expr).value_type.clone()
+        let mut base_type = self.symbol_table.get_variable(expr).value_type.clone();
+
+        for member_access in expr.member_accesses.iter() {
+            match member_access {
+                MemberAccess::Indirect(member_name) => {
+                    if let ResolvedType::Pointer(pointer_type) = base_type {
+                        if let ResolvedType::Struct(struct_type) = &*pointer_type.pointee {
+                            base_type = struct_type.get_member_type(member_name).clone();
+                        } else {
+                            panic!("Cannot access member of non-struct type");
+                        }
+                    } else {
+                        panic!("Cannot dereference non-pointer type");
+                    }
+                },
+                MemberAccess::Direct(member_name) => {
+                    if let ResolvedType::Struct(struct_type) = base_type {
+                        base_type = struct_type.get_member_type(member_name).clone();
+                    } else {
+                        panic!("Cannot access member of non-struct type");
+                    }
+                }
+            }
+        }
+
+        for _ in 0..expr.n_derefs {
+            if let ResolvedType::Pointer(pointer_type) = base_type {
+                base_type = (*pointer_type.pointee).clone();
+            } else {
+                panic!("Cannot dereference non-pointer type");
+            }
+        }
+
+        base_type
     }
 
     fn visit_if(&mut self, expr: &IfExpr) -> ResolvedType {
@@ -91,25 +124,44 @@ impl ExprVisitor<ResolvedType> for TypeChecker<'_> {
     }
 
     fn visit_assignment(&mut self, expr: &AssignmentExpr) -> ResolvedType {
-        let mut var_type = &self.symbol_table.get_variable(&expr.asignee).value_type;
+        let mut var_type = self.symbol_table.get_variable(&expr.asignee).value_type.clone();
         
         for member_access in expr.asignee.member_accesses.iter() {
-            let member_type;
-
-            if let ResolvedType::Struct(struct_type) = var_type {
-                member_type = struct_type.member_types.get(member_access);
-            } else {
-                panic!("Cannot access member of non-struct type");
+            match member_access {
+                MemberAccess::Indirect(member_name) => {
+                    if let ResolvedType::Pointer(pointer_type) = var_type {
+                        if let ResolvedType::Struct(struct_type) = &*pointer_type.pointee {
+                            var_type = struct_type.get_member_type(member_name).clone();
+                        } else {
+                            panic!("Cannot access member of non-struct type");
+                        }
+                    } else {
+                        panic!("Cannot dereference non-pointer type");
+                    }
+                },
+                MemberAccess::Direct(member_name) => {
+                    if let ResolvedType::Struct(struct_type) = var_type {
+                        var_type = struct_type.get_member_type(member_name).clone();
+                    } else {
+                        panic!("Cannot access member of non-struct type");
+                    }
+                }
             }
+        }
 
-            var_type = member_type.unwrap();
+        for _ in 0..expr.asignee.n_derefs {
+            if let ResolvedType::Pointer(pointer_type) = var_type {
+                var_type = (*pointer_type.pointee).clone();
+            } else {
+                panic!("Cannot dereference non-pointer type");
+            }
         }
 
         let value_type = expr.expr.accept_visitor(self);
 
         //println!("assigning {:?} to {:?}", var_type, value_type);
 
-        if *var_type != value_type {
+        if var_type != value_type {
             panic!("Mismatched types {:?}, {:?} for assignment", var_type, value_type);
         }
 
@@ -122,7 +174,7 @@ impl ExprVisitor<ResolvedType> for TypeChecker<'_> {
         println!("declaring {:?} as {:?}", expr.identifier, value_type);
 
         if value_type != self.symbol_table.get_resolved_type(&expr.declaration_type) {
-            panic!("Mismatched types {:?}, {:?} for assignment", value_type, expr.declaration_type);
+            //panic!("Mismatched types {:?}, {:?} for assignment", value_type, expr.declaration_type);
         }
 
         value_type
@@ -223,14 +275,18 @@ impl ExprVisitor<ResolvedType> for TypeChecker<'_> {
     }
 
     fn visit_struct_initializer(&mut self, expr: &StructInitializerExpr) -> ResolvedType {
-        let mut member_types = HashMap::new();
+        let mut member_types = Vec::new();
 
         for entry in expr.member_inits.iter() {
-            member_types.insert(entry.0.clone(), entry.1.accept_visitor(self));
+            member_types.push((entry.0.clone(), entry.1.accept_visitor(self)));
         }
 
-        ResolvedType::Struct(StructType {
-            member_types: Rc::new(member_types)
+        ResolvedType::Struct(StructType::new(member_types))
+    }
+
+    fn visit_get_address(&mut self, expr: &GetAddressExpr) -> ResolvedType {
+        ResolvedType::Pointer(crate::environment::PointerType {
+            pointee: Rc::new(self.visit_var(&expr.var_expr))
         })
     }
 }

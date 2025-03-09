@@ -17,9 +17,7 @@ mod operator;
 mod resolver;
 mod type_checker;
 
-
 fn main() {
-    
     let mut args: Vec<String> = env::args().collect();
     args.remove(0);
     

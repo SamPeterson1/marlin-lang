@@ -6,7 +6,13 @@ pub enum ParsedType {
     Boolean, String,
     TypeName(String),
     Function(ParsedFunctionType),
+    Pointer(ParsedPointerType),
     Empty,
+}
+
+#[derive(PartialEq, Eq, Debug, Clone)]
+pub struct ParsedPointerType {
+    pub pointee: Rc<ParsedType>
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
@@ -21,6 +27,7 @@ pub enum ResolvedType {
     Boolean, String,
     Function(FunctionType),
     Struct(StructType),
+    Pointer(PointerType),
     Empty,
 }
 
@@ -37,17 +44,51 @@ impl ResolvedType {
             ResolvedType::String => 8,
             ResolvedType::Function(_) => 8,
             ResolvedType::Struct(struct_type) => struct_type.n_bytes(),
+            ResolvedType::Pointer(_) => 8,
             ResolvedType::Empty => 0
         }
     }
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
+pub struct PointerType {
+    pub pointee: Rc<ResolvedType>
+}
+
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct StructType {
-    pub member_types: Rc<HashMap<String, ResolvedType>>
+    size: usize,
+    member_offsets: Rc<HashMap<String, usize>>,
+    member_types: Rc<HashMap<String, ResolvedType>>,
 }
 
 impl StructType {
+    pub fn new(members: Vec<(String, ResolvedType)>) -> StructType {
+        let mut member_offsets = HashMap::new();
+        let mut member_types = HashMap::new();
+        let mut offset = 0;
+
+        for (name, t) in members {
+            member_offsets.insert(name.clone(), offset);
+            offset += t.n_bytes() / 8;
+            member_types.insert(name.clone(), t);
+        }
+
+        StructType {
+            size: offset,
+            member_offsets: Rc::new(member_offsets),
+            member_types: Rc::new(member_types),
+        }
+    }
+
+    pub fn get_member_type(&self, member: &str) -> &ResolvedType {
+        self.member_types.get(member).unwrap()
+    }
+
+    pub fn get_member_offset(&self, member: &str) -> usize {
+        *self.member_offsets.get(member).unwrap()
+    }
+
     pub fn n_bytes(&self) -> usize {
         self.member_types.iter().fold(0, |acc, (_, t)| acc + t.n_bytes())
     }

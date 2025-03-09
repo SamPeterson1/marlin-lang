@@ -27,6 +27,7 @@ pub trait ExprVisitor<T> {
     fn visit_input(&mut self, expr: &InputExpr) -> T;
     fn visit_call(&mut self, expr: &CallExpr) -> T;
     fn visit_struct_initializer(&mut self, expr: &StructInitializerExpr) -> T;
+    fn visit_get_address(&mut self, expr: &GetAddressExpr) -> T;
 }
 
 macro_rules! impl_expr {
@@ -126,10 +127,17 @@ impl LiteralExpr {
 impl_expr!(LiteralExpr, visit_literal);
 
 #[derive(Debug, Clone)]
+pub enum MemberAccess {
+    Direct(String),
+    Indirect(String)
+}
+
+#[derive(Debug, Clone)]
 pub struct VarExpr {
     pub id: i32,
     pub identifier: Rc<String>,
-    pub member_accesses: Rc<Vec<String>>,
+    pub member_accesses: Rc<Vec<MemberAccess>>,
+    pub n_derefs: i32,
     pub position: PositionRange
 }
 
@@ -148,9 +156,10 @@ impl std::hash::Hash for VarExpr {
 }
 
 impl VarExpr {
-    pub fn new_unboxed(id: i32, identifier: String, member_accesses: Vec<String>) -> VarExpr {
+    pub fn new_unboxed(id: i32, n_derefs: i32, identifier: String, member_accesses: Vec<MemberAccess>) -> VarExpr {
         VarExpr {
             id,
+            n_derefs,
             identifier: Rc::new(identifier),
             member_accesses: Rc::new(member_accesses),
             position: PositionRange::new(Position::new(0, 0))
@@ -158,9 +167,10 @@ impl VarExpr {
     }
 
     #[allow(dead_code)]
-    pub fn new(id: i32, identifier: String, member_accesses: Vec<String>, position: PositionRange) -> Box<dyn Expr> {
+    pub fn new(id: i32, n_derefs: i32, identifier: String, member_accesses: Vec<MemberAccess>, position: PositionRange) -> Box<dyn Expr> {
         Box::new(VarExpr {
             id,
+            n_derefs,
             identifier: Rc::new(identifier),
             member_accesses: Rc::new(member_accesses),
             position
@@ -170,6 +180,7 @@ impl VarExpr {
     pub fn clone(var_expr: &VarExpr) -> VarExpr {
         VarExpr {
             id: var_expr.id,
+            n_derefs: var_expr.n_derefs,
             identifier: Rc::clone(&var_expr.identifier),
             member_accesses: Rc::clone(&var_expr.member_accesses),
             position: var_expr.position
@@ -447,3 +458,20 @@ impl StructInitializerExpr {
 }
 
 impl_expr!(StructInitializerExpr, visit_struct_initializer);
+
+#[derive(Debug)]
+pub struct GetAddressExpr {
+    pub var_expr: VarExpr,
+    pub position: PositionRange
+}
+
+impl GetAddressExpr {
+    pub fn new(var_expr: VarExpr, position: PositionRange) -> Box<dyn Expr> {
+        Box::new(GetAddressExpr {
+            var_expr,
+            position
+        })
+    }
+}
+
+impl_expr!(GetAddressExpr, visit_get_address);

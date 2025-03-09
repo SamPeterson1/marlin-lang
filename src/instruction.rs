@@ -327,10 +327,11 @@ impl InstructionBuilder {
             .with_sr1(sr1).instruction
     }
 
-    pub fn ldr(dr: u8, sr2: u8) -> u64 {
+    pub fn ldr(dr: u8, sr1: u8, sr2: u8) -> u64 {
         InstructionBuilder::new()
             .with_opcode(opcodes::OP_LDR)
             .with_dr(dr)
+            .with_sr1(sr1)
             .with_sr2(sr2).instruction
     }
 

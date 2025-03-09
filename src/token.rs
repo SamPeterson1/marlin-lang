@@ -90,7 +90,7 @@ pub enum TokenType {
     LeftSquare, RightSquare, 
     LeftParen, RightParen,
 
-    Plus, Minus, Slash, Star, 
+    Plus, Minus, Slash, Star, Ampersand,
     NotEqual, Equal, 
     Greater, GreaterEqual, 
     Less, LessEqual,

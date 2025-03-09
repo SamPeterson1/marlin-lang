@@ -1,14 +1,7 @@
 use std::collections::HashMap;
+use std::rc::Rc;
 
-use crate::{environment::Literal, expr::{item::{FunctionItem, Item, ItemVisitor, StructItem}, Expr, ExprVisitor}, instruction::InstructionBuilder, resolver::SymbolTable, type_checker::TypeChecker};
-
-/*
-R0 stores result of previous operation
-*/
-
-/*
-int foo = a * (b + c / d)
-*/
+use crate::{environment::{Literal, ParsedType, ResolvedType, StructType}, expr::{item::{FunctionItem, Item, ItemVisitor, StructItem}, Expr, ExprVisitor, GetAddressExpr, MemberAccess, StructInitializerExpr, VarExpr}, instruction::InstructionBuilder, resolver::SymbolTable, type_checker::TypeChecker};
 
 const RET_ADDR_REG: u8 = 15;
 const STACK_PTR_REG: u8 = 14;
@@ -17,15 +10,57 @@ const CONSTANT_POOL_REG: u8 = 12;
 
 pub struct CompilerFunction {
     body_instructions: Vec<u64>,
-    local_vars: HashMap<i32, u32>,
+    local_vars_size: usize,
+    local_vars: HashMap<i32, usize>,
+    args: Vec<usize>,
+    args_size: usize,
 }
 
 impl CompilerFunction {
     pub fn new() -> CompilerFunction {
         CompilerFunction {
             body_instructions: Vec::new(),
+            local_vars_size: 0,
             local_vars: HashMap::new(),
+            args: Vec::new(),
+            args_size: 0,
         }
+    }
+
+    pub fn get_args_size(&self) -> usize {
+        self.args_size
+    }
+
+    pub fn add_argument(&mut self, size: usize) -> usize {
+        let arg_index = self.args_size;
+        self.args.push(self.args_size);
+        self.args_size += size;
+        arg_index
+    }
+
+    pub fn get_arg(&mut self, id: usize) -> usize {
+        self.args[id]
+    }
+
+    pub fn get_local_var(&mut self, id: i32) -> usize {
+        *self.local_vars.get(&id).unwrap()
+    }
+
+    pub fn define_intermediate_var(&mut self, size: usize) -> usize {
+        let stack_index = self.local_vars_size;
+        self.local_vars_size += size;
+        stack_index
+    }
+
+    pub fn define_local_var(&mut self, id: i32, size: usize) -> usize {
+        let stack_index = self.local_vars_size;
+        self.local_vars.insert(id, self.local_vars_size);
+        self.local_vars_size += size;
+        stack_index
+    }
+
+    pub fn local_vars_size(&self) -> usize {
+        self.local_vars_size
     }
 
     pub fn n_instructions(&self) -> usize {
@@ -51,9 +86,9 @@ impl CompilerFunction {
         instructions.push(InstructionBuilder::push(FRAME_PTR_REG));
         instructions.push(InstructionBuilder::addi_imm(FRAME_PTR_REG, STACK_PTR_REG, 0));
 
-        instructions.push(InstructionBuilder::addi_imm(STACK_PTR_REG, STACK_PTR_REG, self.local_vars.len() as i32));
+        instructions.push(InstructionBuilder::addi_imm(STACK_PTR_REG, STACK_PTR_REG, self.local_vars_size() as i32));
 
-        for i in 0..12 {
+        for i in 0..2 {
             instructions.push(InstructionBuilder::push(i));
         }
 
@@ -61,11 +96,11 @@ impl CompilerFunction {
 
         instructions.push(InstructionBuilder::stfp(0, -2));
 
-        for i in (0..12).rev() {
+        for i in (0..2).rev() {
             instructions.push(InstructionBuilder::pop(i));
         }
 
-        instructions.push(InstructionBuilder::addi_imm(STACK_PTR_REG, STACK_PTR_REG, -(self.local_vars.len() as i32)));
+        instructions.push(InstructionBuilder::addi_imm(STACK_PTR_REG, STACK_PTR_REG, -(self.local_vars_size() as i32)));
 
         instructions.push(InstructionBuilder::pop(FRAME_PTR_REG));
         instructions.push(InstructionBuilder::pop(RET_ADDR_REG));
@@ -146,6 +181,11 @@ impl ItemVisitor<()> for Compiler<'_> {
     fn visit_struct(&mut self, item: &StructItem) -> () { }
 
     fn visit_function(&mut self, item: &FunctionItem) -> () {
+        for arg in item.args.iter() {
+            let resolved_type = self.symbol_table.get_resolved_type(arg.1);
+            self.current_function.add_argument(resolved_type.n_bytes() / 8);
+        }
+
         item.expr.accept_visitor(self);
 
         let mut current_function_swap = CompilerFunction::new();
@@ -174,10 +214,12 @@ impl ExprVisitor<()> for Compiler<'_> {
 
     fn visit_binary(&mut self, expr: &crate::expr::BinaryExpr) -> () {
         expr.left.accept_visitor(self);
-        self.current_function.push_instruction(InstructionBuilder::addi_imm(1, 0, 0));
+        let intermmediate_var_index = self.current_function.define_intermediate_var(1);
+        self.current_function.push_instruction(InstructionBuilder::stfp(0, intermmediate_var_index as i32 + 1));
         expr.right.accept_visitor(self);
 
         let operation_type = expr.left.accept_visitor(&mut self.type_checker);
+        self.current_function.push_instruction(InstructionBuilder::ldfp(1, intermmediate_var_index as i32 + 1));
         self.current_function.push_instructions(expr.operator.compile(0, 1, 0, operation_type));
     }
 
@@ -200,16 +242,54 @@ impl ExprVisitor<()> for Compiler<'_> {
         }.into_iter().collect());
     }
 
-    fn visit_var(&mut self, expr: &crate::expr::VarExpr) -> () {
+    fn visit_var(&mut self, expr: &VarExpr) -> () {
         let resolved_var = self.symbol_table.get_variable(expr);
         
         if resolved_var.is_argument {
-            let arg_index = resolved_var.id as i32;
+            let arg_index = self.current_function.get_arg(resolved_var.id as usize) as i32;
+            println!("Getting argument index {} for var {}", arg_index, expr.identifier);
             self.current_function.push_instruction(InstructionBuilder::ldfp(0, -arg_index - 3));
         } else {
-            let stack_index = *self.current_function.local_vars.get(&resolved_var.id).unwrap() as i32;
+            let stack_index = self.current_function.get_local_var(resolved_var.id) as i32;
             self.current_function.push_instruction(InstructionBuilder::ldfp(0, stack_index + 1));
         }
+
+        let mut var_type = resolved_var.value_type.clone();
+
+        for member_access in expr.member_accesses.iter() {
+            match member_access {
+                MemberAccess::Direct(member_name) => {
+                    if let ResolvedType::Struct(struct_type) = &var_type {
+                        let member_offset = struct_type.get_member_offset(member_name);
+                        self.current_function.push_instruction(InstructionBuilder::ldr_imm(0, 0, member_offset as i32));
+                        var_type = struct_type.get_member_type(member_name).clone();
+                    } else {
+                        panic!("Member access on non-struct type");
+                    }
+                },
+                MemberAccess::Indirect(member_name) => {
+                    if let ResolvedType::Pointer(pointer_type) = &var_type {
+                        if let ResolvedType::Struct(struct_type) = &*pointer_type.pointee {
+                            let member_offset = struct_type.get_member_offset(member_name);
+                            self.current_function.push_instruction(InstructionBuilder::ldr_imm(0, 0, 0));
+                            self.current_function.push_instruction(InstructionBuilder::ldr_imm(0, 0, member_offset as i32));
+                            var_type = struct_type.get_member_type(member_name).clone();
+                        } else {
+                            panic!("Member access on non-struct type");
+                        }
+                    } else {
+                        panic!("Member access on non-pointer type");
+                    }
+                }
+            }
+        }
+
+        for _ in 0..expr.n_derefs {
+            println!("Dereferencing {}", expr.identifier);
+            self.current_function.push_instruction(InstructionBuilder::ldr_imm(0, 0, 0));
+        }
+
+        self.current_function.push_instruction(InstructionBuilder::nop());
     }
 
     /*
@@ -242,26 +322,68 @@ impl ExprVisitor<()> for Compiler<'_> {
     }
 
     fn visit_assignment(&mut self, expr: &crate::expr::AssignmentExpr) -> () {
+        self.current_function.push_instruction(InstructionBuilder::nop());
         let resolved_var = self.symbol_table.get_variable(&expr.asignee);
         
         expr.expr.accept_visitor(self);
 
         if resolved_var.is_argument {
-            let arg_index = resolved_var.id as i32;
-            self.current_function.push_instruction(InstructionBuilder::stfp(0, -arg_index - 3));
+            let arg_index = self.current_function.get_arg(resolved_var.id as usize) as i32;
+            self.current_function.push_instruction(InstructionBuilder::addi_imm(1, FRAME_PTR_REG, -arg_index - 3));
         } else {
-            let stack_index = *self.current_function.local_vars.get(&resolved_var.id).unwrap() as i32;
-            self.current_function.push_instruction(InstructionBuilder::stfp(0, stack_index + 1));
+            let stack_index = self.current_function.get_local_var(resolved_var.id) as i32;
+            self.current_function.push_instruction(InstructionBuilder::addi_imm(1, FRAME_PTR_REG, stack_index + 1));
         }
+
+        let mut var_type = resolved_var.value_type.clone();
+
+        for member_access in expr.asignee.member_accesses.iter() {
+            match member_access {
+                MemberAccess::Direct(member_name) => {
+                    if let ResolvedType::Struct(struct_type) = &var_type {
+                        let member_offset = struct_type.get_member_offset(member_name);
+                        
+                        self.current_function.push_instruction(InstructionBuilder::ldr_imm(1, 1, 0));
+                        self.current_function.push_instruction(InstructionBuilder::addi_imm(1, 1, member_offset as i32));
+    
+                        var_type = struct_type.get_member_type(member_name).clone();
+                    } else {
+                        panic!("Member access on non-struct type");
+                    }
+                },
+                MemberAccess::Indirect(member_name) => {
+                    if let ResolvedType::Pointer(pointer_type) = &var_type {
+                        if let ResolvedType::Struct(struct_type) = &*pointer_type.pointee {
+                            let member_offset = struct_type.get_member_offset(member_name);
+                            
+                            self.current_function.push_instruction(InstructionBuilder::ldr_imm(1, 1, 0));
+                            self.current_function.push_instruction(InstructionBuilder::ldr_imm(1, 1, 0));
+                            self.current_function.push_instruction(InstructionBuilder::addi_imm(1, 1, member_offset as i32));
+
+                            var_type = struct_type.get_member_type(member_name).clone();
+                        } else {
+                            panic!("Member access on non-struct type");
+                        }
+                    } else {
+                        panic!("Member access on non-pointer type");
+                    }
+                }
+            }
+        }
+
+        for _ in 0..expr.asignee.n_derefs {
+            self.current_function.push_instruction(InstructionBuilder::ldr_imm(1, 1, 0));
+        }
+
+        self.current_function.push_instruction(InstructionBuilder::str_imm(0, 1, 0));
     }
 
     fn visit_declaration(&mut self, expr: &crate::expr::DeclarationExpr) -> () {
-        let stack_index = self.current_function.local_vars.len() as i32;
-        self.current_function.local_vars.insert(expr.id, stack_index as u32);
+        let stack_index = self.current_function.define_local_var(expr.id, 1);
 
         expr.expr.accept_visitor(self);
 
-        self.current_function.push_instruction(InstructionBuilder::stfp(0, stack_index + 1))
+        self.current_function.push_instruction(InstructionBuilder::stfp(0, stack_index as i32 + 1))
     }
 
     fn visit_block(&mut self, expr: &crate::expr::BlockExpr) -> () {
@@ -332,7 +454,7 @@ impl ExprVisitor<()> for Compiler<'_> {
             function_address_location
         };
 
-        for arg in &expr.args {
+        for arg in expr.args.iter().rev() {
             arg.accept_visitor(self);
             self.current_function.push_instruction(InstructionBuilder::push(0));
         }
@@ -346,7 +468,33 @@ impl ExprVisitor<()> for Compiler<'_> {
         self.current_function.push_instruction(InstructionBuilder::addi_imm(STACK_PTR_REG, STACK_PTR_REG, -(expr.args.len() as i32)));
     }
 
-    fn visit_struct_initializer(&mut self, expr: &crate::expr::StructInitializerExpr) -> () {
-        todo!()
+    fn visit_struct_initializer(&mut self, expr: &StructInitializerExpr) -> () {
+        if let ResolvedType::Struct(struct_type) = self.symbol_table.get_resolved_type(&ParsedType::TypeName((*expr.type_name).clone())) {
+            let stack_offset = self.current_function.define_intermediate_var(struct_type.n_bytes() / 8);
+            for (member_name, member_expr) in expr.member_inits.iter() {
+                member_expr.accept_visitor(self);
+                let member_offset = struct_type.get_member_offset(member_name);
+
+                self.current_function.push_instruction(InstructionBuilder::stfp(0, (stack_offset + member_offset) as i32 + 1));
+            }
+
+            self.current_function.push_instruction(InstructionBuilder::addi_imm(0, FRAME_PTR_REG, stack_offset as i32 + 1));
+        } else {
+            panic!("Struct initializer on non-struct type");
+        }
+
+
+    }
+
+    fn visit_get_address(&mut self, expr: &GetAddressExpr) -> () {
+        let resolved_var = self.symbol_table.get_variable(&expr.var_expr);
+
+        if resolved_var.is_argument {
+            let arg_index = self.current_function.get_arg(resolved_var.id as usize) as i32;
+            self.current_function.push_instruction(InstructionBuilder::addi_imm(0, FRAME_PTR_REG, -arg_index - 3));
+        } else {
+            let stack_index = self.current_function.get_local_var(resolved_var.id) as i32;
+            self.current_function.push_instruction(InstructionBuilder::addi_imm(0, FRAME_PTR_REG, stack_index + 1));
+        }
     }
 }
