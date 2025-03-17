@@ -96,6 +96,8 @@ pub enum TokenType {
     Less, LessEqual,
     And, Or, Not,
 
+    Putc, Getc,
+    Alloc,
     Arrow,
     Let,
 

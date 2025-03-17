@@ -298,7 +298,7 @@ boolean_binary_operator!(Or, ||, "||",  fn compile(&self, dr: u8, sr1: u8, sr2: 
     let mut instructions = Vec::new();
 
     instructions.push(match operation_type {
-        ResolvedType::Boolean => InstructionBuilder::and(dr, sr1, sr2),
+        ResolvedType::Boolean => InstructionBuilder::or(dr, sr1, sr2),
         _ => panic!("Unsupported type for operator '||'")
     });
 

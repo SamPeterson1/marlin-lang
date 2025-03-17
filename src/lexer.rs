@@ -362,6 +362,9 @@ impl Lexer<'_> {
             "rand" => self.end_token(TokenType::Rand, None),
             "input" => self.end_token(TokenType::Input, None),
             "struct" => self.end_token(TokenType::Struct, None),
+            "alloc" => self.end_token(TokenType::Alloc, None),
+            "putc" => self.end_token(TokenType::Putc, None),
+            "getc" => self.end_token(TokenType::Getc, None),
             _ => self.end_token(TokenType::Identifier, Some(TokenValue::String(word))),
         }
     }

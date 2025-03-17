@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 
-use crate::{environment::{FunctionType, ParsedFunctionType, ParsedType, PointerType, ResolvedType, StructType}, error::Diagnostic, expr::{item::{FunctionItem, Item, ItemVisitor, StructItem}, AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitable, ExprVisitor, GetAddressExpr, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, RandExpr, StructInitializerExpr, UnaryExpr, VarExpr}};
+use crate::{environment::{FunctionType, ParsedFunctionType, ParsedType, PointerType, ResolvedType, StructType}, error::Diagnostic, expr::{item::{FunctionItem, Item, ItemVisitor, StructItem}, AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitable, ExprVisitor, GetAddressExpr, GetCharExpr, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, PutCharExpr, RandExpr, StaticArrayExpr, StructInitializerExpr, UnaryExpr, VarExpr}};
 
 struct VarDeclaration {
     is_defined: bool,
@@ -192,7 +192,7 @@ impl ItemVisitor<()> for TypeResolver<'_> {
     
     fn visit_function(&mut self, item: &crate::expr::item::FunctionItem) -> () { 
         let resolved_type = self.symbol_table.get_resolved_type(&ParsedType::Function(ParsedFunctionType {
-            arg_types: Rc::new(item.args.values().cloned().collect()),
+            arg_types: Rc::new(item.args.iter().map(|arg| arg.1.clone()).collect()),
             ret_type: Rc::new(item.ret_type.clone())
         }));
 
@@ -317,7 +317,11 @@ impl ExprVisitor<()> for VariableResolver<'_> {
     fn visit_literal(&mut self, expr: &LiteralExpr) { }
 
     fn visit_var(&mut self, expr: &VarExpr) {
-        self.resolve_var(expr)
+        self.resolve_var(expr);
+
+        for array_access in expr.array_accesses.iter() {
+            array_access.accept_visitor(self);
+        }
     }
 
     fn visit_if(&mut self, expr: &IfExpr) {
@@ -409,5 +413,17 @@ impl ExprVisitor<()> for VariableResolver<'_> {
 
     fn visit_get_address(&mut self, expr: &GetAddressExpr) -> () {
         expr.var_expr.accept_visitor(self);
+    }
+
+    fn visit_static_array(&mut self, expr: &StaticArrayExpr) -> () {
+
+    }
+
+    fn visit_get_char(&mut self, expr: &GetCharExpr) -> () {
+        
+    }
+
+    fn visit_put_char(&mut self, expr: &PutCharExpr) -> () {
+        expr.expr.accept_visitor(self);
     }
 }

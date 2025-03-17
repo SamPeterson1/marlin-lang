@@ -1,0 +1,205 @@
+struct Board {
+    *int cells;
+    bool is_x_turn;
+}
+
+fn print_str(*int chars) {
+    print_str_generic(chars, false);
+}
+
+fn println_str(*int chars) {
+    print_str_generic(chars, true);
+}
+
+fn print_str_generic(*int chars, bool newline) {
+    let int i = 0;
+    while (chars[i] != 0) {
+        putc chars[i];
+        i = i + 1;
+    }
+
+    if (newline) {
+        putc 10;
+    }
+}
+
+fn print_board(*Board board) {
+    for (let int i = 0; i < 3; i = i + 1) {
+        for (let int j = 0; j < 3; j = j + 1) {
+            putc get_cell(board, i, j);
+        }
+        putc 10;
+    }
+}
+
+fn int get_cell(*Board board, int row, int col) {
+    board->cells[3 * row + col]
+}
+
+fn set_cell(*Board board, int row, int col, int value) {
+    board->cells[3 * row + col] = value;
+}
+
+fn get_move(*Board board, *int row, *int col) {
+    let bool valid_move = false;
+
+    while (!valid_move) {
+        let int in_row = 0;
+        let int in_col = 0;
+
+        print_str("Enter row: ");
+        in_row = getc;
+        in_row = in_row - 48;
+
+        print_str("Enter column: ");
+        in_col = getc;
+        in_col = in_col - 48;
+
+        if (in_row >= 0 and in_row < 3 and in_col >= 0 and in_col < 3) {
+            if (get_cell(board, in_row, in_col) == 45) {
+                *row = in_row;
+                *col = in_col;
+                valid_move = true;
+            } else {
+                println_str("Cell already taken!");
+            }
+        } else {
+            println_str("Move out of bounds!");
+        }
+    }
+}
+
+fn bool check_horizontal_win(*Board board, *int winner) {
+    let bool ret_val = false;
+
+    for (let int i = 0; i < 3; i = i + 1) {
+        print_str("LOG: Checking horizontal win: ");
+        putc get_cell(board, i, 0);
+        putc get_cell(board, i, 1);
+        putc get_cell(board, i, 2);
+        putc 10;
+        if (get_cell(board, i, 0) == get_cell(board, i, 1) and get_cell(board, i, 1) == get_cell(board, i, 2)) {
+            if (get_cell(board, i, 0) != 45) {
+                println_str("LOG: Horizontal win!");
+                *winner = get_cell(board, i, 0);
+                ret_val = true;
+            }
+        }
+    }
+
+    ret_val
+}
+
+fn bool check_vertical_win(*Board board, *int winner) {
+    let bool ret_val = false;
+
+    for (let int i = 0; i < 3; i = i + 1) {
+        print_str("LOG: Checking vertical win: ");
+        putc get_cell(board, 0, i);
+        putc get_cell(board, 1, i);
+        putc get_cell(board, 2, i);
+        putc 10;
+        if (get_cell(board, 0, i) == get_cell(board, 1, i) and get_cell(board, 1, i) == get_cell(board, 2, i)) {
+            if (get_cell(board, 0, i) != 45) {
+                println_str("LOG: Vertical win");
+                *winner = get_cell(board, 0, i);
+                ret_val = true;
+            }
+        }
+    }
+
+    ret_val
+}
+
+fn bool check_diagonal_win(*Board board, *int winner) {
+    let bool ret_val = false;
+
+    print_str("LOG: Checking diagonal win: ");
+    putc get_cell(board, 0, 0);
+    putc get_cell(board, 1, 1);
+    putc get_cell(board, 2, 2);
+    putc 10;
+
+    if (get_cell(board, 0, 0) == get_cell(board, 1, 1) and get_cell(board, 1, 1) == get_cell(board, 2, 2)) {
+        if (get_cell(board, 0, 0) != 45) {
+            println_str("LOG: Diagonal win");
+            *winner = get_cell(board, 0, 0);
+            ret_val = true;
+        }
+    }
+    
+    print_str("LOG: Checking diagonal win: ");
+    putc get_cell(board, 0, 2);
+    putc get_cell(board, 1, 1);
+    putc get_cell(board, 2, 0);
+    putc 10;
+
+    if (get_cell(board, 0, 2) == get_cell(board, 1, 1) and get_cell(board, 1, 1) == get_cell(board, 2, 0)) {
+        if (get_cell(board, 0, 2) != 45) {
+            println_str("LOG: Diagonal win");
+            *winner = get_cell(board, 0, 2);
+            ret_val = true;
+        }
+    }
+
+    ret_val
+}
+
+fn int main() {
+    let int empty = 45;
+    let int x = 88;
+    let int o = 79;
+
+    let Board board = Board {
+        cells: 0,
+        is_x_turn: false
+    };
+
+    board.cells = alloc int[9];
+    for (let int i = 0; i < 9; i = i + 1) {
+        board.cells[i] = empty;
+    }
+
+    board.is_x_turn = true;
+
+    let bool game_over = false;
+
+    while (!game_over) {
+        print_board(&board);
+
+        if (board.is_x_turn) {
+            println_str("X's turn!");
+        } else {
+            println_str("O's turn!");
+        }
+
+        let int row = 0;
+        let int col = 0;
+
+        get_move(&board, &row, &col);
+
+        if (board.is_x_turn) {
+            set_cell(&board, row, col, x);
+        } else {
+            set_cell(&board, row, col, o);
+        }
+
+        board.is_x_turn = !board.is_x_turn;
+
+        let int winner = 0;
+
+        if (check_horizontal_win(&board, &winner) or check_vertical_win(&board, &winner) or check_diagonal_win(&board, &winner)) {
+            print_board(&board);
+
+            if (winner == x) {
+                println_str("X wins!");
+            } else {
+                println_str("O wins!");
+            }
+
+            game_over = true;
+        }
+    }
+
+    0   
+}

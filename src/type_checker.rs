@@ -1,6 +1,6 @@
-use std::{collections::HashMap, rc::Rc};
+use std::{collections::HashMap, fmt::Pointer, rc::Rc};
 
-use crate::{environment::{FunctionType, PointerType, ResolvedType, StructType}, error::Diagnostic, expr::{item::{FunctionItem, Item, ItemVisitor, StructItem}, AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, GetAddressExpr, IfExpr, InputExpr, LiteralExpr, LoopExpr, MemberAccess, PrintExpr, RandExpr, StructInitializerExpr, UnaryExpr, VarExpr}, resolver::SymbolTable};
+use crate::{environment::{FunctionType, PointerType, ResolvedType, StructType}, error::Diagnostic, expr::{item::{FunctionItem, Item, ItemVisitor, StructItem}, AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, GetAddressExpr, GetCharExpr, IfExpr, InputExpr, LiteralExpr, LoopExpr, MemberAccess, PrintExpr, PutCharExpr, RandExpr, StaticArrayExpr, StructInitializerExpr, UnaryExpr, VarExpr}, resolver::SymbolTable};
 
 pub struct TypeChecker<'a> {
     symbol_table: &'a SymbolTable,
@@ -90,6 +90,21 @@ impl ExprVisitor<ResolvedType> for TypeChecker<'_> {
             }
         }
 
+        for array_access in expr.array_accesses.iter() {
+            println!("array access {:?}", array_access);
+            let index_type = array_access.accept_visitor(self);
+
+            if index_type != ResolvedType::Integer {
+                panic!("Cannot access array with non-integer index");
+            }
+
+            if let ResolvedType::Pointer(pointer_type) = base_type {
+                base_type = (*pointer_type.pointee).clone();
+            } else {
+                panic!("Cannot perform array access on non-pointer type");
+            }
+        }
+
         for _ in 0..expr.n_derefs {
             if let ResolvedType::Pointer(pointer_type) = base_type {
                 base_type = (*pointer_type.pointee).clone();
@@ -146,6 +161,20 @@ impl ExprVisitor<ResolvedType> for TypeChecker<'_> {
                         panic!("Cannot access member of non-struct type");
                     }
                 }
+            }
+        }
+
+        for array_access in expr.asignee.array_accesses.iter() {
+            let index_type = array_access.accept_visitor(self);
+
+            if index_type != ResolvedType::Integer {
+                panic!("Cannot access array with non-integer index");
+            }
+
+            if let ResolvedType::Pointer(pointer_type) = var_type {
+                var_type = (*pointer_type.pointee).clone();
+            } else {
+                panic!("Cannot perform array access on non-pointer type");
             }
         }
 
@@ -288,5 +317,19 @@ impl ExprVisitor<ResolvedType> for TypeChecker<'_> {
         ResolvedType::Pointer(crate::environment::PointerType {
             pointee: Rc::new(self.visit_var(&expr.var_expr))
         })
+    }
+
+    fn visit_static_array(&mut self, expr: &StaticArrayExpr) -> ResolvedType {
+        ResolvedType::Pointer(PointerType {
+            pointee: Rc::new(self.symbol_table.get_resolved_type(&expr.declaration_type))
+        })
+    }
+
+    fn visit_get_char(&mut self, expr: &GetCharExpr) -> ResolvedType {
+        ResolvedType::Integer
+    }
+
+    fn visit_put_char(&mut self, expr: &PutCharExpr) -> ResolvedType {
+        ResolvedType::Empty
     }
 }

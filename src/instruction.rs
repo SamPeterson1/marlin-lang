@@ -460,6 +460,18 @@ impl InstructionBuilder {
             .with_sr1(sr1).instruction
     }
 
+    pub fn putc(sr1: u8) -> u64 {
+        InstructionBuilder::new()
+            .with_opcode(opcodes::OP_PUTC)
+            .with_sr1(sr1).instruction
+    }
+
+    pub fn getc(dr: u8) -> u64 {
+        InstructionBuilder::new()
+            .with_opcode(opcodes::OP_GETC)
+            .with_dr(dr).instruction
+    }
+
     pub fn ret() -> u64 {
         InstructionBuilder::new()
             .with_opcode(opcodes::OP_RET).instruction

@@ -1,0 +1,28 @@
+fn main() {
+    let *int prompt = "Enter 5 characters to echo: ";
+    let int i = 0;
+
+    while (prompt[i] != 0) {
+        putc prompt[i];
+        i = i + 1;
+    }
+
+    let *int in_buf = alloc int[5];
+
+    for (let int i = 0; i < 5; i = i + 1) {
+        in_buf[i] = getc;
+    }
+
+    let *int response = "You entered: ";
+
+    i = 0;
+
+    while (response[i] != 0) {
+        putc response[i];
+        i = i + 1;
+    }
+
+    for (let int i = 0; i < 5; i = i + 1) {
+        putc in_buf[i];
+    }
+}

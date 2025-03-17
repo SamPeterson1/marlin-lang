@@ -55,14 +55,14 @@ impl_item!(StructItem, visit_struct);
 #[derive(Debug)]
 pub struct FunctionItem {
     pub name: Rc<String>,
-    pub args: HashMap<String, ParsedType>,
+    pub args: Vec<(String, ParsedType)>,
     pub expr: Box<dyn Expr>,
     pub ret_type: ParsedType,
     pub position: PositionRange,
 }
 
 impl FunctionItem {
-    pub fn new(name: String, args: HashMap<String, ParsedType>, expr: Box<dyn Expr>, ret_type: ParsedType, position: PositionRange) -> Box<dyn Item> {
+    pub fn new(name: String, args: Vec<(String, ParsedType)>, expr: Box<dyn Expr>, ret_type: ParsedType, position: PositionRange) -> Box<dyn Item> {
         Box::new(FunctionItem {
             name: Rc::new(name),
             args,

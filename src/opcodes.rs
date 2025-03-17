@@ -36,5 +36,7 @@ pub const OP_LDI: u8 = 0b101001;
 pub const OP_ST: u8 = 0b101010;
 pub const OP_STI: u8 = 0b101011;
 pub const OP_CALL: u8 = 0b110001;
+pub const OP_PUTC: u8 = 0b110010;
+pub const OP_GETC: u8 = 0b110011;
 pub const OP_RET: u8 = 0b101100;
 pub const OP_HALT: u8 = 0b101101;

@@ -28,6 +28,9 @@ pub trait ExprVisitor<T> {
     fn visit_call(&mut self, expr: &CallExpr) -> T;
     fn visit_struct_initializer(&mut self, expr: &StructInitializerExpr) -> T;
     fn visit_get_address(&mut self, expr: &GetAddressExpr) -> T;
+    fn visit_static_array(&mut self, expr: &StaticArrayExpr) -> T;
+    fn visit_put_char(&mut self, expr: &PutCharExpr) -> T;
+    fn visit_get_char(&mut self, expr: &GetCharExpr) -> T;
 }
 
 macro_rules! impl_expr {
@@ -71,6 +74,17 @@ impl BinaryExpr {
     pub fn new(left: Box<dyn Expr>, right: Box<dyn Expr>, operator_token: &Token) -> Box<dyn Expr> {
         let operator = operator::as_binary_operator(operator_token);
 
+        let position = PositionRange::concat(left.get_position(), right.get_position());
+
+        Box::new(BinaryExpr {
+            left,
+            right,
+            operator,
+            position
+        })
+    }
+
+    pub fn new_with_operator(left: Box<dyn Expr>, right: Box<dyn Expr>, operator: Box<dyn BinaryOperator>) -> Box<dyn Expr> {
         let position = PositionRange::concat(left.get_position(), right.get_position());
 
         Box::new(BinaryExpr {
@@ -137,6 +151,7 @@ pub struct VarExpr {
     pub id: i32,
     pub identifier: Rc<String>,
     pub member_accesses: Rc<Vec<MemberAccess>>,
+    pub array_accesses: Rc<Vec<Box<dyn Expr>>>,
     pub n_derefs: i32,
     pub position: PositionRange
 }
@@ -156,25 +171,15 @@ impl std::hash::Hash for VarExpr {
 }
 
 impl VarExpr {
-    pub fn new_unboxed(id: i32, n_derefs: i32, identifier: String, member_accesses: Vec<MemberAccess>) -> VarExpr {
+    pub fn new_unboxed(id: i32, n_derefs: i32, identifier: String, member_accesses: Vec<MemberAccess>, array_accesses: Vec<Box<dyn Expr>>) -> VarExpr {
         VarExpr {
             id,
             n_derefs,
             identifier: Rc::new(identifier),
             member_accesses: Rc::new(member_accesses),
+            array_accesses: Rc::new(array_accesses),
             position: PositionRange::new(Position::new(0, 0))
         }
-    }
-
-    #[allow(dead_code)]
-    pub fn new(id: i32, n_derefs: i32, identifier: String, member_accesses: Vec<MemberAccess>, position: PositionRange) -> Box<dyn Expr> {
-        Box::new(VarExpr {
-            id,
-            n_derefs,
-            identifier: Rc::new(identifier),
-            member_accesses: Rc::new(member_accesses),
-            position
-        })
     }
 
     pub fn clone(var_expr: &VarExpr) -> VarExpr {
@@ -183,6 +188,7 @@ impl VarExpr {
             n_derefs: var_expr.n_derefs,
             identifier: Rc::clone(&var_expr.identifier),
             member_accesses: Rc::clone(&var_expr.member_accesses),
+            array_accesses: Rc::clone(&var_expr.array_accesses),
             position: var_expr.position
         }
     }
@@ -475,3 +481,53 @@ impl GetAddressExpr {
 }
 
 impl_expr!(GetAddressExpr, visit_get_address);
+
+#[derive(Debug)]
+pub struct StaticArrayExpr {
+    pub len: usize,
+    pub declaration_type: ParsedType,
+    pub position: PositionRange
+}
+
+impl StaticArrayExpr {
+    pub fn new(len: usize, declaration_type: ParsedType) -> Box<dyn Expr> {
+        Box::new(StaticArrayExpr {
+            len, declaration_type,
+            position: PositionRange::new(Position::new(0, 0))
+        })
+    }
+}
+
+impl_expr!(StaticArrayExpr, visit_static_array);
+
+#[derive(Debug)]
+pub struct PutCharExpr {
+    pub expr: Box<dyn Expr>,
+    pub position: PositionRange
+}
+
+impl PutCharExpr {
+    pub fn new(expr: Box<dyn Expr>, position: PositionRange) -> Box<dyn Expr> {
+        Box::new(PutCharExpr {
+            expr,
+            position
+        })
+    }
+}
+
+impl_expr!(PutCharExpr, visit_put_char);
+
+#[derive(Debug)]
+pub struct GetCharExpr {
+    pub position: PositionRange
+}
+
+impl GetCharExpr {
+    pub fn new(position: PositionRange) -> Box<dyn Expr> {
+        Box::new(GetCharExpr {
+            position
+        })
+    }
+}
+
+impl_expr!(GetCharExpr, visit_get_char);
