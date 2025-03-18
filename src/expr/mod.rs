@@ -318,7 +318,6 @@ impl<'a> ExprParser<'a> {
     //if_block | block
     fn expr(&mut self) -> Option<Box<dyn Expr>> {
         match self.cur()?.token_type {
-            TokenType::Semicolon => {self.advance(); Some(EmptyExpr::new(self.cur()?.position))}
             TokenType::If => self.if_block(),
             TokenType::For => self.for_loop(),
             TokenType::While => self.while_loop(),

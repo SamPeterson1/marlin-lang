@@ -83,17 +83,6 @@ impl BinaryExpr {
             position
         })
     }
-
-    pub fn new_with_operator(left: Box<dyn Expr>, right: Box<dyn Expr>, operator: Box<dyn BinaryOperator>) -> Box<dyn Expr> {
-        let position = PositionRange::concat(left.get_position(), right.get_position());
-
-        Box::new(BinaryExpr {
-            left,
-            right,
-            operator,
-            position
-        })
-    }
 }
 
 impl_expr!(BinaryExpr, visit_binary);

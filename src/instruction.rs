@@ -1,17 +1,45 @@
-use crate::opcodes;
+use crate::{opcodes, vm::ConditionCode};
 
-#[derive(PartialEq, Eq)]
-pub struct ConditionCode {
-    pub n: bool,
-    pub z: bool,
-    pub p: bool,
+
+pub struct Instruction {
+    pub opcode: u8,
+    pub dr: usize,
+    pub sr1: usize,
+    pub sr2: usize,
+    pub sr3: usize,
+    pub imm32: [u8; 4],
+    pub cc: ConditionCode,
+    pub pc_offset32: i32,
+    pub use_imm32: bool,
 }
 
-impl ConditionCode {
-    pub fn new(n: bool, z: bool, p: bool) -> ConditionCode {
-        ConditionCode { n, z, p }
+impl Instruction {
+    pub fn new(inst: u64) -> Self {
+        let imm32_bytes = [
+            ((inst >> 4) & 0xFF) as u8,
+            ((inst >> 12) & 0xFF) as u8,
+            ((inst >> 20) & 0xFF) as u8,
+            ((inst >> 28) & 0xFF) as u8
+        ];
+
+        let n = ((inst >> 39) & 1) != 0;
+        let z = ((inst >> 38) & 1) != 0;
+        let p = ((inst >> 37) & 1) != 0;
+
+        Instruction {
+            opcode: (inst >> 57) as u8 & 0b111111,
+            dr: (inst >> 53) as usize & 0b1111,
+            sr1: (inst as usize) & 0b1111,
+            sr2: ((inst >> 4) as usize) & 0b1111,
+            sr3: (inst >> 53) as usize & 0b1111,
+            imm32: imm32_bytes,
+            cc: ConditionCode::new(n, z, p),
+            pc_offset32: ((inst >> 4) & 0xFFFFFFFF) as i32,
+            use_imm32: ((inst >> 52) & 1) != 0
+        }
     }
 }
+
 pub struct InstructionBuilder {
     pub instruction: u64,
 }
@@ -338,7 +366,6 @@ impl InstructionBuilder {
     pub fn ldr_imm(dr: u8, sr1: u8, imm32: i32) -> u64 {
         InstructionBuilder::new()
             .with_opcode(opcodes::OP_LDR)
-            .with_sr1(sr1)
             .with_dr(dr)
             .with_imm32i(imm32).instruction
     }
@@ -460,10 +487,9 @@ impl InstructionBuilder {
             .with_sr1(sr1).instruction
     }
 
-    pub fn putc(sr1: u8) -> u64 {
+    pub fn ret() -> u64 {
         InstructionBuilder::new()
-            .with_opcode(opcodes::OP_PUTC)
-            .with_sr1(sr1).instruction
+            .with_opcode(opcodes::OP_RET).instruction
     }
 
     pub fn getc(dr: u8) -> u64 {
@@ -472,9 +498,10 @@ impl InstructionBuilder {
             .with_dr(dr).instruction
     }
 
-    pub fn ret() -> u64 {
+    pub fn putc(sr1: u8) -> u64 {
         InstructionBuilder::new()
-            .with_opcode(opcodes::OP_RET).instruction
+            .with_opcode(opcodes::OP_PUTC)
+            .with_sr1(sr1).instruction
     }
 
     pub fn halt() -> u64 {

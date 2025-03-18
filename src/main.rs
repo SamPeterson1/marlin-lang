@@ -10,6 +10,7 @@ mod expr;
 mod instruction;
 mod compiler;
 mod opcodes;
+mod vm;
 
 mod environment;
 
