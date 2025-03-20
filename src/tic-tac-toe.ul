@@ -1,6 +1,6 @@
 struct Board {
-    *int cells;
-    bool is_x_turn;
+    *int cells,
+    bool is_x_turn
 }
 
 fn print_str(*int chars) {
@@ -24,15 +24,15 @@ fn print_str_generic(*int chars, bool newline) {
 }
 
 fn print_board(*Board board) {
-    for (let int i = 0; i < 3; i = i + 1) {
-        for (let int j = 0; j < 3; j = j + 1) {
+    for (let int i = 0; i < 3; i = i + 1;) {
+        for (let int j = 0; j < 3; j = j + 1;) {
             putc get_cell(board, i, j);
         }
         putc 10;
     }
 }
 
-fn int get_cell(*Board board, int row, int col) {
+fn get_cell(*Board board, int row, int col) -> int {
     board->cells[3 * row + col]
 }
 
@@ -69,10 +69,10 @@ fn get_move(*Board board, *int row, *int col) {
     }
 }
 
-fn bool check_horizontal_win(*Board board, *int winner) {
+fn check_horizontal_win(*Board board, *int winner) -> bool {
     let bool ret_val = false;
 
-    for (let int i = 0; i < 3; i = i + 1) {
+    for (let int i = 0; i < 3; i = i + 1;) {
         print_str("LOG: Checking horizontal win: ");
         putc get_cell(board, i, 0);
         putc get_cell(board, i, 1);
@@ -90,10 +90,10 @@ fn bool check_horizontal_win(*Board board, *int winner) {
     ret_val
 }
 
-fn bool check_vertical_win(*Board board, *int winner) {
+fn check_vertical_win(*Board board, *int winner) -> bool {
     let bool ret_val = false;
 
-    for (let int i = 0; i < 3; i = i + 1) {
+    for (let int i = 0; i < 3; i = i + 1;) {
         print_str("LOG: Checking vertical win: ");
         putc get_cell(board, 0, i);
         putc get_cell(board, 1, i);
@@ -111,7 +111,7 @@ fn bool check_vertical_win(*Board board, *int winner) {
     ret_val
 }
 
-fn bool check_diagonal_win(*Board board, *int winner) {
+fn check_diagonal_win(*Board board, *int winner) -> bool {
     let bool ret_val = false;
 
     print_str("LOG: Checking diagonal win: ");
@@ -145,7 +145,7 @@ fn bool check_diagonal_win(*Board board, *int winner) {
     ret_val
 }
 
-fn int main() {
+fn main() -> int {
     let int empty = 45;
     let int x = 88;
     let int o = 79;
@@ -156,7 +156,7 @@ fn int main() {
     };
 
     board.cells = alloc int[9];
-    for (let int i = 0; i < 9; i = i + 1) {
+    for (let int i = 0; i < 9; i = i + 1;) {
         board.cells[i] = empty;
     }
 
@@ -197,7 +197,7 @@ fn int main() {
                 println_str("O wins!");
             }
 
-            game_over = true;
+            game_over = true
         }
     }
 

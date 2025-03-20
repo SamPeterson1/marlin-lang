@@ -1,7 +1,8 @@
 use crate::{environment::ResolvedType, error::{Diagnostic, DiagnosticType}, instruction::InstructionBuilder, token::{Position, PositionRange, Token, TokenType}};
+use std::fmt;
 
-pub fn as_binary_operator(token: &Token) -> Box<dyn BinaryOperator> {
-    match token.token_type {
+pub fn as_binary_operator(token_type: TokenType) -> Box<dyn BinaryOperator> {
+    match token_type {
         TokenType::Plus => Box::new(Plus),
         TokenType::Minus => Box::new(Minus),
         TokenType::Star => Box::new(Times),
@@ -14,26 +15,32 @@ pub fn as_binary_operator(token: &Token) -> Box<dyn BinaryOperator> {
         TokenType::NotEqual => Box::new(NotEqual),
         TokenType::And => Box::new(And),
         TokenType::Or => Box::new(Or),
-        _ => panic!("Invalid binary operator {:?}", token.token_type)
+        _ => panic!("Invalid binary operator {:?}", token_type)
     }
 }
 
-pub fn as_unary_operator(token: &Token) -> Box<dyn UnaryOperator> {
-    match token.token_type {
+pub fn as_unary_operator(token_type: TokenType) -> Box<dyn UnaryOperator> {
+    match token_type {
         TokenType::Semicolon => Box::new(Semicolon),
         TokenType::Not => Box::new(Not),
         TokenType::Minus => Box::new(Negative),
-        _ => panic!("Invalid unary operator {:?}", token.token_type)
+        _ => panic!("Invalid unary operator {:?}", token_type)
     }
 }
 
-pub trait UnaryOperator : std::fmt::Debug {
+pub trait UnaryOperator : fmt::Debug + fmt::Display {
     fn interpret_type(&self, value_type: ResolvedType) -> Result<ResolvedType, Diagnostic>;
     fn compile(&self, dr: u8, sr1: u8, operation_type: ResolvedType) -> Vec<u64>;
 }
 
 #[derive(Debug)]
 struct Not;
+
+impl fmt::Display for Not {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "!")
+    }
+}
 
 impl UnaryOperator for Not {
     fn interpret_type(&self, value_type: ResolvedType) -> Result<ResolvedType, Diagnostic> {
@@ -59,6 +66,12 @@ impl UnaryOperator for Not {
 
 #[derive(Debug)]
 struct Negative;
+
+impl fmt::Display for Negative {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "-")
+    }
+}   
 
 impl UnaryOperator for Negative {
     fn interpret_type(&self, value_type: ResolvedType) -> Result<ResolvedType, Diagnostic> {
@@ -88,6 +101,12 @@ impl UnaryOperator for Negative {
 
 struct Semicolon;
 
+impl fmt::Display for Semicolon {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, ";")
+    }
+}
+
 impl UnaryOperator for Semicolon {
     fn interpret_type(&self, _value_type: ResolvedType) -> Result<ResolvedType, Diagnostic> {
         Ok(ResolvedType::Empty)
@@ -98,7 +117,7 @@ impl UnaryOperator for Semicolon {
     }
 }
 
-pub trait BinaryOperator : std::fmt::Debug {
+pub trait BinaryOperator : std::fmt::Debug + std::fmt::Display {
     fn interpret_type(&self, left: ResolvedType, right: ResolvedType) -> Result<ResolvedType, Diagnostic>;
     fn compile(&self, dr: u8, sr1: u8, sr2: u8, operation_type: ResolvedType) -> Vec<u64>;
 }
@@ -120,6 +139,12 @@ macro_rules! arithmetic_binary_operator {
 
             $Compile
         }
+
+        impl fmt::Display for $Name {
+            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                write!(f, "{}", $OperatorName)
+            }
+        }
     };
 }
 
@@ -140,6 +165,12 @@ macro_rules! comparative_binary_operator {
 
             $Compile
         }
+
+        impl fmt::Display for $Name {
+            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                write!(f, "{}", $OperatorName)
+            }
+        }
     };
 }
 
@@ -159,6 +190,12 @@ macro_rules! boolean_binary_operator {
             }
 
             $Compile
+        }
+
+        impl fmt::Display for $Name {
+            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                write!(f, "{}", $OperatorName)
+            }
         }
     };
 }

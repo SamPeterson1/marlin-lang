@@ -1,14 +1,14 @@
-use std::{collections::HashMap, rc::Rc};
+use std::{collections::HashMap, rc::Rc, fmt};
 
 use crate::{environment::ParsedType, token::PositionRange};
 
-use super::{BlockExpr, Expr};
+use super::Expr;
 
 pub trait ItemVisitable<T> {
     fn accept_visitor(&self, visitor: &mut dyn ItemVisitor<T>) -> T;
 }
 
-pub trait Item: ItemVisitable<()> + std::fmt::Debug {
+pub trait Item: ItemVisitable<()> + fmt::Debug  + fmt::Display {
     fn get_position(&self) -> &PositionRange;
 }
 
@@ -40,6 +40,22 @@ pub struct StructItem {
     pub position: PositionRange,
 }
 
+impl fmt::Display for StructItem {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{{\"type\": \"struct\", \"name\": \"{}\", \"members\": {{", self.name)?;
+        
+        for (i, (name, ty)) in self.members.iter().enumerate() {
+            write!(f, "\"{}\": {}", name, ty)?;
+
+            if i < self.members.len() - 1 {
+                write!(f, ", ")?;
+            }
+        }
+
+        write!(f, "}}}}")
+    }
+}
+
 impl StructItem {
     pub fn new(name: String, members: HashMap<String, ParsedType>, position: PositionRange) -> Box<dyn Item> {
         Box::new(StructItem {
@@ -59,6 +75,22 @@ pub struct FunctionItem {
     pub expr: Box<dyn Expr>,
     pub ret_type: ParsedType,
     pub position: PositionRange,
+}
+
+impl fmt::Display for FunctionItem {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{{\"type\": \"function\", \"name\": \"{}\", \"args\": [", self.name)?;
+
+        for (i, (name, ty)) in self.args.iter().enumerate() {
+            write!(f, "{{\"name\": \"{}\", \"type\": {}}}", name, ty)?;
+
+            if i < self.args.len() - 1 {
+                write!(f, ",")?;
+            }
+        }
+
+        write!(f, "], \"return_type\": {}, \"expr\": {}}}", self.ret_type, self.expr)
+    }
 }
 
 impl FunctionItem {

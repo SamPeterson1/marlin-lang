@@ -1,8 +1,9 @@
-use std::{collections::HashMap, rc::Rc};
+use std::{collections::HashMap, fmt, rc::Rc};
 
+use chrono::format;
 use item::{FunctionItem, Item, StructItem};
 
-use crate::{environment::{Literal, ParsedFunctionType, ParsedPointerType, ParsedType}, error::{Diagnostic, DiagnosticType}, token::{Position, PositionRange, Token, TokenType, TokenValue}};
+use crate::{environment::{Literal, ParsedPointerType, ParsedType}, error::{Diagnostic, DiagnosticType}, logger::{LogSeverity, Logger}, token::{Position, PositionRange, Token, TokenType, TokenValue}};
 pub use self::expr::*;
 
 pub mod expr;
@@ -14,6 +15,7 @@ pub struct ExprParser<'a> {
     diagnostics: Vec<Diagnostic>,
     var_expr_id_counter: i32,
     declaration_expr_id_counter: i32,
+    logger: Logger,
 }
 
 pub struct ParseResult {
@@ -23,60 +25,111 @@ pub struct ParseResult {
 
 impl<'a> ExprParser<'a> {
     pub fn new(tokens: &[Token]) -> ExprParser {
-        ExprParser {ptr: 0, tokens, diagnostics: Vec::new(), var_expr_id_counter: 0, declaration_expr_id_counter: 0}
-    }
-
-    fn err_expected_identifier(&self) -> Diagnostic {
-        let prev = self.prev().unwrap();
-        let msg = String::from("expected identifier");
-
-        Diagnostic::new(1, DiagnosticType::Error, prev.position, msg)
-    }
-
-    fn err_expected_equals(&self) -> Diagnostic {
-        let prev = self.prev().unwrap();
-        let msg = String::from("expected equals sign");
-
-        Diagnostic::new(1, DiagnosticType::Error, prev.position, msg)
-    }
-
-    fn err_expected_semicolon(&self) -> Diagnostic {
-        let prev = self.prev().unwrap();
-        let msg = String::from("expected semicolon");
-
-        Diagnostic::new(1, DiagnosticType::Error, prev.position, msg)
-    }
-
-    fn err_expected_closing_parenthesis(&self) -> Diagnostic {
-        let prev = self.prev().unwrap();
-        let msg = String::from("expected closing parenthesis");
-
-        Diagnostic::new(1, DiagnosticType::Error, prev.position, msg)
-    }
-
-    fn err_expected_parenthesis_after_for(&self) -> Diagnostic {
-        let prev = self.cur().unwrap();
-        let msg = String::from("expected parenthesis after for keyword");
-
-        Diagnostic::new(1, DiagnosticType::Error, prev.position, msg)
+        ExprParser {ptr: 1, tokens, diagnostics: Vec::new(), var_expr_id_counter: 0, declaration_expr_id_counter: 0, logger: Logger::new("ExprParser")}
     }
     
+    fn err_expected_struct_name(&self) -> Diagnostic {
+        let msg = String::from("expected struct name");
+
+        Diagnostic::new(1, DiagnosticType::Error, self.cur().position, msg)
+    }
+
+    fn err_expected_member_name(&self) -> Diagnostic {
+        let msg = String::from("expected member name");
+
+        Diagnostic::new(1, DiagnosticType::Error, self.cur().position, msg)
+    }
+
+    fn err_expected_member_type(&self) -> Diagnostic {
+        let msg = String::from("expected member type");
+
+        Diagnostic::new(1, DiagnosticType::Error, self.cur().position, msg)
+    }
+
+    fn err_expected_fn_name(&self) -> Diagnostic {
+        let msg = String::from("expected function name");
+
+        Diagnostic::new(1, DiagnosticType::Error, self.cur().position, msg)
+    }
+
     fn err_unexpected_token(&self) -> Diagnostic {
-        let prev = self.prev().unwrap();
         let msg = String::from("unexpected token");
 
-        Diagnostic::new(1, DiagnosticType::Error, prev.position, msg)}
+        Diagnostic::new(1, DiagnosticType::Error, self.cur().position, msg)
+    }
+
+    fn err_expected_item(&self) -> Diagnostic {
+        let msg = String::from("expected item");
+
+        Diagnostic::new(1, DiagnosticType::Error, self.cur().position, msg)
+    }
+
+    fn err_expected_token(&self, token_type: TokenType) -> Diagnostic {
+        let msg = format!("expected {}", token_type);
+
+        Diagnostic::new(1, DiagnosticType::Error, self.cur().position, msg)
+    }
+
+    fn err_expected_arg_type(&self) -> Diagnostic {
+        let msg = String::from("expected argument type");
+
+        Diagnostic::new(1, DiagnosticType::Error, self.cur().position, msg)
+    }
+
+    fn err_expected_arg_name(&self) -> Diagnostic {
+        let msg = String::from("expected argument name");
+
+        Diagnostic::new(1, DiagnosticType::Error, self.cur().position, msg)
+    }
+
+    fn err_expected_return_type(&self) -> Diagnostic {
+        let msg = String::from("expected return type");
+
+        Diagnostic::new(1, DiagnosticType::Error, self.cur().position, msg)
+    }
+
+    fn err_expected_declaration_type(&self) -> Diagnostic {
+        let msg = String::from("expected declaration type");
+
+        Diagnostic::new(1, DiagnosticType::Error, self.cur().position, msg)
+    }
+
+    fn err_expected_declaration_name(&self) -> Diagnostic {
+        let msg = String::from("expected declaration name");
+
+        Diagnostic::new(1, DiagnosticType::Error, self.cur().position, msg)
+    }
+
+    fn err_expected_var(&self) -> Diagnostic {
+        let msg = String::from("expected variable");
+
+        Diagnostic::new(1, DiagnosticType::Error, self.cur().position, msg)
+    }
+
+    fn log_parse_result(&self, expr: &Option<impl fmt::Display>, name: &str) {
+        if let Some(expr) = expr {
+            self.logger.log_trace_info(&format!("Parsed {}: {}", name, expr));
+        } else {
+            self.logger.log_trace_error(&format!("Failed to parse {}", name));
+        }
+    }
 
     pub fn parse(mut self) -> ParseResult {
+        self.logger.log_brief_info("Beginning parser");
+
         let mut items = Vec::new();
         
         while !self.is_at_end() {
             if let Some(expr) = self.item() {
+                self.logger.log_brief_info(&format!("Parsed item successfully"));
+                self.logger.log_detailed_info(&format!("Parsed item: {}", expr));
                 items.push(expr);
+            } else {
+                self.logger.log_brief_error(&format!("Failed to parse item. Current token: {:?}", self.cur()));
             }
-
-            println!("{:?} {:?}", self.cur(), self.peek());
         }
+
+        self.logger.log_brief_info(&format!("Parsed {} items with {} diagnostics", items.len(), self.diagnostics.len()));
 
         ParseResult {
             items,
@@ -84,25 +137,20 @@ impl<'a> ExprParser<'a> {
         }
     }
 
-    fn try_match(&mut self, matches: &[TokenType]) -> bool {
-        if self.ptr == self.tokens.len() {
-            return false;
-        }
-
+    fn try_match(&mut self, matches: &[TokenType]) -> Option<Token> {
         for token_match in matches {
-            if self.tokens[self.ptr].token_type == *token_match {
-                self.advance();
-                return true;
+            if self.cur().token_type == *token_match {
+                return Some(self.advance());
             }
         }
 
-        return false;
+        return None;
     }
 
     fn advance(&mut self) -> Token {
         let ret = &self.tokens[self.ptr];
 
-        if self.ptr < self.tokens.len() {
+        if self.tokens[self.ptr].token_type != TokenType::EOF {
             self.ptr += 1;
         }
 
@@ -113,84 +161,91 @@ impl<'a> ExprParser<'a> {
         self.ptr == self.tokens.len() || self.tokens[self.ptr].token_type == TokenType::EOF
     }
 
-    fn peek(&self) -> Option<Token> {
-        if self.ptr + 1 < self.tokens.len() {
-            Some(self.tokens[self.ptr + 1].clone())
+    fn peek(&self) -> Token {
+        if self.ptr + 1 >= self.tokens.len() {
+            return self.cur();
+        }
+
+        self.tokens[self.ptr + 1].clone()
+    }
+
+    fn cur(&self) -> Token {
+        self.tokens[self.ptr].clone()
+    }
+
+    fn prev(&self) -> Token {
+        self.tokens[self.ptr - 1].clone()
+    }
+
+    fn push_diagnostic(&mut self, diagnostic: Diagnostic) {
+        let log_severity = match diagnostic.diagnostic_type {
+            DiagnosticType::Error => LogSeverity::Error,
+            DiagnosticType::Warning => LogSeverity::Warning,
+        };
+
+        self.logger.log_brief(log_severity, &format!("Pushing diagnostic: {}", diagnostic));
+        self.diagnostics.push(diagnostic);
+    }
+
+    fn some_or_diagnostic<T>(&mut self, opt: Option<T>, diagnostic: Diagnostic) -> Option<T> {
+        if opt.is_none() {
+            self.push_diagnostic(diagnostic);
+        }
+
+        opt
+    }
+
+    fn try_consume(&mut self, token: TokenType) -> Option<Token> {
+        if self.cur().token_type == token {
+            Some(self.advance())
         } else {
             None
         }
     }
 
-    fn cur(&self) -> Option<Token> {
-        if self.ptr < self.tokens.len() {
-            Some(self.tokens[self.ptr].clone())
-        } else {
-            None
-        }
-    }
-
-    fn prev(&self) -> Option<Token> {
-        if self.ptr >= 1 {
-            Some(self.tokens[self.ptr - 1].clone())
-        } else {
-            None
-        }
-    }
-
-    fn consume(&mut self, token: TokenType, diagnostic: Option<Diagnostic>) -> bool {
-        let cur = self.cur();
-        
-        if cur.is_none() || cur.unwrap().token_type != token {
-            if let Some(diagnostic) = diagnostic {
-                self.diagnostics.push(diagnostic);
-            }
+    fn consume_or_diagnostic(&mut self, token: TokenType, diagnostic: Diagnostic) -> Option<Token> {
+        if self.cur().token_type != token {
+            self.push_diagnostic(diagnostic);
             
-            false
+            None
         } else {
-            self.advance();
-            true
+            Some(self.advance())
         }
     }
 
     fn try_assignment(&mut self) -> Option<VarExpr> {
+        self.logger.log_trace_info("Trying to parse assignment");
         let ptr = self.ptr;
         let var_expr = self.var();
 
-        if var_expr.is_none() || !self.consume(TokenType::Assignment, None) {
+        if let Some(var_expr) = &var_expr {
+            self.logger.log_trace_info(&format!("Parsed var expr: {:?}", var_expr));
+        } else {
+            self.logger.log_trace_info("Did not parse var expr");
+        }
+
+        if var_expr.is_none() || self.try_consume(TokenType::Assignment).is_none() {
+            self.logger.log_trace_info("No assignment found");
             self.ptr = ptr;
             return None;
         }
 
+        self.logger.log_trace_info("Found assignment");
         var_expr
-    }
-
-    #[allow(dead_code)]
-    fn is_type(&mut self) -> bool {
-        if self.cur().is_none() {
-            return false;
-        }
-
-        match self.cur().unwrap().token_type {
-            TokenType::Bool | TokenType::Int  | TokenType::Double | TokenType::String | TokenType::Identifier => true,
-            _ => false
-        }
     }
 
     //any primitive type
     //(type, type, ...) -> type
     fn try_type(&mut self) -> Option<ParsedType> {
-        println!("Trying type");
-        let cur = self.cur()?;
+        let cur = self.cur();
 
         match (cur.token_type, cur.value) {
-            (TokenType::Int, None) => {self.advance(); Some(ParsedType::Integer)},
-            (TokenType::Double, None) => {self.advance(); Some(ParsedType::Double)},
-            (TokenType::Bool, None) => {self.advance(); Some(ParsedType::Boolean)},
-            (TokenType::String, None) => {self.advance(); Some(ParsedType::String)},
-            (TokenType::Identifier, Some(TokenValue::String(type_name))) => {self.advance(); Some(ParsedType::TypeName(type_name))},
-            (TokenType::Star, None) => {
+            (TokenType::Int, TokenValue::None) => {self.advance(); Some(ParsedType::Integer)},
+            (TokenType::Double, TokenValue::None) => {self.advance(); Some(ParsedType::Double)},
+            (TokenType::Bool, TokenValue::None) => {self.advance(); Some(ParsedType::Boolean)},
+            (TokenType::Identifier, TokenValue::String(type_name)) => {self.advance(); Some(ParsedType::TypeName(type_name))},
+            (TokenType::Star, TokenValue::None) => {
                 self.advance();
-                println!("Parsing pointer type");
                 let pointee = self.try_type()?;
                 Some(ParsedType::Pointer(ParsedPointerType {pointee: Rc::new(pointee)}))
             },
@@ -199,449 +254,483 @@ impl<'a> ExprParser<'a> {
     }
 
     fn item(&mut self) -> Option<Box<dyn Item>> {
-        let cur = self.cur()?;
+        self.logger.log_trace_info(&format!("Entering item parser. Current token {:?}", self.cur()));
+        let cur = self.cur();
 
         match cur.token_type {
             TokenType::Struct => self.struct_item(),
             TokenType::Fn => self.function_item(),
-            _ => None
+            _ => {
+                self.push_diagnostic(self.err_expected_item());
+                self.advance();
+                None
+            }
         }
     }
 
+    //struct: STRUCT IDENTIFIER LEFT_CURLY ([type] IDENTIFIER COMMA)* RIGHT_CURLY
     fn struct_item(&mut self) -> Option<Box<dyn Item>> {
-        self.advance();
+        self.logger.log_trace_info(&format!("Entering struct parser. Current token {:?}", self.cur()));
+        let struct_token = self.advance();
 
-        let mut cur = self.cur()?;
-        let mut struct_name = None;
+        let struct_name = self.consume_or_diagnostic(TokenType::Identifier, self.err_expected_struct_name())
+            .map(|x| x.get_string().to_string());
 
-        if let (TokenType::Identifier, Some(TokenValue::String(name))) = (cur.token_type, cur.value) {
-            struct_name = Some(name);
-            self.advance();
-        }
+        self.log_parse_result(&struct_name, "struct name");
 
-        if !self.consume(TokenType::LeftCurly, None) {
-            return None;
-        }
+        self.consume_or_diagnostic(TokenType::LeftCurly, self.err_expected_token(TokenType::LeftCurly));
 
         let mut members = HashMap::new();
 
-        cur = self.cur()?;
+        loop {
+            let opt_type = self.try_type();
+            let member_type = self.some_or_diagnostic(opt_type, self.err_expected_member_name());
+            let member_name = self.consume_or_diagnostic(TokenType::Identifier, self.err_expected_member_name())
+                .map(|x| x.get_string().to_string());
 
-        while cur.token_type != TokenType::RightCurly {
-            let member_type = self.try_type()?;
-            cur = self.cur()?;
+            self.log_parse_result(&member_type, "member type");
+            self.log_parse_result(&member_name, "member name");
 
-            let mut member_name = None;
-
-            if let (TokenType::Identifier, Some(TokenValue::String(name))) = (cur.token_type, cur.value) {
-                member_name = Some(name);
-                self.advance();
+            if let (Some(member_type), Some(member_name)) = (member_type, member_name) {
+                members.insert(member_name, member_type);
             }
 
-            members.insert(member_name?, member_type);
-
-            self.consume(TokenType::Semicolon, None);
-
-            cur = self.cur()?;
+            if self.try_consume(TokenType::Comma).is_none() {
+                self.logger.log_trace_info(&format!("Done parsing struct members"));
+                self.consume_or_diagnostic(TokenType::RightCurly, self.err_expected_token(TokenType::RightCurly));
+                break;
+            }
         }
 
-        if !self.consume(TokenType::RightCurly, None) {
-            return None
-        }
+        let position = PositionRange::concat(&struct_token.position, &self.prev().position);
 
-        Some(StructItem::new(struct_name?, members, PositionRange::new(Position::new(0, 0))))
+        Some(StructItem::new(struct_name?, members, position))
     }
 
-    //fn type identifier(type identifier, type identifier, ...) block
+    //function: FN IDENTIFIER LEFT_PAREN [type identifier]* RIGHT_PAREN (-> [type])? [block]
     fn function_item(&mut self) -> Option<Box<dyn Item>> {
-        self.advance();
+        self.logger.log_trace_info(&format!("Entering function parser. Current token {:?}", self.cur()));
+        let fn_token = self.advance();
 
-        let return_type = if self.peek()?.token_type == TokenType::LeftParen {
-            println!("No return type");
-            ParsedType::Empty
-        } else {
-            self.try_type()?
-        };
+        let function_name = self.consume_or_diagnostic(TokenType::Identifier, self.err_expected_fn_name())
+            .map(|x| x.get_string().to_string());
 
-        let cur = self.cur()?;
+        self.log_parse_result(&function_name, "function name");
 
-        println!("Parsing functio name, cur token = {:?}", cur);
-
-        let mut function_name = None;
-
-        if let (TokenType::Identifier, Some(TokenValue::String(name))) = (cur.token_type, cur.value) {
-            function_name = Some(name);
-            self.advance();
-        }
-
-        self.consume(TokenType::LeftParen, None);
+        self.consume_or_diagnostic(TokenType::LeftParen, self.err_expected_token(TokenType::LeftParen));
 
         let mut args = Vec::new();
 
-        while !self.try_match(&[TokenType::RightParen]) {
-            let arg_type = self.try_type()?;
-            println!("Parsing arg type {:?}", arg_type);
-            let cur = self.cur()?;
-
-            let mut arg_name = None;
-
-            if let (TokenType::Identifier, Some(TokenValue::String(name))) = (cur.token_type, cur.value) {
-                arg_name = Some(name);
-                self.advance();
+        loop {
+            if self.try_consume(TokenType::RightParen).is_some() {
+                self.logger.log_trace_info(&format!("Done parsing function arguments"));
+                break;
             }
 
-            args.push((arg_name?, arg_type));
+            let opt_type = self.try_type();
+            let arg_type = self.some_or_diagnostic(opt_type, self.err_expected_arg_type());
 
-            self.consume(TokenType::Comma, None);
-            println!("Parsing arg");
+            let arg_name = self.consume_or_diagnostic(TokenType::Identifier, self.err_expected_arg_name())
+                .map(|x| x.get_string().to_string());
+
+            self.log_parse_result(&arg_type, "argument type");
+            self.log_parse_result(&arg_name, "argument name");
+
+            if let (Some(arg_type), Some(arg_name)) = (arg_type, arg_name) {
+                args.push((arg_name, arg_type));
+            }
+
+            if self.try_consume(TokenType::Comma).is_none() {
+                self.logger.log_trace_info(&format!("Done parsing function arguments"));
+                self.consume_or_diagnostic(TokenType::RightParen, self.err_expected_token(TokenType::RightParen));
+                break;
+            }
         }
 
-        println!("Parsing block");
-        let block = self.block()?;
-        println!("Parsed block, {:?}", function_name);
-        Some(FunctionItem::new(function_name?, args, block, return_type, PositionRange::new(Position::new(0, 0))))
-    }
-
-    //expr;
-    fn statement(&mut self) -> Option<Box<dyn Expr>> {
-        let mut expr = self.expr()?;
-
-        if self.try_match(&[TokenType::Semicolon]) {
-            expr = UnaryExpr::new(expr, self.prev().as_ref().unwrap());
+        let return_type = if self.try_consume(TokenType::Arrow).is_some() {
+            let opt_type = self.try_type();
+            self.some_or_diagnostic(opt_type, self.err_expected_return_type())
         } else {
-            //TODO: Throw error if semicolon is needed
-        }
+            Some(ParsedType::Empty)
+        };
 
-        Some(expr)
+        self.log_parse_result(&return_type, "return type");
+
+        let block = self.block();
+
+        self.log_parse_result(&block, "function block");
+
+        let position = PositionRange::concat(&fn_token.position, &self.prev().position);
+
+        Some(FunctionItem::new(function_name?, args, block?, return_type?, position))
     }
 
-    //if_block | block
+    //statement: [expression] SEMICOLON
+    fn statement(&mut self) -> Option<Box<dyn Expr>> {
+        self.logger.log_trace_info(&format!("Entering statement parser. Current token {:?}", self.cur()));
+
+        let expr = self.expr();
+
+        self.log_parse_result(&expr, "expression");
+
+        if let Some(semicolon_token) = self.try_consume(TokenType::Semicolon) {
+            self.logger.log_trace_info(&format!("Parsed semicolon token"));
+            Some(UnaryExpr::new(expr?, semicolon_token))
+        } else {
+            self.logger.log_trace_info(&format!("No semicolon found"));
+            expr
+        }
+    }
+
+
+    
+    //expression: [loop] | [if] | [alloc] | [getc] | [block] | [for] | [while] | [break] | [putc] | [struct_initializer] | [declaration]
     fn expr(&mut self) -> Option<Box<dyn Expr>> {
-        match self.cur()?.token_type {
+        self.logger.log_trace_info(&format!("Entering expression parser. Current token {:?}", self.cur()));
+
+        match self.cur().token_type {
             TokenType::If => self.if_block(),
             TokenType::For => self.for_loop(),
             TokenType::While => self.while_loop(),
             TokenType::Loop => self.loop_expr(),
             TokenType::Break => self.break_expr(),
-            TokenType::Rand => self.rand(),
-            TokenType::Input => self.input(),
-            TokenType::Print => self.print(),
             TokenType::Alloc => self.array_allocation(),
             TokenType::Putc => self.putc(),
             TokenType::Getc => self.getc(),
-            _ => self.block(),
+            TokenType::LeftCurly => self.block(),
+            TokenType::Identifier => {
+                if self.peek().token_type == TokenType::LeftCurly {
+                    self.struct_initializer()
+                } else {
+                    self.declaration()
+                }
+            },
+            _ => self.declaration()
         }
     }
 
+    //inline_expression: [condition]
+    fn inline_expr(&mut self) -> Option<Box<dyn Expr>> {
+        self.logger.log_trace_info(&format!("Entering inline expression parser. Current token {:?}", self.cur()));
+
+        self.condition()
+    }
+
     fn putc(&mut self) -> Option<Box<dyn Expr>> {
+        self.logger.log_trace_info(&format!("Entering putc parser. Current token {:?}", self.cur()));
         self.advance();
 
-        Some(PutCharExpr::new(self.expr()?,PositionRange::new(Position::new(0, 0))))
+        let expr = self.expr();
+
+        self.log_parse_result(&expr, "putc expression");
+
+        Some(PutCharExpr::new(expr?,PositionRange::new(Position::new(0, 0))))
     }
 
     fn getc(&mut self) -> Option<Box<dyn Expr>> {
+        self.logger.log_trace_info(&format!("Entering getc parser. Current token {:?}", self.cur()));
         self.advance();
 
         Some(GetCharExpr::new(PositionRange::new(Position::new(0, 0))))
     }
 
     fn array_allocation(&mut self) -> Option<Box<dyn Expr>> {
-        self.advance();
-        let array_type = self.try_type().unwrap();
+        self.logger.log_trace_info(&format!("Entering array allocation parser. Current token {:?}", self.cur()));
+        let alloc_token = self.advance();
+        let array_type = self.try_type();
 
-        self.consume(TokenType::LeftSquare, None);
+        self.log_parse_result(&array_type, "array type");
+
+        self.consume_or_diagnostic(TokenType::LeftSquare, self.err_expected_token(TokenType::LeftSquare));
         
-        let mut array_size = None;
-        let cur = self.cur()?;
-        if let (TokenType::IntLiteral, Some(TokenValue::Int(size))) = (cur.token_type, cur.value) {
-            array_size = Some(size as usize);
-            self.advance();
-        }
+        let array_size = self.consume_or_diagnostic(TokenType::IntLiteral, self.err_expected_token(TokenType::IntLiteral))
+            .map(|x| x.get_int() as usize);
 
-        self.consume(TokenType::RightSquare, None);
+        self.log_parse_result(&array_size, "array size");
 
-        Some(StaticArrayExpr::new(array_size?, array_type))
+        self.consume_or_diagnostic(TokenType::RightSquare, self.err_expected_token(TokenType::RightSquare));
+
+        let position = PositionRange::concat(&alloc_token.position, &self.prev().position);
+
+        Some(StaticArrayExpr::new(array_size?, array_type?, position))
     }
 
-    //input expr
-    fn input(&mut self) -> Option<Box<dyn Expr>> {
-        self.advance();
-
-        let return_type = self.try_type()?;
-        let prompt = self.expr()?;
-
-        Some(InputExpr::new(prompt, return_type))
-    }
-
-    //rand(expr, expr)
-    fn rand(&mut self) -> Option<Box<dyn Expr>> {
-        self.advance();
-
-        self.consume(TokenType::LeftParen, None);
-        let min = self.expr()?;
-        self.consume(TokenType::Comma, None);
-        let max = self.expr()?;
-        self.consume(TokenType::RightParen, None);
-
-
-        Some(RandExpr::new(min, max, &PositionRange::new(Position::new(0, 0))))
-    }
-
-    //print expr
-    fn print(&mut self) -> Option<Box<dyn Expr>> {
-        self.advance();
-
-        Some(PrintExpr::new(self.expr()?, &PositionRange::new(Position::new(0, 0))))
-    }
-
-    //break expr
+    //break: BREAK [expression]? SEMICOLON
     fn break_expr(&mut self) -> Option<Box<dyn Expr>> {
-        self.advance();
+        self.logger.log_trace_info(&format!("Entering break parser. Current token {:?}", self.cur()));
+        let break_token = self.advance();
 
-        let expr = self.expr()?;
+        let expr = self.expr();
 
-        self.consume(TokenType::Semicolon, Some(self.err_expected_semicolon()));
-        Some(BreakExpr::new(expr))
+        self.log_parse_result(&expr, "break expression");
+        self.consume_or_diagnostic(TokenType::Semicolon, self.err_expected_token(TokenType::Semicolon));
+
+        let position = PositionRange::concat(&break_token.position, &self.prev().position);
+
+        Some(BreakExpr::new(expr?, position))
     }
 
-    //while expr block
+    //while: WHILE [inline_expression] [block]
     fn while_loop(&mut self) -> Option<Box<dyn Expr>> {
-        self.advance();
+        self.logger.log_trace_info(&format!("Entering while parser. Current token {:?}", self.cur()));
+        let while_token = self.advance();
 
-        let condition = self.expr()?;
-        let body = self.block()?;
+        let condition = self.inline_expr();
+        let body = self.block();
 
-        Some(LoopExpr::new_while(condition, body))
+        self.log_parse_result(&condition, "while condition");
+        self.log_parse_result(&body, "while body");
+
+        let position = PositionRange::concat(&while_token.position, &self.prev().position);
+
+        Some(LoopExpr::new_while(condition?, body?, position))
     }
 
-    //loop block
+    //loop: LOOP [block]
     fn loop_expr(&mut self) -> Option<Box<dyn Expr>> {
-        self.advance();
-
-        let body = self.block()?;
-
-        Some(LoopExpr::new(body, PositionRange::new(Position::new(0, 0))))
-    }
-
-    //for (expr; expr; expr) block
-    fn for_loop(&mut self) -> Option<Box<dyn Expr>> {
-        println!("PARSING FOR");
-        self.advance();
-
-        let has_parenthesis = self.consume(TokenType::LeftParen, Some(self.err_expected_parenthesis_after_for()));
-
-        let initial = self.expr();
-        self.consume(TokenType::Semicolon, Some(self.err_expected_semicolon()));
-
-        let condition = self.expr();
-
-        self.consume(TokenType::Semicolon, Some(self.err_expected_semicolon()));
-
-        let increment = self.expr();
-
-        let err = if has_parenthesis {
-            Some(self.err_expected_closing_parenthesis())
-        } else {
-            None
-        };
-
-        self.consume(TokenType::RightParen, err);
-
-        println!("Parsing body: {:?}", self.cur());
+        self.logger.log_trace_info(&format!("Entering loop parser. Current token {:?}", self.cur()));
+        let loop_token = self.advance();
 
         let body = self.block();
 
-        println!("Initial {:?}", initial);
-        println!("Condition {:?}", condition);
-        println!("Increment {:?}", increment);
-        println!("Body {:?}", body);
+        self.log_parse_result(&body, "loop body");
+
+        let position = PositionRange::concat(&loop_token.position, &self.prev().position);
+
+        Some(LoopExpr::new(body?, position))
+    }
+
+    //for: FOR LEFT_PAREN [declaration] [inline_expression] SEMICOLON [assignment] RIGHT_PAREN [block]
+    fn for_loop(&mut self) -> Option<Box<dyn Expr>> {
+        self.logger.log_trace_info(&format!("Entering for parser. Current token {:?}", self.cur()));
+        let for_token = self.advance();
+
+        self.consume_or_diagnostic(TokenType::LeftParen, self.err_expected_token(TokenType::LeftParen));
+
+        let initial = self.declaration();
+        self.log_parse_result(&initial, "for initial");
+
+        let condition = self.inline_expr();
+        self.log_parse_result(&condition, "for condition");
+
+        self.consume_or_diagnostic(TokenType::Semicolon, self.err_expected_token(TokenType::Semicolon));
+
+        let increment = self.assignment();
+        self.log_parse_result(&increment, "for increment");
+
+        self.consume_or_diagnostic(TokenType::RightParen, self.err_expected_token(TokenType::RightParen));
+
+
+        let body = self.block();    
+        self.log_parse_result(&body, "for body");
         
-        let result = Some(LoopExpr::new_for(initial?, condition?, increment?, body?, PositionRange::new(Position::new(0, 0))));
+        let position= PositionRange::concat(&for_token.position, &self.prev().position);
+
+        let result = Some(LoopExpr::new_for(initial?, condition?, increment?, body?, position));
         
         result
     }
 
-    //if assignment block else if_block
+    //if: IF [inline_expression] [block] [elif]* [else]?
     fn if_block(&mut self) -> Option<Box<dyn Expr>> {
-        println!("Parsing if");
-        self.advance();
+        self.logger.log_trace_info(&format!("Entering if parser. Current token {:?}", self.cur()));
+        let if_token = self.advance();  
         
-        let condition = self.assignment()?;
+        let condition = self.inline_expr();
+        self.log_parse_result(&condition, "if condition");
 
-        println!("If Condition: {:?}", condition);
-        println!("If Next token: {:?}", self.cur());
+        let success = self.block();
+        self.log_parse_result(&success, "if success");
 
-        let success = self.block()?;
+        let fail = if self.try_consume(TokenType::Else).is_some(){
+            let fail = match self.cur().token_type {
+                TokenType::If => self.if_block(),
+                _ => self.block()
+            };
 
-        println!("If Success: {:?}",success);
-
-        let fail = if self.try_match(&[TokenType::Else]) {
-            Some(match self.cur()?.token_type {
-                TokenType::If => self.if_block()?,
-                _ => self.block()?
-            })
+            self.log_parse_result(&fail, "if fail");
+            fail
         } else {
+            self.logger.log_trace_info(&format!("No else block found"));
             None
         };
 
-        println!("Whee");
+        let position = PositionRange::concat(&if_token.position, &self.prev().position);
 
-        Some(IfExpr::new(condition, success, fail))
+        Some(IfExpr::new(condition?, success?, fail, position))
     }
 
-    //{ statement* } | declaration
+    //block: LEFT_CURLY [statement]* RIGHT_CURLY
     fn block(&mut self) -> Option<Box<dyn Expr>> {
-        if self.try_match(&[TokenType::LeftCurly]) {
-            let mut exprs: Vec<Box<dyn Expr>> = Vec::new();
+        self.logger.log_trace_info(&format!("Entering block parser. Current token {:?}", self.cur()));
+        let start_token = self.cur();
+        self.consume_or_diagnostic(TokenType::LeftCurly, self.err_expected_token(TokenType::LeftCurly));
+        let mut exprs: Vec<Box<dyn Expr>> = Vec::new();
 
-            while self.cur()?.token_type != TokenType::RightCurly {
-                exprs.push(self.statement()?);
-                println!("Parsed block statement {:?}", exprs.get(exprs.len()-1));
-                println!("Next token: {:?}", self.cur());
+        while self.try_match(&[TokenType::EOF, TokenType::RightCurly]).is_none() {
+            let statement = self.statement();
+            self.log_parse_result(&statement, "block statement");
+
+            if let Some(statement) = statement {
+                exprs.push(statement);
             }
-
-            self.advance();
-            Some(BlockExpr::new(exprs))
-        } else {
-            self.declaration()
+            //println!("Parsed block statement");
+            //println!("Next token: {:?}", self.cur());
         }
+
+        let position = PositionRange::concat(&start_token.position, &self.prev().position);
+
+        Some(BlockExpr::new(exprs, position))
     }
 
-    //let identifier: type = expr | assignment
+    //declaration: LET [type] IDENTIFIER ASSIGNMENT [expression]? SEMICOLON | [assignment]
     fn declaration(&mut self) -> Option<Box<dyn Expr>> {
-        if self.try_match(&[TokenType::Let]) {
-            println!("Parsing declaration");
-            let declaration_type = self.try_type();
+        self.logger.log_trace_info(&format!("Entering declaration parser. Current token {:?}", self.cur()));
+        if let Some(let_token) = self.try_consume(TokenType::Let) {
+            let opt_type = self.try_type();
+            let declaration_type = self.some_or_diagnostic(opt_type, self.err_expected_declaration_type());
+            self.log_parse_result(&declaration_type, "declaration type");
 
-            let cur = self.cur()?;
+            let declaration_name = self.consume_or_diagnostic(TokenType::Identifier, self.err_expected_declaration_name())
+                .map(|x| x.get_string().to_string());
+            self.log_parse_result(&declaration_name, "declaration name");
 
-            let identifier = match (cur.token_type, cur.value) {
-                (TokenType::Identifier, Some(TokenValue::String(identifier))) => {
-                    self.advance();
-                    Some(identifier)
-                },
-                _ => {
-                    self.diagnostics.push(self.err_expected_identifier());
-                    None
-                }
-            };
-            
-            self.consume(TokenType::Assignment, Some(self.err_expected_equals()));
+            self.consume_or_diagnostic(TokenType::Assignment, self.err_expected_token(TokenType::Assignment));
 
-            let expr = self.expr()?;
+            let expr = self.expr();
+            self.log_parse_result(&expr, "declaration expression");
+
+            self.consume_or_diagnostic(TokenType::Semicolon, self.err_expected_token(TokenType::Semicolon));
+
+            let position = PositionRange::concat(&let_token.position, &self.prev().position);
+
             self.declaration_expr_id_counter += 1;
-            Some(DeclarationExpr::new(self.declaration_expr_id_counter, identifier?, declaration_type?, expr))
+            Some(DeclarationExpr::new(self.declaration_expr_id_counter, declaration_name?, declaration_type?, expr?, position))
         } else {
             self.assignment()
         }
     }
 
-    //(IDENTIFIER =)* expr
+    //assignment: [var] ASSIGNMENT [expression] SEMICOLON | [inline_expression]
     fn assignment(&mut self) -> Option<Box<dyn Expr>> {  
-        println!("Trying assignment {:?}", self.cur());      
+        self.logger.log_trace_info(&format!("Entering assignment parser. Current token {:?}", self.cur()));
         match self.try_assignment() {
             Some(asignee) => {
-                Some(AssignmentExpr::new(asignee, self.expr()?))
+                let expr = self.expr();
+                self.log_parse_result(&expr, "assignment expression");
+
+                self.consume_or_diagnostic(TokenType::Semicolon, self.err_expected_token(TokenType::Semicolon));
+
+                Some(AssignmentExpr::new(asignee, expr?))
             },
-            None => self.struct_initializer()
+            None => {
+                self.inline_expr()
+            }
         }
     }
 
-    //(*...)identifier.field.field ...[term][term]...
+    //var: STAR* IDENTIFIER (DOT IDENTIFIER)* (LEFT_BRACKET inline_expression RIGHT_BRACKET)*
     fn var(&mut self) -> Option<VarExpr> {
-        let identifier;
+        self.logger.log_trace_info(&format!("Entering var parser. Current token {:?}", self.cur()));
+        
+        let first_position = self.cur().position.clone();
         let mut n_derefs = 0;
 
-        while self.consume(TokenType::Star, None) {
+        while self.try_consume(TokenType::Star).is_some() {
             n_derefs += 1;
         }
 
-        let mut cur = self.cur()?;
+        self.logger.log_trace_info(&format!("Parsed {} derefs", n_derefs));
 
-        if let (TokenType::Identifier, Some(TokenValue::String(value))) = (cur.token_type, cur.value) {
-            identifier = Some(value);
-            self.advance();
-        } else {
-            return None;
-        }
+        let identifier = self.try_consume(TokenType::Identifier)
+            .map(|x| x.get_string().to_string())?;
 
         let mut member_accesses = Vec::new();
 
-        while self.try_match(&[TokenType::Dot, TokenType::Arrow]) {
-            let access_token = self.prev()?;
-
-            cur = self.cur()?;
-
-            if let (TokenType::Identifier, Some(TokenValue::String(value))) = (cur.token_type, cur.value) {
+        while let Some(access_token) = self.try_match(&[TokenType::Dot, TokenType::Arrow]) {
+            if let Some(identifier) = self.try_consume(TokenType::Identifier) {
                 if access_token.token_type == TokenType::Dot {
-                    member_accesses.push(MemberAccess::Direct(value));
+                    self.logger.log_trace_info("Parsed direct member access");
+                    member_accesses.push(MemberAccess::Direct(identifier.get_string().to_string()));
                 } else {
-                    member_accesses.push(MemberAccess::Indirect(value));
+                    self.logger.log_trace_info("Parsed indirect member access");
+                    member_accesses.push(MemberAccess::Indirect(identifier.get_string().to_string()));
                 }
             } else {
-                //TODO: throw error
                 return None;
             }
-
-            self.advance();
         }
 
         let mut array_accesses = Vec::new();
 
-        while self.consume(TokenType::LeftSquare, None) {
-            array_accesses.push(self.term()?);
-            self.consume(TokenType::RightSquare, None);
+        while self.try_consume(TokenType::LeftSquare).is_some() {
+            let expr = self.inline_expr();
+
+            if let Some(inline_expr) = expr {
+                array_accesses.push(inline_expr);   
+            }
+
+            self.try_consume(TokenType::RightSquare)?;
         }
 
         self.var_expr_id_counter += 1;
 
-        Some(VarExpr::new_unboxed(self.var_expr_id_counter, n_derefs, identifier?, member_accesses, array_accesses))
+        let position = PositionRange::concat(&first_position, &self.prev().position);
+
+        Some(VarExpr::new_unboxed(self.var_expr_id_counter, n_derefs, identifier, member_accesses, array_accesses, position))
     }
 
+    //struct_initializer: IDENTIFIER LEFT_CURLY [member_intializer] (COMMA, [member_intializer])* RIGHT_CURLY
+    //member_intializer: IDENTIFIER COLON [inline_expression]
     fn struct_initializer(&mut self) -> Option<Box<dyn Expr>> {
-        let cur = self.cur()?;
+        self.logger.log_trace_info(&format!("Entering struct initializer parser. Current token {:?}", self.cur()));
 
-        if let (TokenType::Identifier, Some(TokenValue::String(type_name))) = (cur.token_type, cur.value) {
-            if let Some(TokenType::LeftCurly) = self.peek().map(|token| token.token_type) {
-                self.advance();
-                self.advance();
+        let type_name_token = self.consume_or_diagnostic(TokenType::Identifier, self.err_expected_struct_name());
+        let type_name = type_name_token.as_ref().map(|x| x.get_string().to_string());
 
-                let mut member_inits = HashMap::new();
+        self.log_parse_result(&type_name, "struct type name");
 
-                while !self.consume(TokenType::RightCurly, None) {
-                    let cur = self.cur()?;
-                    let mut member_name = None;
-                    
-                    if let (TokenType::Identifier, Some(TokenValue::String(value))) = (cur.token_type, cur.value) {
-                        member_name = Some(value);
-                        self.advance();
-                    }
+        self.consume_or_diagnostic(TokenType::LeftCurly, self.err_expected_token(TokenType::LeftCurly));
 
-                    self.consume(TokenType::Colon, None);
+        let mut member_inits = HashMap::new();
 
-                    let expr = self.expr()?;
+        loop {
+            let member_name = self.consume_or_diagnostic(TokenType::Identifier, self.err_expected_member_name())
+                .map(|x| x.get_string().to_string());
+            self.log_parse_result(&member_name, "member name");
 
-                    self.consume(TokenType::Comma, None);
+            self.consume_or_diagnostic(TokenType::Colon, self.err_expected_token(TokenType::Colon));
 
-                    member_inits.insert(member_name?, expr);
-                }
+            let expr = self.expr();
+            self.log_parse_result(&expr, "member expression");
 
-                return Some(StructInitializerExpr::new(type_name, member_inits, PositionRange::new(Position::new(0, 0))))
+            member_inits.insert(member_name?, expr?);
+
+            if self.try_consume(TokenType::Comma).is_none() {
+                self.logger.log_trace_info(&format!("Done parsing struct member initializers"));
+                self.consume_or_diagnostic(TokenType::RightCurly, self.err_expected_token(TokenType::RightCurly));
+                break;
             }
         }
 
-        self.boolean_term()
+        let position = PositionRange::concat(&type_name_token?.position, &self.prev().position);
+
+        Some(StructInitializerExpr::new(type_name?, member_inits, position))
     }
 
-    //boolean_factor (and boolean_factor)*
-    fn boolean_term(&mut self) -> Option<Box<dyn Expr>> {
-        let mut expr = self.boolean_factor()?;
+    //condition: [boolean_factor] (OR [boolean_factor])*
+    fn condition(&mut self) -> Option<Box<dyn Expr>> {
+        self.logger.log_trace_info(&format!("Entering condition parser. Current token {:?}", self.cur()));
 
-        while self.consume(TokenType::And, None) {
-            let operator = self.prev()?;
-            let right = self.boolean_factor()?;
+        let mut boolean_factor = self.boolean_factor();
+        self.log_parse_result(&boolean_factor, "boolean factor");
+        let mut expr = boolean_factor?;
 
-            expr = BinaryExpr::new(expr, right, &operator);
+        while let Some(operator) = self.try_consume(TokenType::Or) {
+            boolean_factor = self.boolean_factor();
+            self.log_parse_result(&boolean_factor, "boolean factor");
+
+            expr = BinaryExpr::new(expr, boolean_factor?, operator.token_type);
         }
 
         Some(expr)
@@ -649,13 +738,17 @@ impl<'a> ExprParser<'a> {
 
     //equality (or equality)*
     fn boolean_factor(&mut self) -> Option<Box<dyn Expr>> {
-        let mut expr = self.equality()?;
+        self.logger.log_trace_info(&format!("Entering boolean factor parser. Current token {:?}", self.cur()));
 
-        while self.consume(TokenType::Or, None) {
-            let operator = self.prev()?;
-            let right = self.equality()?;
+        let mut equality = self.equality();
+        self.log_parse_result(&equality, "equality expression");
+        let mut expr = equality?;
 
-            expr = BinaryExpr::new(expr, right, &operator);
+        while let Some(operator) = self.try_consume(TokenType::And) {
+            equality = self.equality();
+            self.log_parse_result(&equality, "equality expression");
+
+            expr = BinaryExpr::new(expr, equality?, operator.token_type);
         }
 
         Some(expr)
@@ -663,13 +756,18 @@ impl<'a> ExprParser<'a> {
 
     //comparison (( "!=" | "==") comparison)*
     fn equality(&mut self) -> Option<Box<dyn Expr>> {
-        let mut expr = self.comparison()?;
-        let matches = [TokenType::Equal, TokenType::NotEqual];
+        self.logger.log_trace_info(&format!("Entering equality parser. Current token {:?}", self.cur()));
 
-        while self.try_match(&matches) {
-            let operator = self.prev()?;
-            let right: Box<dyn Expr> = self.comparison()?;
-            expr = BinaryExpr::new(expr, right, &operator);
+        let mut comparison = self.comparison();
+        self.log_parse_result(&comparison, "comparison expression");
+
+        let mut expr = comparison?;
+
+        while let Some(operator) = self.try_match(&[TokenType::Equal, TokenType::NotEqual]) {
+            comparison = self.comparison();
+            self.log_parse_result(&comparison, "comparison expression");
+
+            expr = BinaryExpr::new(expr, comparison?, operator.token_type);
         }
 
         Some(expr)
@@ -677,15 +775,18 @@ impl<'a> ExprParser<'a> {
 
     //term ((">" | ">=" | "<" | "<=") term)*
     fn comparison(&mut self) -> Option<Box<dyn Expr>> {
-        let mut expr = self.term()?;
+        self.logger.log_trace_info(&format!("Entering comparison parser. Current token {:?}", self.cur()));
+
+        let mut term = self.term();
+        self.log_parse_result(&term, "term expression");
+        let mut expr = term?;
 
         let matches = [TokenType::Greater, TokenType::GreaterEqual, TokenType::Less, TokenType::LessEqual];
         
-        while self.try_match(&matches) {
-            let operator = self.prev()?;
-            let right = self.term()?;
-
-            expr = BinaryExpr::new(expr, right, &operator);
+        while let Some(operator) = self.try_match(&matches) {
+            term = self.term();
+            self.log_parse_result(&term, "term expression");
+            expr = BinaryExpr::new(expr, term?, operator.token_type);
         }
 
         Some(expr)
@@ -694,14 +795,16 @@ impl<'a> ExprParser<'a> {
 
     //factor (("-" | "+") factor)*
     fn term(&mut self) -> Option<Box<dyn Expr>> {
-        let mut expr = self.factor()?;
-        let matches = [TokenType::Minus, TokenType::Plus];
+        self.logger.log_trace_info(&format!("Entering term parser. Current token {:?}", self.cur()));
 
-        while self.try_match(&matches) {
-            let operator = self.prev()?;
-            let right = self.factor()?;
+        let mut factor = self.factor();
+        self.log_parse_result(&factor, "factor expression");
+        let mut expr = factor?;
 
-            expr = BinaryExpr::new(expr, right, &operator);
+        while let Some(operator) = self.try_match(&[TokenType::Minus, TokenType::Plus]) {
+            factor = self.factor();
+            self.log_parse_result(&factor, "factor expression");
+            expr = BinaryExpr::new(expr, factor?, operator.token_type);
         }
 
         Some(expr)
@@ -709,14 +812,16 @@ impl<'a> ExprParser<'a> {
 
     //unary (("/" | "*")) unary)*
     fn factor(&mut self) -> Option<Box<dyn Expr>> {
-        let mut expr = self.unary()?;
-        let matches = [TokenType::Slash, TokenType::Star];
+        self.logger.log_trace_info(&format!("Entering factor parser. Current token {:?}", self.cur()));
 
-        while self.try_match(&matches) {
-            let operator = self.prev()?;
-            let right = self.unary()?;
+        let mut unary = self.unary();
+        self.log_parse_result(&unary, "unary expression");
+        let mut expr = unary?;
 
-            expr = BinaryExpr::new(expr, right, &operator);
+        while let Some(operator) = self.try_match(&[TokenType::Slash, TokenType::Star]) {
+            unary = self.unary();
+            self.log_parse_result(&unary, "unary expression");
+            expr = BinaryExpr::new(expr, unary?, operator.token_type);
         }
 
         Some(expr)
@@ -724,77 +829,108 @@ impl<'a> ExprParser<'a> {
 
     //(("!" | "-") unary) | call
     fn unary(&mut self) -> Option<Box<dyn Expr>> {
-        let matches = [TokenType::Not, TokenType::Minus];
+        self.logger.log_trace_info(&format!("Entering unary parser. Current token {:?}", self.cur()));
 
-        if self.try_match(&matches) {
-            let operator = self.prev()?;
-            Some(UnaryExpr::new(self.unary()?, &operator))
+        if let Some(operator) = self.try_match(&[TokenType::Not, TokenType::Minus]) {
+            let unary = self.unary();
+            self.log_parse_result(&unary, "unary expression");
+            Some(UnaryExpr::new(unary?, operator))
         } else {
             self.call()
         }
     }
 
-    //identifier(args)* | primary
+    //call: IDENTIFIER LEFT_PAREN (([inline_expression], COMMA)* [inline_expression]?) | [primary]
     fn call(&mut self) -> Option<Box<dyn Expr>> {
-        if let Some(var_expr) = self.var() {
-            if self.consume(TokenType::LeftParen, None) {
+        self.logger.log_trace_info(&format!("Entering call parser. Current token {:?}", self.cur()));
+
+        if self.cur().token_type == TokenType::Identifier {
+            if self.peek().token_type == TokenType::LeftParen {
+                let function_name = self.advance().get_string().to_string();
+                self.logger.log_trace_info(&format!("Parsed function name: {}", function_name));
+
+                self.advance();
+
                 let mut args: Vec<Box<dyn Expr>> = Vec::new();
 
-                while !self.try_match(&[TokenType::RightParen]) {
-                    args.push(self.boolean_term()?);
-                    self.consume(TokenType::Comma, None);
+                loop {
+                    let arg = self.inline_expr();
+                    self.log_parse_result(&arg, "call arg");
+
+                    if let Some(arg) = arg {
+                        args.push(arg);
+                    }
+
+                    if self.try_consume(TokenType::Comma).is_none() {
+                        self.logger.log_trace_info(&format!("Done parsing call args"));
+                        self.consume_or_diagnostic(TokenType::RightParen, self.err_expected_token(TokenType::RightParen));
+                        break;
+                    }
                 }
 
-                Some(CallExpr::new(var_expr, args))
+                Some(CallExpr::new(function_name, args))
             } else {
-                Some(Box::new(var_expr))
+                self.primary()
             }
         } else {
             self.primary()
         }
     }
 
-    //&IDENTIFIER | LITERAL | "(" expr ")"
+    //primary: &?[var] | [literal] | LEFT_PAREN inline_expression RIGHT_PAREN
     fn primary(&mut self) -> Option<Box<dyn Expr>> {
-        let cur = self.cur()?;
+        self.logger.log_trace_info(&format!("Entering primary parser. Current token {:?}", self.cur()));
+        let cur = self.cur();
 
         match (cur.token_type, cur.value) {
-            (TokenType::IntLiteral, Some(TokenValue::Int(value))) => {
+            (TokenType::IntLiteral, TokenValue::Int(value)) => {
+                self.logger.log_trace_info(&format!("Parsed int literal: {}", value));
                 self.advance();
                 Some(LiteralExpr::new(Literal::Int(value), ParsedType::Integer, PositionRange::new(Position::new(0, 0))))
             },
-            (TokenType::DoubleLiteral, Some(TokenValue::Double(value))) => {
+            (TokenType::DoubleLiteral, TokenValue::Double(value)) => {
+                self.logger.log_trace_info(&format!("Parsed double literal: {}", value));
                 self.advance();
                 Some(LiteralExpr::new(Literal::Double(value), ParsedType::Double, PositionRange::new(Position::new(0, 0))))
             },
-            (TokenType::BoolLiteral, Some(TokenValue::Bool(value))) => {
+            (TokenType::BoolLiteral, TokenValue::Bool(value)) => {
+                self.logger.log_trace_info(&format!("Parsed bool literal: {}", value));
                 self.advance();
                 Some(LiteralExpr::new(Literal::Bool(value), ParsedType::Boolean, PositionRange::new(Position::new(0, 0))))
             },
-            (TokenType::StringLiteral, Some(TokenValue::String(value))) => {
+            (TokenType::StringLiteral, TokenValue::String(value)) => {
+                self.logger.log_trace_info(&format!("Parsed string literal: {}", value));
                 self.advance();
                 Some(LiteralExpr::new(Literal::String(value), ParsedType::Pointer(ParsedPointerType {pointee: Rc::new(ParsedType::Integer)}), PositionRange::new(Position::new(0, 0))))
             },
-            (TokenType::Identifier, Some(TokenValue::String(_))) => {
-                Some(Box::new(self.var()?))
-            },
-            (TokenType::Ampersand, None) => {
+            (TokenType::Ampersand, TokenValue::None) => {
                 self.advance();
-                Some(GetAddressExpr::new(self.var()?, PositionRange::new(Position::new(0, 0))))
+                let var_opt = self.var();
+                let var_expr = self.some_or_diagnostic(var_opt, self.err_expected_var());
+                self.log_parse_result(&var_expr, "get address var expression");
+                Some(GetAddressExpr::new(var_expr?, PositionRange::new(Position::new(0, 0))))
             },
-            (TokenType::LeftParen, None) => {
+            (TokenType::LeftParen, TokenValue::None) => {
                 self.advance();
 
                 let expr = self.expr();
+                self.log_parse_result(&expr, "parenthesized expression");
 
-                self.consume(TokenType::RightParen, Some(self.err_expected_closing_parenthesis()));
+                self.consume_or_diagnostic(TokenType::RightParen, self.err_expected_token(TokenType::RightParen));
 
                 expr
             },
             _ => {
-                self.advance();
-                self.diagnostics.push(self.err_unexpected_token());
-                None
+                let var_opt = self.var();
+                let var_expr= self.some_or_diagnostic(var_opt, self.err_unexpected_token());
+
+                if var_expr.is_none() {
+                    let cur = self.advance();
+                    self.logger.log_brief_error(&format!("Reached bottom of parser stack. Skipping token {:?} and giving up", cur));
+                }
+
+                self.log_parse_result(&var_expr, "var expression");
+                Some(Box::new(var_expr?))
             } 
         }
     }

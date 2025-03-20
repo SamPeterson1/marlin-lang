@@ -367,6 +367,7 @@ impl InstructionBuilder {
         InstructionBuilder::new()
             .with_opcode(opcodes::OP_LDR)
             .with_dr(dr)
+            .with_sr1(sr1)
             .with_imm32i(imm32).instruction
     }
 

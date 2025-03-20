@@ -1,11 +1,12 @@
 use std::{collections::HashMap, fmt::Pointer, rc::Rc};
 
-use crate::{environment::{FunctionType, PointerType, ResolvedType, StructType}, error::Diagnostic, expr::{item::{FunctionItem, Item, ItemVisitor, StructItem}, AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitor, GetAddressExpr, GetCharExpr, IfExpr, InputExpr, LiteralExpr, LoopExpr, MemberAccess, PrintExpr, PutCharExpr, RandExpr, StaticArrayExpr, StructInitializerExpr, UnaryExpr, VarExpr}, resolver::SymbolTable};
+use crate::{environment::{FunctionType, PointerType, ResolvedType, StructType}, error::Diagnostic, expr::{item::{FunctionItem, Item, ItemVisitor, StructItem}, AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, ExprVisitor, GetAddressExpr, GetCharExpr, IfExpr, LiteralExpr, LoopExpr, MemberAccess, PutCharExpr, StaticArrayExpr, StructInitializerExpr, UnaryExpr, VarExpr}, resolver::SymbolTable};
 
 pub struct TypeChecker<'a> {
     symbol_table: &'a SymbolTable,
     loop_types: Vec<Option<ResolvedType>>,
-    current_loop_idx: Option<usize>
+    current_loop_idx: Option<usize>,
+    diagnostics: Vec<Diagnostic>
 }
 
 impl<'a> TypeChecker<'a> {
@@ -13,7 +14,8 @@ impl<'a> TypeChecker<'a> {
         TypeChecker {
             symbol_table,
             loop_types: Vec::new(),
-            current_loop_idx: None
+            current_loop_idx: None,
+            diagnostics: Vec::new()
         }
     }
 
@@ -33,18 +35,15 @@ impl ItemVisitor<()> for TypeChecker<'_> {
     fn visit_function(&mut self, item: &FunctionItem) {
         let return_type = item.expr.accept_visitor(self);
 
+        let function_ret_type = self.symbol_table.get_resolved_type(&item.ret_type);
+
         if return_type != self.symbol_table.get_resolved_type(&item.ret_type) {
-            panic!("Mismatched types {:?}, {:?} for function return", return_type, item.ret_type);
+            panic!("Mismatched types {:?}, {:?} for function {:?} return", return_type, item.ret_type, item.name);
         }
     }
 }
 
 impl ExprVisitor<ResolvedType> for TypeChecker<'_> {
-    fn visit_empty(&mut self, _expr: &EmptyExpr) -> ResolvedType {
-        ResolvedType::Empty
-    }
-
-
     fn visit_binary(&mut self, expr: &BinaryExpr) -> ResolvedType {
         let left_type = expr.left.accept_visitor(self);
         let right_type = expr.right.accept_visitor(self);
@@ -156,6 +155,7 @@ impl ExprVisitor<ResolvedType> for TypeChecker<'_> {
                 },
                 MemberAccess::Direct(member_name) => {
                     if let ResolvedType::Struct(struct_type) = var_type {
+                        println!("accessing member {:?}", member_name);
                         var_type = struct_type.get_member_type(member_name).clone();
                     } else {
                         panic!("Cannot access member of non-struct type");
@@ -194,7 +194,7 @@ impl ExprVisitor<ResolvedType> for TypeChecker<'_> {
             panic!("Mismatched types {:?}, {:?} for assignment", var_type, value_type);
         }
 
-        var_type.clone()
+        ResolvedType::Empty
     }
 
     fn visit_declaration(&mut self, expr: &DeclarationExpr) -> ResolvedType {
@@ -206,7 +206,7 @@ impl ExprVisitor<ResolvedType> for TypeChecker<'_> {
             //panic!("Mismatched types {:?}, {:?} for assignment", value_type, expr.declaration_type);
         }
 
-        value_type
+        ResolvedType::Empty
     }
 
     fn visit_block(&mut self, expr: &BlockExpr) -> ResolvedType {
@@ -217,21 +217,6 @@ impl ExprVisitor<ResolvedType> for TypeChecker<'_> {
         }
 
         block_type
-    }
-
-    fn visit_print(&mut self, expr: &PrintExpr) -> ResolvedType {
-        expr.expr.accept_visitor(self)
-    }
-
-    fn visit_rand(&mut self, expr: &RandExpr) -> ResolvedType {
-        let min_type = expr.min.accept_visitor(self);
-        let max_type = expr.max.accept_visitor(self);
-
-        if min_type != ResolvedType::Integer || max_type != ResolvedType::Integer {
-            panic!("Invalid types {:?}, {:?} for rand expression", min_type, max_type);
-        }
-
-        ResolvedType::Integer
     }
 
     fn visit_loop(&mut self, expr: &LoopExpr) -> ResolvedType {
@@ -271,12 +256,8 @@ impl ExprVisitor<ResolvedType> for TypeChecker<'_> {
         }
     }
 
-    fn visit_input(&mut self, expr: &InputExpr) -> ResolvedType {
-        self.symbol_table.get_resolved_type(&expr.return_type).clone()
-    }
-
     fn visit_call(&mut self, expr: &CallExpr) -> ResolvedType {
-        let expr_type = self.symbol_table.get_function(&expr.function.identifier);
+        let expr_type = self.symbol_table.get_function(&expr.function);
 
         println!("calling {:?}", expr_type);
 

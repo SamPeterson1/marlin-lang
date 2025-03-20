@@ -1,21 +1,21 @@
 program: [item]* EOF
 item: [function] | [struct]
-function: FN [type] IDENTIFIER LEFT_PAREN [type identifier]* RIGHT_PAREN [block]
-statement: [declaration] | [assignment] | [for] | [while] | [break] | [putc]
-expression: [loop] | [if] | [alloc] | [getc] | [block]
+function: FN IDENTIFIER LEFT_PAREN [type identifier]* RIGHT_PAREN (ARROW [type])? [block]
+statement: [expression] SEMICOLON
+expression: [loop] | [if] | [alloc] | [getc] | [block] | [for] | [while] | [break] | [putc] | [struct_initializer] | [declaration]
 inline_expression: [condition]
-declaration: LET [type] IDENTIFIER ASSIGNMENT [expression]? SEMICOLON
-assignment: [var] ASSIGNMENT [expression] SEMICOLON
-for: FOR LEFT_PAREN STATEMENT STATEMENT STATEMENT RIGHT_PAREN [block]
-while: WHILE LEFT_PAREN [inline_expression] RIGHT_PAREN [block]
+declaration: LET [type] IDENTIFIER ASSIGNMENT [expression]? SEMICOLON | [assignment]
+assignment: [var] ASSIGNMENT [expression] SEMICOLON | [inline_expression]
+for: FOR LEFT_PAREN [declaration] [inline_expression] SEMICOLON [assignment] RIGHT_PAREN [block]
+while: WHILE [inline_expression] [block]
 break: BREAK [expression]? SEMICOLON
 loop: LOOP [block]
-if: IF LEFT_PAREN [inline_expression] RIGHT_PAREN [block] [elif]* [else]?
-elif: ELSE IF LEFT_PAREN [inline_expression] RIGHT_PAREN [block]
+if: IF [inline_expression] [block] [elif]* [else]?
+elif: ELSE IF [inline_expression] [block]
 else: ELSE [block]
 alloc: ALLOC [type] LEFT_SQUARE INT_LITERAL RIGHT_SQUARE
-block: LEFT_CURLY [statement]+ [expression]? RIGHT_CURLY | struct_initializer
-struct_initializer: IDENTIFIER LEFT_CURLY [member_intializer] (COMMA, [member_intializer])* RIGHT_CURLY | [inline_expression]
+block: LEFT_CURLY [statement]* RIGHT_CURLY | [inline_expression]
+struct_initializer: IDENTIFIER LEFT_CURLY [member_intializer] (COMMA, [member_intializer])* RIGHT_CURLY
 member_intializer: IDENTIFIER COLON [inline_expression]
 condition: [boolean_factor] (OR [boolean_factor])*
 boolean_factor: [comparison] (AND [comparison])*
@@ -28,4 +28,4 @@ call: IDENTIFIER LEFT_PAREN (([inline_expression], COMMA)* [inline_expression]?)
 primary: [var] | [literal] | LEFT_PAREN inline_expression RIGHT_PAREN
 type: [STAR]* (INT | BOOL | DOUBLE)
 var: AMPERSAND? STAR* IDENTIFIER (DOT IDENTIFIER)* (LEFT_BRACKET inline_expression RIGHT_BRACKET)*
-struct: STRUCT IDENTIFIER LEFT_CURLY ([type] IDENTIFIER SEMICOLON)*
+struct: STRUCT IDENTIFIER LEFT_CURLY ([type] IDENTIFIER SEMICOLON)* RIGHT_CURLY

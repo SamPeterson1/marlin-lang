@@ -4,10 +4,13 @@ use std::path::Path;
 use std::env;
 
 use crate::compiler::{Compiler, CompilerResult};
+use crate::error::DiagnosticType;
 use crate::expr::{ExprParser, ParseResult};
+use crate::logger::{LogSeverity, Logger};
 use crate::resolver::SymbolTable;
 use crate::type_checker::TypeChecker;
-use crate::{lexer, log};
+use crate::vm::VM;
+use crate::lexer;
 use crate::token::Token;
 
 
@@ -57,20 +60,20 @@ pub fn run_prompt() {
 }
 
 fn run(code: String) {
-    println!("{}", code);
+    let logger = Logger::new("run");
 
+    logger.log_brief_info("Running code");
+    logger.log_detailed_info(format!("Source code: {}", code).as_str());
+
+    logger.log_brief_info("Lexing code");
     let tokens: Vec<Token> = lexer::parse(&code);
-
+    logger.log_brief_info("Done lexing");
     
     let parser = ExprParser::new(&tokens);
 
-
+    logger.log_brief_info("Parsing code");
     let ParseResult { items, diagnostics: parse_diagnostics } = parser.parse();
-
-    for item in &items {
-        println!("{:?}", item);
-        println!("");
-    }
+    logger.log_brief_info("Done parsing");
 
     let mut symbol_table = SymbolTable::new();
     let resolve_errors = symbol_table.resolve(&items);
@@ -78,7 +81,6 @@ fn run(code: String) {
     let mut type_checker = TypeChecker::new(&symbol_table);
     let type_errors = type_checker.check_types(&items);
     
-
     let mut all_errors = Vec::new();
 
     all_errors.extend(parse_diagnostics);
@@ -87,16 +89,33 @@ fn run(code: String) {
 
     if !all_errors.is_empty() {
         for error in &all_errors {
-            log::log(error);
+            let log_severity = match error.diagnostic_type {
+                DiagnosticType::Error => LogSeverity::Error,
+                DiagnosticType::Warning => LogSeverity::Warning
+            };
+
+            logger.log_brief(log_severity, &format!("{}", error));
         }
+    } else {
+        logger.log_brief_info("No errors found");
     }
 
     let mut compiler = Compiler::new(&symbol_table);
     let CompilerResult {instructions, constant_pool} = compiler.compile(&items);
+
+    let mut vm = VM::new();
+
+    vm.load_memory(0, &instructions, instructions.len());
+    vm.load_memory(6000, &constant_pool, constant_pool.len());
 
     println!("Instructions: {:?}", instructions);
     println!("Number of instructions: {}", instructions.len());
     
     println!("Constant pool: {:?}", constant_pool);
     println!("Number of constants: {}", constant_pool.len());
+
+    vm.run();
+
+    println!("VM finished");
+    println!("Result in R0: {}", vm.registers[0].as_u64());
 }

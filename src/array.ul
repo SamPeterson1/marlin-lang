@@ -1,4 +1,4 @@
-fn int main() {
+fn main() -> int {
     let *int arr = alloc int[4];
     arr[0] = 1;
     arr[2] = 8;
@@ -7,7 +7,7 @@ fn int main() {
 
     let int sum = 0;
 
-    for (let int i = 0; i < 4; i = i + 1) {
+    for (let int i = 0; i < 4; i = i + 1;) {
         sum = sum + arr[i];
     }
 

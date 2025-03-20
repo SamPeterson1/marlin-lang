@@ -215,10 +215,6 @@ impl ItemVisitor<()> for Compiler<'_> {
 }
 
 impl ExprVisitor<()> for Compiler<'_> {
-    fn visit_empty(&mut self, expr: &crate::expr::EmptyExpr) -> () {
-        todo!()
-    }
-
     fn visit_binary(&mut self, expr: &crate::expr::BinaryExpr) -> () {
         expr.left.accept_visitor(self);
         let intermmediate_var_index = self.current_function.define_intermediate_var(1);
@@ -437,14 +433,6 @@ impl ExprVisitor<()> for Compiler<'_> {
         expr.exprs.iter().for_each(|expr| expr.accept_visitor(self));
     }
 
-    fn visit_print(&mut self, expr: &crate::expr::PrintExpr) -> () {
-        expr.expr.accept_visitor(self);
-    }
-
-    fn visit_rand(&mut self, expr: &crate::expr::RandExpr) -> () {
-        todo!()
-    }
-
     /*
     START
     JMP to END if condition is false
@@ -487,12 +475,8 @@ impl ExprVisitor<()> for Compiler<'_> {
         todo!()
     }
 
-    fn visit_input(&mut self, expr: &crate::expr::InputExpr) -> () {
-        todo!()
-    }
-
     fn visit_call(&mut self, expr: &crate::expr::CallExpr) -> () {
-        let function_name = &*expr.function.identifier;
+        let function_name = &expr.function;
         let function_address_location = if self.function_address_locations.contains_key(function_name) {
             *self.function_address_locations.get(function_name).unwrap()
         } else {

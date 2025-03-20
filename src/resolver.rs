@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 
-use crate::{environment::{FunctionType, ParsedFunctionType, ParsedType, PointerType, ResolvedType, StructType}, error::Diagnostic, expr::{item::{FunctionItem, Item, ItemVisitor, StructItem}, AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, EmptyExpr, Expr, ExprVisitable, ExprVisitor, GetAddressExpr, GetCharExpr, IfExpr, InputExpr, LiteralExpr, LoopExpr, PrintExpr, PutCharExpr, RandExpr, StaticArrayExpr, StructInitializerExpr, UnaryExpr, VarExpr}};
+use crate::{environment::{FunctionType, ParsedFunctionType, ParsedType, PointerType, ResolvedType, StructType}, error::Diagnostic, expr::{item::{FunctionItem, Item, ItemVisitor, StructItem}, AssignmentExpr, BinaryExpr, BlockExpr, BreakExpr, CallExpr, DeclarationExpr, ExprVisitable, ExprVisitor, GetAddressExpr, GetCharExpr, IfExpr, LiteralExpr, LoopExpr, PutCharExpr, StaticArrayExpr, StructInitializerExpr, UnaryExpr, VarExpr}, logger::Logger};
 
 struct VarDeclaration {
     is_defined: bool,
@@ -73,28 +73,28 @@ impl SymbolTable {
         let mut member_types = Vec::new();
 
         for (member_name, member_type) in struct_item.members.iter() {
-            member_types.push((member_name.to_string(), self.get_resolved_type(member_type)));
+            member_types.push((member_name.to_string(), self.get_resolved_type(member_type).unwrap()));
         }
 
         ResolvedType::Struct(StructType::new(member_types))
     }
 
-    pub fn get_resolved_type(&self, parsed_type: &ParsedType) -> ResolvedType {
-        match parsed_type {
+    pub fn get_resolved_type(&self, parsed_type: &ParsedType) -> Option<ResolvedType> {
+       Some(match parsed_type {
             ParsedType::Integer => ResolvedType::Integer,
             ParsedType::Double => ResolvedType::Double,
             ParsedType::Boolean => ResolvedType::Boolean,
             ParsedType::String => ResolvedType::String,
             ParsedType::Empty => ResolvedType::Empty,
-            ParsedType::TypeName(name) => self.types.get(name).unwrap().clone(),
+            ParsedType::TypeName(name) => self.types.get(name)?.clone(),
             ParsedType::Function(parsed_function_type) => {
                 let mut arg_types = Vec::new();
 
                 for parsed_arg_type in &*parsed_function_type.arg_types {
-                    arg_types.push(self.get_resolved_type(parsed_arg_type).clone())
+                    arg_types.push(self.get_resolved_type(parsed_arg_type).clone()?)
                 }
 
-                let ret_type = self.get_resolved_type(&parsed_function_type.ret_type);
+                let ret_type = self.get_resolved_type(&parsed_function_type.ret_type)?;
 
                 ResolvedType::Function(FunctionType {
                     arg_types: Rc::new(arg_types),
@@ -102,9 +102,9 @@ impl SymbolTable {
                 })
             },
             ParsedType::Pointer(pointer_type) => ResolvedType::Pointer(PointerType {
-                pointee: Rc::new(self.get_resolved_type(&pointer_type.pointee))
+                pointee: Rc::new(self.get_resolved_type(&pointer_type.pointee)?)
             })
-        }
+        })
     }
 }
 
@@ -113,6 +113,8 @@ pub struct TypeResolver<'a> {
     unresolved_types: HashMap<String, i32>,
     type_dependencies: HashMap<String, Vec<String>>,
     unresolved_struct_declarations: HashMap<String, StructItem>,
+    logger: Logger,
+    diagnostics: Vec<Diagnostic>,
 }
 
 impl TypeResolver<'_> {
@@ -122,6 +124,7 @@ impl TypeResolver<'_> {
             unresolved_types: HashMap::new(),
             type_dependencies: HashMap::new(),
             unresolved_struct_declarations: HashMap::new(),
+            logger: Logger::new("TypeResolver"),
         }
     }
 
@@ -138,6 +141,8 @@ impl TypeResolver<'_> {
     }
 
     fn resolve_struct(&mut self, type_name: String) {
+        self.logger.log_brief_info(&format!("Fully resolved struct {}", type_name));
+
         let struct_expr = self.unresolved_struct_declarations.remove(&type_name).unwrap();
             
         let resolved_type = self.symbol_table.resolve_struct_item(&struct_expr);
@@ -150,7 +155,7 @@ impl TypeResolver<'_> {
 
                 *n_dependencies -= 1;
 
-                println!("Struct {:?} now has {:?} dependencies after resolving {:?}", dependency, *n_dependencies, type_name);
+                self.logger.log_detailed_info(&format!("Struct {:?} now has {:?} dependencies after resolving {:?}", dependency, *n_dependencies, type_name));
 
                 if *n_dependencies == 0 {
                     self.resolve_struct(dependency);
@@ -166,12 +171,16 @@ impl ItemVisitor<()> for TypeResolver<'_> {
 
         let struct_name = expr.name.clone();
 
+        self.logger.log_brief_info(&format!("Resolving struct {:?}", struct_name));
+
         for (_, member_type) in expr.members.iter() {
             if let ParsedType::TypeName(type_name) = member_type {
                 if !self.symbol_table.has_type_name(type_name) {
-                    let dependencies: &mut Vec<String> = self.type_dependencies.entry(type_name.to_string()).or_insert_with(|| Vec::new());
+                    let dependencies= self.type_dependencies.entry(type_name.to_string()).or_insert_with(|| Vec::new());
                     dependencies.push(struct_name.to_string());
 
+                    self.logger.log_brief_info(&format!("Struct {:?} depends on unresolved type {:?}", struct_name, type_name));
+                    
                     n_dependencies += 1;
 
                     continue;
@@ -179,7 +188,7 @@ impl ItemVisitor<()> for TypeResolver<'_> {
             }
         }
 
-        println!("Struct {:?} has {:?} dependencies", struct_name, n_dependencies);
+        self.logger.log_brief_info(&format!("Struct {:?} has {:?} dependencies", struct_name, n_dependencies));
 
         self.unresolved_struct_declarations.insert(struct_name.to_string(), expr.clone());
 
@@ -195,6 +204,10 @@ impl ItemVisitor<()> for TypeResolver<'_> {
             arg_types: Rc::new(item.args.iter().map(|arg| arg.1.clone()).collect()),
             ret_type: Rc::new(item.ret_type.clone())
         }));
+
+        if resolved_type.is_none() {
+            
+        }
 
         self.symbol_table.insert_function(item.name.to_string(), resolved_type);
     }
@@ -303,8 +316,6 @@ impl ItemVisitor<()> for VariableResolver<'_> {
 }
 
 impl ExprVisitor<()> for VariableResolver<'_> {
-    fn visit_empty(&mut self, _expr: &EmptyExpr) {}
-
     fn visit_binary(&mut self, expr: &BinaryExpr) {
         expr.left.accept_visitor(self);
         expr.right.accept_visitor(self);
@@ -359,15 +370,6 @@ impl ExprVisitor<()> for VariableResolver<'_> {
         self.pop_scope();
     }
 
-    fn visit_print(&mut self, expr: &PrintExpr) {
-        expr.expr.accept_visitor(self);
-    }
-
-    fn visit_rand(&mut self, expr: &RandExpr) {
-        expr.min.accept_visitor(self);
-        expr.max.accept_visitor(self);
-    }
-
     fn visit_loop(&mut self, expr: &LoopExpr) {
         self.push_scope();
         
@@ -391,13 +393,9 @@ impl ExprVisitor<()> for VariableResolver<'_> {
         expr.expr.accept_visitor(self);
     }
 
-    fn visit_input(&mut self, expr: &InputExpr) {
-        expr.prompt.accept_visitor(self);
-    }
-
     fn visit_call(&mut self, expr: &CallExpr) {
-        if !self.symbol_table.functions.contains_key(&*expr.function.identifier) {
-            panic!("Unknown function name {:?}", &*expr.function.identifier);
+        if !self.symbol_table.functions.contains_key(&*expr.function) {
+            panic!("Unknown function name {:?}", &*expr.function);
         }
 
         for arg in &expr.args {

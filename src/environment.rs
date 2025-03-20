@@ -1,3 +1,4 @@
+use core::fmt;
 use std::{collections::HashMap, rc::Rc};
 
 #[derive(PartialEq, Eq, Debug, Clone)]
@@ -10,15 +11,48 @@ pub enum ParsedType {
     Empty,
 }
 
+impl fmt::Display for ParsedType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ParsedType::Integer => write!(f, "{{\"type\": \"Integer\"}}"),
+            ParsedType::Double => write!(f, "{{\"type\": \"Double\"}}"),
+            ParsedType::Boolean => write!(f, "{{\"type\": \"Boolean\"}}"),
+            ParsedType::String => write!(f, "{{\"type\": \"String\"}}"),
+            ParsedType::TypeName(name) => write!(f, "{{\"type\": \"TypeName\", \"name\": \"{}\"}}", name),
+            ParsedType::Function(func) => write!(f, "{{\"type\": \"Function\", \"function\": {}}}", func),
+            ParsedType::Pointer(ptr) => write!(f, "{{\"type\": \"Pointer\", \"pointer\": {}}}", ptr),
+            ParsedType::Empty => write!(f, "{{\"type\": \"Empty\"}}")
+        }
+    }
+}
+
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub struct ParsedPointerType {
     pub pointee: Rc<ParsedType>
+}
+
+impl fmt::Display for ParsedPointerType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{{\"pointee\": {}}}", self.pointee)
+    }
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub struct ParsedFunctionType {
     pub arg_types: Rc<Vec<ParsedType>>,
     pub ret_type: Rc<ParsedType>
+}
+
+impl fmt::Display for ParsedFunctionType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{{\"arg_types\": [")?;
+
+        for arg in self.arg_types.iter() {
+            write!(f, "{},", arg)?;
+        }
+
+        write!(f, "], \"ret_type\": {}}}", self.ret_type)
+    }
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
@@ -106,4 +140,15 @@ pub enum Literal {
     Double (f64),
     Bool (bool),
     String (String),
+}
+
+impl fmt::Display for Literal {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Literal::Int(i) => write!(f, "{{\"type\": \"Integer\", \"value\": {}}}", i),
+            Literal::Double(d) => write!(f, "{{\"type\": \"Double\", \"value\": {}}}", d),
+            Literal::Bool(b) => write!(f, "{{\"type\": \"Boolean\", \"value\": {}}}", b),
+            Literal::String(s) => write!(f, "{{\"type\": \"String\", \"value\": \"{}\"}}", s),
+        }
+    }
 }

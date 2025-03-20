@@ -1,8 +1,8 @@
 use std::{iter::Peekable, str::Chars};
 
 use crate::error::{self, Diagnostic, DiagnosticType};
+use crate::logger::Logger;
 use crate::token::{Position, PositionRange};
-use crate::log;
 use crate::token::{Token, TokenType, TokenValue};
 
 pub struct LexerDiagnostic {
@@ -24,27 +24,29 @@ impl LexerDiagnostic {
             diagnostic,
         }
     }
- 
-    fn log(&self) {
-        log::log(&self.diagnostic);
-    }
 }
 
 pub fn parse(code: &str) -> Vec<Token> {
-    let mut tokens = Vec::new();
+    let mut tokens = vec![Token {
+        token_type: TokenType::SOF,
+        value: TokenValue::None,
+        position: PositionRange::new(Position::new(0, 0)),
+    }];
+
     let mut lexer = Lexer::new(code);
 
     while let Some(token) = lexer.next_token() {
         let is_eof = token.token_type == TokenType::EOF;
 
-        println!("{:?}", token);
-
+        lexer.logger.log_detailed_info(format!("Parsed token: {:?}", token).as_str());
         tokens.push(token);
 
         if is_eof {
             break;
         }
     }
+
+    lexer.logger.log_brief_info(&format!("Parsed {} tokens", tokens.len()));
 
     tokens
 }
@@ -54,7 +56,8 @@ pub struct Lexer<'a> {
     pub cur: Option<char>,
     pub position: Position,
     pub index: i32,
-    pub token_start: Option<PositionRange>
+    pub token_start: Option<PositionRange>,
+    pub logger: Logger
 }
 
 impl Lexer<'_> {
@@ -67,7 +70,8 @@ impl Lexer<'_> {
             cur,
             position: Position::new(1, 1),
             index: 0,
-            token_start: None
+            token_start: None,
+            logger: Logger::new("lexer")
         }
     }
 
@@ -116,7 +120,7 @@ impl Lexer<'_> {
         self.chars.peek()
     }
 
-    fn end_token(&mut self, token_type: TokenType, value: Option<TokenValue>) -> Result<Token, LexerDiagnostic> {
+    fn end_token(&mut self, token_type: TokenType, value: TokenValue) -> Result<Token, LexerDiagnostic> {
         let token_start = self.token_start.take().expect("There is no token to end");
 
         let ret = Ok(Token {
@@ -124,6 +128,8 @@ impl Lexer<'_> {
             value,
             position: token_start.with_end(self.position)
         });
+
+
 
         self.token_start = None;
 
@@ -139,8 +145,6 @@ impl Lexer<'_> {
             match self.try_next_token() {
                 Ok(token) => break Some(token),
                 Err(err) => {
-                    err.log();
-
                     if err.fatal {
                         break None;
                     }
@@ -154,37 +158,37 @@ impl Lexer<'_> {
     fn try_next_token(&mut self) -> Result<Token, LexerDiagnostic> {
         let mut cur = match self.cur {
             Some(cur) => cur,
-            None => return self.end_token(TokenType::EOF, None)
+            None => return self.end_token(TokenType::EOF, TokenValue::None)
         };
 
         while Self::is_whitespace(cur) {
             if let Some(c) = self.next() {
                 cur = c;
             } else {
-                return self.end_token(TokenType::EOF, None);
+                return self.end_token(TokenType::EOF, TokenValue::None);
             }
         }
         
         match cur {
-            ';' => self.end_token(TokenType::Semicolon, None),
-            ',' => self.end_token(TokenType::Comma, None),
-            '.' => self.end_token(TokenType::Dot, None),
-            ':' => self.end_token(TokenType::Colon, None),
-            '{' => self.end_token(TokenType::LeftCurly, None),
-            '}' => self.end_token(TokenType::RightCurly, None),
-            '(' => self.end_token(TokenType::LeftParen, None),
-            ')' => self.end_token(TokenType::RightParen, None),
-            '[' => self.end_token(TokenType::LeftSquare, None),
-            ']' => self.end_token(TokenType::RightSquare, None),
-            '+' => self.end_token(TokenType::Plus, None),
-            '*' => self.end_token(TokenType::Star, None),
+            ';' => self.end_token(TokenType::Semicolon, TokenValue::None),
+            ',' => self.end_token(TokenType::Comma, TokenValue::None),
+            '.' => self.end_token(TokenType::Dot, TokenValue::None),
+            ':' => self.end_token(TokenType::Colon, TokenValue::None),
+            '{' => self.end_token(TokenType::LeftCurly, TokenValue::None),
+            '}' => self.end_token(TokenType::RightCurly, TokenValue::None),
+            '(' => self.end_token(TokenType::LeftParen, TokenValue::None),
+            ')' => self.end_token(TokenType::RightParen, TokenValue::None),
+            '[' => self.end_token(TokenType::LeftSquare, TokenValue::None),
+            ']' => self.end_token(TokenType::RightSquare, TokenValue::None),
+            '+' => self.end_token(TokenType::Plus, TokenValue::None),
+            '*' => self.end_token(TokenType::Star, TokenValue::None),
             '-' => self.parse_pair('>', TokenType::Minus, TokenType::Arrow),
             '/' => self.parse_slash(),
             '!' => self.parse_pair('=', TokenType::Not, TokenType::NotEqual),
             '>' => self.parse_pair('=', TokenType::Greater, TokenType::GreaterEqual),
             '<' => self.parse_pair('=', TokenType::Less, TokenType::LessEqual),
             '=' => self.parse_pair('=', TokenType::Assignment, TokenType::Equal),
-            '&' => self.end_token(TokenType::Ampersand, None),
+            '&' => self.end_token(TokenType::Ampersand, TokenValue::None),
             '\"' => self.parse_string(),
             _ => self.parse_other(),
         }
@@ -208,12 +212,12 @@ impl Lexer<'_> {
         if let Some(&peek) = peek {
             if peek == second_char {
                 self.next();
-                self.end_token(paired, None)
+                self.end_token(paired, TokenValue::None)
             } else {
-                self.end_token(single, None)
+                self.end_token(single, TokenValue::None)
             }
         } else {
-            self.end_token(single, None)
+            self.end_token(single, TokenValue::None)
         }
     }
 
@@ -228,7 +232,7 @@ impl Lexer<'_> {
 
                 self.try_next_token()
             },
-            _ => self.end_token(TokenType::Slash, None)
+            _ => self.end_token(TokenType::Slash, TokenValue::None)
         }
     }
     
@@ -252,7 +256,7 @@ impl Lexer<'_> {
             return Err(self.err_unclosed_quotes(start))
         }
     
-        self.end_token(TokenType::StringLiteral, Some(TokenValue::String(value)))
+        self.end_token(TokenType::StringLiteral, TokenValue::String(value))
     }
 
     fn parse_numeric(&mut self) -> Result<Token, LexerDiagnostic> {
@@ -300,21 +304,21 @@ impl Lexer<'_> {
         match peek {
             Some('d') => {
                 self.next();
-                self.end_token(TokenType::DoubleLiteral, Some(TokenValue::Double(value)))
+                self.end_token(TokenType::DoubleLiteral, TokenValue::Double(value))
             },
             Some('i') => {
                 self.next();
                 if !is_decimal {
-                    self.end_token(TokenType::IntLiteral, Some(TokenValue::Int(value as i64)))
+                    self.end_token(TokenType::IntLiteral, TokenValue::Int(value as i64))
                 } else {
                     Result::Err(self.err_decimal_literal_as_int())
                 }
             },
             _ => {
                 if !is_decimal {
-                    self.end_token(TokenType::IntLiteral, Some(TokenValue::Int(value as i64)))
+                    self.end_token(TokenType::IntLiteral, TokenValue::Int(value as i64))
                 } else {
-                    self.end_token(TokenType::FloatLiteral, Some(TokenValue::Double(value)))
+                    self.end_token(TokenType::FloatLiteral, TokenValue::Double(value))
                 }
             },
         }
@@ -340,32 +344,32 @@ impl Lexer<'_> {
         }
     
         match word.as_str() {
-            "if" => self.end_token(TokenType::If, None),
-            "else" => self.end_token(TokenType::Else, None),
-            "for" => self.end_token(TokenType::For, None),
-            "return" => self.end_token(TokenType::Return, None),
-            "fn" => self.end_token(TokenType::Fn, None),
-            "this" => self.end_token(TokenType::This, None),
-            "true" => self.end_token(TokenType::BoolLiteral, Some(TokenValue::Bool(true))),
-            "false" => self.end_token(TokenType::BoolLiteral, Some(TokenValue::Bool(false))),
-            "and" => self.end_token(TokenType::And, None),
-            "or" => self.end_token(TokenType::Or, None),
-            "while" => self.end_token(TokenType::While, None),
-            "break" => self.end_token(TokenType::Break, None),
-            "loop" => self.end_token(TokenType::Loop, None),
-            "int" => self.end_token(TokenType::Int, None),
-            "double" => self.end_token(TokenType::Double, None),
-            "bool" => self.end_token(TokenType::Bool, None),
-            "str" => self.end_token(TokenType::String, None),
-            "let" => self.end_token(TokenType::Let, None),
-            "print" => self.end_token(TokenType::Print, None),
-            "rand" => self.end_token(TokenType::Rand, None),
-            "input" => self.end_token(TokenType::Input, None),
-            "struct" => self.end_token(TokenType::Struct, None),
-            "alloc" => self.end_token(TokenType::Alloc, None),
-            "putc" => self.end_token(TokenType::Putc, None),
-            "getc" => self.end_token(TokenType::Getc, None),
-            _ => self.end_token(TokenType::Identifier, Some(TokenValue::String(word))),
+            "if" => self.end_token(TokenType::If, TokenValue::None),
+            "else" => self.end_token(TokenType::Else, TokenValue::None),
+            "for" => self.end_token(TokenType::For, TokenValue::None),
+            "return" => self.end_token(TokenType::Return, TokenValue::None),
+            "fn" => self.end_token(TokenType::Fn, TokenValue::None),
+            "this" => self.end_token(TokenType::This, TokenValue::None),
+            "true" => self.end_token(TokenType::BoolLiteral, TokenValue::Bool(true)),
+            "false" => self.end_token(TokenType::BoolLiteral,TokenValue::Bool(false)),
+            "and" => self.end_token(TokenType::And, TokenValue::None),
+            "or" => self.end_token(TokenType::Or, TokenValue::None),
+            "while" => self.end_token(TokenType::While, TokenValue::None),
+            "break" => self.end_token(TokenType::Break, TokenValue::None),
+            "loop" => self.end_token(TokenType::Loop, TokenValue::None),
+            "int" => self.end_token(TokenType::Int, TokenValue::None),
+            "double" => self.end_token(TokenType::Double, TokenValue::None),
+            "bool" => self.end_token(TokenType::Bool, TokenValue::None),
+            "str" => self.end_token(TokenType::String, TokenValue::None),
+            "let" => self.end_token(TokenType::Let, TokenValue::None),
+            "print" => self.end_token(TokenType::Print, TokenValue::None),
+            "rand" => self.end_token(TokenType::Rand, TokenValue::None),
+            "input" => self.end_token(TokenType::Input, TokenValue::None),
+            "struct" => self.end_token(TokenType::Struct, TokenValue::None),
+            "alloc" => self.end_token(TokenType::Alloc, TokenValue::None),
+            "putc" => self.end_token(TokenType::Putc, TokenValue::None),
+            "getc" => self.end_token(TokenType::Getc, TokenValue::None),
+            _ => self.end_token(TokenType::Identifier, TokenValue::String(word)),
         }
     }
     

@@ -1,4 +1,4 @@
-fn int factorial(int n) {
+fn factorial(int n) -> int {
     if n == 0 {
         1
     } else {
@@ -6,7 +6,7 @@ fn int factorial(int n) {
     }
 }
 
-fn int fib(int n) {
+fn fib(int n) -> int {
     if n == 0 {
         0
     } else if n == 1 {
@@ -16,11 +16,11 @@ fn int fib(int n) {
     }
 }
 
-fn int add(*int a, int b) {
+fn add(*int a, int b) -> int {
     *a + b
 }
 
-fn int main() {
+fn main() -> int {
     let int a = 1;
     add(&a, 3)
 }
