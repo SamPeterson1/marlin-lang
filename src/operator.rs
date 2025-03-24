@@ -1,5 +1,6 @@
-use crate::{environment::ResolvedType, error::{Diagnostic, DiagnosticType}, instruction::InstructionBuilder, token::{Position, PositionRange, Token, TokenType}};
 use std::fmt;
+
+use crate::{error::{Diagnostic, DiagnosticType}, instruction::InstructionBuilder, token::{Position, PositionRange, TokenType}, types::resolved_type::ResolvedType};
 
 pub fn as_binary_operator(token_type: TokenType) -> Box<dyn BinaryOperator> {
     match token_type {

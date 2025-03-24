@@ -5,8 +5,8 @@ use std::env;
 
 use crate::compiler::{Compiler, CompilerResult};
 use crate::error::DiagnosticType;
-use crate::expr::{ExprParser, ParseResult};
 use crate::logger::{LogSeverity, Logger};
+use crate::parser::{ExprParser, ParseResult};
 use crate::resolver::SymbolTable;
 use crate::type_checker::TypeChecker;
 use crate::vm::VM;
@@ -76,16 +76,28 @@ fn run(code: String) {
     logger.log_brief_info("Done parsing");
 
     let mut symbol_table = SymbolTable::new();
-    let resolve_errors = symbol_table.resolve(&items);
-    
-    let mut type_checker = TypeChecker::new(&symbol_table);
-    let type_errors = type_checker.check_types(&items);
-    
-    let mut all_errors = Vec::new();
 
+    let mut all_errors = Vec::new();
     all_errors.extend(parse_diagnostics);
-    all_errors.extend(resolve_errors);
-    all_errors.extend(type_errors);
+
+    if all_errors.len() == 0 {
+        logger.log_brief_info("Resolving symbols");
+        let resolve_errors = symbol_table.resolve(&items);
+        all_errors.extend(resolve_errors);
+        logger.log_brief_info("Done resolving symbols");
+    } else {
+        logger.log_brief_info("Skipping symbol resolution due to previous errors");
+    }
+    
+    if all_errors.len() == 0 {
+        logger.log_brief_info("Checking types");
+        let mut type_checker = TypeChecker::new(&symbol_table);
+        let type_errors = type_checker.check_types(&items);
+        all_errors.extend(type_errors);
+        logger.log_brief_info("Done checking types");
+    } else {
+        logger.log_brief_info("Skipping type checking due to previous errors");
+    }
 
     if !all_errors.is_empty() {
         for error in &all_errors {
@@ -96,6 +108,9 @@ fn run(code: String) {
 
             logger.log_brief(log_severity, &format!("{}", error));
         }
+        logger.log_brief_info("Errors found. Exiting");
+        
+        return;
     } else {
         logger.log_brief_info("No errors found");
     }

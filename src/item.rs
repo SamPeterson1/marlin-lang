@@ -1,14 +1,12 @@
 use std::{collections::HashMap, rc::Rc, fmt};
 
-use crate::{environment::ParsedType, token::PositionRange};
-
-use super::Expr;
+use crate::{expr::Expr, token::PositionRange, types::parsed_type::ParsedType};
 
 pub trait ItemVisitable<T> {
     fn accept_visitor(&self, visitor: &mut dyn ItemVisitor<T>) -> T;
 }
 
-pub trait Item: ItemVisitable<()> + fmt::Debug  + fmt::Display {
+pub trait Item: ItemVisitable<()> + fmt::Display {
     fn get_position(&self) -> &PositionRange;
 }
 
@@ -33,7 +31,7 @@ macro_rules! impl_item {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct StructItem {
     pub name: Rc<String>,
     pub members: HashMap<String, ParsedType>,
@@ -68,7 +66,6 @@ impl StructItem {
 
 impl_item!(StructItem, visit_struct);
 
-#[derive(Debug)]
 pub struct FunctionItem {
     pub name: Rc<String>,
     pub args: Vec<(String, ParsedType)>,

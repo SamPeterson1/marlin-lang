@@ -197,7 +197,7 @@ fn main() -> int {
                 println_str("O wins!");
             }
 
-            game_over = true
+            game_over = true;
         }
     }
 

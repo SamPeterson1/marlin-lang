@@ -6,7 +6,7 @@ fn factorial(int n) -> int {
     }
 }
 
-fn fib(int n) -> int {
+fn fib(int n, Foo b) -> int {
     if n == 0 {
         0
     } else if n == 1 {
