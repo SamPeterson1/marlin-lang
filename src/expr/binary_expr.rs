@@ -18,17 +18,17 @@ impl fmt::Display for BinaryExpr {
 }
 
 impl BinaryExpr {
-    pub fn new(left: Box<dyn Expr>, right: Box<dyn Expr>, operator_token: TokenType) -> Box<dyn Expr> {
+    pub fn new(left: Box<dyn Expr>, right: Box<dyn Expr>, operator_token: TokenType) -> BinaryExpr {
         let operator = operator::as_binary_operator(operator_token);
 
         let position = PositionRange::concat(left.get_position(), right.get_position());
 
-        Box::new(BinaryExpr {
+        BinaryExpr {
             left,
             right,
             operator,
             position
-        })
+        }
     }
 }
 

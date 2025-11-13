@@ -5,7 +5,7 @@ use std::env;
 
 use crate::compiler::{Compiler, CompilerResult};
 use crate::error::DiagnosticType;
-use crate::logger::{LogSeverity, Logger};
+use crate::logger::{LogLevel, LogSource, Logger};
 use crate::parser::{ExprParser, ParseResult};
 use crate::resolver::SymbolTable;
 use crate::type_checker::TypeChecker;
@@ -59,21 +59,29 @@ pub fn run_prompt() {
     }
 }
 
+struct Runner { }
+
+impl LogSource for Runner {
+    fn get_source(&self) -> String {
+        "Runner".to_string()
+    }
+}
+
 fn run(code: String) {
-    let logger = Logger::new("run");
+    let runner = Runner {};
 
-    logger.log_brief_info("Running code");
-    logger.log_detailed_info(format!("Source code: {}", code).as_str());
+    Logger::log_info(&runner, "Running code");
+    Logger::log_debug(&runner, format!("Source code: {}", code).as_str());
 
-    logger.log_brief_info("Lexing code");
+    Logger::log_info(&runner, "Lexing code");
     let tokens: Vec<Token> = lexer::parse(&code);
-    logger.log_brief_info("Done lexing");
+    Logger::log_info(&runner, "Done lexing");
     
     let parser = ExprParser::new(&tokens);
 
-    logger.log_brief_info("Parsing code");
+    Logger::log_info(&runner, "Parsing code");
     let ParseResult { items, diagnostics: parse_diagnostics } = parser.parse();
-    logger.log_brief_info("Done parsing");
+    Logger::log_info(&runner, "Done parsing");
 
     let mut symbol_table = SymbolTable::new();
 
@@ -81,38 +89,38 @@ fn run(code: String) {
     all_errors.extend(parse_diagnostics);
 
     if all_errors.len() == 0 {
-        logger.log_brief_info("Resolving symbols");
+        Logger::log_info(&runner, "Resolving symbols");
         let resolve_errors = symbol_table.resolve(&items);
         all_errors.extend(resolve_errors);
-        logger.log_brief_info("Done resolving symbols");
+        Logger::log_info(&runner, "Done resolving symbols");
     } else {
-        logger.log_brief_info("Skipping symbol resolution due to previous errors");
+        Logger::log_info(&runner, "Skipping symbol resolution due to previous errors");
     }
     
     if all_errors.len() == 0 {
-        logger.log_brief_info("Checking types");
+        Logger::log_info(&runner, "Checking types");
         let mut type_checker = TypeChecker::new(&symbol_table);
         let type_errors = type_checker.check_types(&items);
         all_errors.extend(type_errors);
-        logger.log_brief_info("Done checking types");
+        Logger::log_info(&runner, "Done checking types");
     } else {
-        logger.log_brief_info("Skipping type checking due to previous errors");
+        Logger::log_info(&runner, "Skipping type checking due to previous errors");
     }
 
     if !all_errors.is_empty() {
         for error in &all_errors {
             let log_severity = match error.diagnostic_type {
-                DiagnosticType::Error => LogSeverity::Error,
-                DiagnosticType::Warning => LogSeverity::Warning
+                DiagnosticType::Error => LogLevel::Error,
+                DiagnosticType::Warning => LogLevel::Warning
             };
 
-            logger.log_brief(log_severity, &format!("{}", error));
+            Logger::log(&runner, log_severity, &format!("{}", error));
         }
-        logger.log_brief_info("Errors found. Exiting");
+        Logger::log_info(&runner, "Errors found. Exiting");
         
         return;
     } else {
-        logger.log_brief_info("No errors found");
+        Logger::log_info(&runner, "No errors found");
     }
 
     let mut compiler = Compiler::new(&symbol_table);

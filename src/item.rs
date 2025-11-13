@@ -55,12 +55,12 @@ impl fmt::Display for StructItem {
 }
 
 impl StructItem {
-    pub fn new(name: String, members: HashMap<String, ParsedType>, position: PositionRange) -> Box<dyn Item> {
-        Box::new(StructItem {
+    pub fn new(name: String, members: HashMap<String, ParsedType>, position: PositionRange) -> StructItem {
+        StructItem {
             name: Rc::new(name),
             members,
             position
-        })
+        }
     }
 }
 
@@ -91,14 +91,14 @@ impl fmt::Display for FunctionItem {
 }
 
 impl FunctionItem {
-    pub fn new(name: String, args: Vec<(String, ParsedType)>, expr: Box<dyn Expr>, ret_type: ParsedType, position: PositionRange) -> Box<dyn Item> {
-        Box::new(FunctionItem {
+    pub fn new(name: String, args: Vec<(String, ParsedType)>, expr: Box<dyn Expr>, ret_type: ParsedType, position: PositionRange) -> FunctionItem {
+        FunctionItem {
             name: Rc::new(name),
             args,
             expr,
             ret_type,
             position
-        })
+        }
     }
 }
 

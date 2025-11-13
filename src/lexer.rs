@@ -1,7 +1,7 @@
 use std::{iter::Peekable, str::Chars};
 
 use crate::error::{self, Diagnostic, DiagnosticType};
-use crate::logger::Logger;
+use crate::logger::{LogSource, Logger};
 use crate::token::{Position, PositionRange};
 use crate::token::{Token, TokenType, TokenValue};
 
@@ -38,7 +38,7 @@ pub fn parse(code: &str) -> Vec<Token> {
     while let Some(token) = lexer.next_token() {
         let is_eof = token.token_type == TokenType::EOF;
 
-        lexer.logger.log_detailed_info(format!("Parsed token: {:?}", token).as_str());
+        Logger::log_debug(&lexer, format!("Parsed token: {:?}", token).as_str());
         tokens.push(token);
 
         if is_eof {
@@ -46,7 +46,7 @@ pub fn parse(code: &str) -> Vec<Token> {
         }
     }
 
-    lexer.logger.log_brief_info(&format!("Parsed {} tokens", tokens.len()));
+    Logger::log_info(&lexer, &format!("Parsed {} tokens", tokens.len()));
 
     tokens
 }
@@ -57,7 +57,12 @@ pub struct Lexer<'a> {
     pub position: Position,
     pub index: i32,
     pub token_start: Option<PositionRange>,
-    pub logger: Logger
+}
+
+impl LogSource for Lexer<'_> {
+    fn get_source(&self) -> String {
+        "Lexer".to_string()
+    }
 }
 
 impl Lexer<'_> {
@@ -71,7 +76,6 @@ impl Lexer<'_> {
             position: Position::new(1, 1),
             index: 0,
             token_start: None,
-            logger: Logger::new("lexer")
         }
     }
 

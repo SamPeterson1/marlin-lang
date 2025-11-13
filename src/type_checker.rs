@@ -1,13 +1,18 @@
 use std::rc::Rc;
 
-use crate::{error::Diagnostic, expr::{assignment_expr::AssignmentExpr, binary_expr::BinaryExpr, block_expr::BlockExpr, break_expr::BreakExpr, call_expr::CallExpr, declaration_expr::DeclarationExpr, get_address_expr::GetAddressExpr, get_char_expr::GetCharExpr, if_expr::IfExpr, literal_expr::LiteralExpr, loop_expr::LoopExpr, put_char_expr::PutCharExpr, static_array_expr::StaticArrayExpr, struct_initializer_expr::StructInitializerExpr, unary_expr::UnaryExpr, var_expr::{MemberAccess, VarExpr}, ExprVisitor}, item::{FunctionItem, Item, ItemVisitor, StructItem}, logger::Logger, resolver::SymbolTable, types::resolved_type::{PointerType, ResolvedType, StructType}};
+use crate::{error::Diagnostic, expr::{ExprVisitor, assignment_expr::AssignmentExpr, binary_expr::BinaryExpr, block_expr::BlockExpr, break_expr::BreakExpr, call_expr::CallExpr, declaration_expr::DeclarationExpr, get_address_expr::GetAddressExpr, get_char_expr::GetCharExpr, if_expr::IfExpr, literal_expr::LiteralExpr, loop_expr::LoopExpr, put_char_expr::PutCharExpr, static_array_expr::StaticArrayExpr, struct_initializer_expr::StructInitializerExpr, unary_expr::UnaryExpr, var_expr::{MemberAccess, VarExpr}}, item::{FunctionItem, Item, ItemVisitor, StructItem}, logger::{LogSource, Logger}, resolver::SymbolTable, types::resolved_type::{PointerType, ResolvedType, StructType}};
 
 pub struct TypeChecker<'a> {
     symbol_table: &'a SymbolTable,
     loop_types: Vec<Option<ResolvedType>>,
     current_loop_idx: Option<usize>,
-    logger: Logger,
     diagnostics: Vec<Diagnostic>
+}
+
+impl LogSource for TypeChecker<'_> {
+    fn get_source(&self) -> String {
+        "TypeChecker".to_string()
+    }
 }
 
 impl<'a> TypeChecker<'a> {
@@ -16,7 +21,6 @@ impl<'a> TypeChecker<'a> {
             symbol_table,
             loop_types: Vec::new(),
             current_loop_idx: None,
-            logger: Logger::new("TypeChecker"),
             diagnostics: Vec::new()
         }
     }
@@ -30,7 +34,7 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn push_diagnostic(&mut self, diagnostic: Diagnostic) {
-        self.logger.log_brief_error(&format!("Pushing diagnostic: {}", diagnostic));
+        Logger::log_error(self, &format!("Pushing diagnostic: {}", diagnostic));
         self.diagnostics.push(diagnostic);
     }
 }

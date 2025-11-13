@@ -16,11 +16,11 @@ impl fmt::Display for BreakExpr {
 }
 
 impl BreakExpr {
-    pub fn new(expr: Box<dyn Expr>, position: PositionRange) -> Box<dyn Expr> {
-        Box::new(BreakExpr {
+    pub fn new(expr: Box<dyn Expr>, position: PositionRange) -> BreakExpr {
+        BreakExpr {
             expr,
             position
-        })
+        }
     }
 }
 

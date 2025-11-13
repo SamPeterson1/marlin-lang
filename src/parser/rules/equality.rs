@@ -1,0 +1,32 @@
+use std::fmt;
+
+use crate::{expr::{Expr, binary_expr::BinaryExpr, declaration_expr::DeclarationExpr}, logger::Log, parser::{ExprParser, ParseRule, rules::{assignment::AssignmentRule, boolean_factor::BooleanFactorRule, comparison::ComparisonRule, expr::ExprRule}}, token::{Position, PositionRange, TokenType}};
+
+pub struct EqualityRule {}
+
+impl fmt::Display for EqualityRule {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Equality")
+    }
+}
+
+//comparison (( "!=" | "==") comparison)*
+impl ParseRule<Box<dyn Expr>> for EqualityRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn Expr>> {
+        parser.log_debug(&format!("Entering equality parser. Current token {:?}", parser.cur()));
+
+        let mut comparison = parser.apply_rule(ComparisonRule {});
+        parser.log_parse_result(&comparison, "comparison expression");
+
+        let mut expr = comparison?;
+
+        while let Some(operator) = parser.try_match(&[TokenType::Equal, TokenType::NotEqual]) {
+            comparison = parser.apply_rule(ComparisonRule {});
+            parser.log_parse_result(&comparison, "comparison expression");
+
+            expr = Box::new(BinaryExpr::new(expr, comparison?, operator.token_type));
+        }
+
+        Some(expr)
+    }
+}

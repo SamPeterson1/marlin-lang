@@ -35,12 +35,12 @@ impl fmt::Display for LiteralExpr {
 }
 
 impl LiteralExpr {
-    pub fn new(value: Literal, parsed_type: ParsedType, position: PositionRange) -> Box<dyn Expr> {
-        Box::new(LiteralExpr {
+    pub fn new(value: Literal, parsed_type: ParsedType, position: PositionRange) -> LiteralExpr {
+        LiteralExpr {
             value,
             parsed_type,
             position
-        })
+        }
     }
 }
 

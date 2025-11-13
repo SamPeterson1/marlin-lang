@@ -49,14 +49,21 @@ impl fmt::Display for DiagnosticType {
     }
 }
 
-pub const LEX_ERR_UNKNOWN_SYMBOL: i32 = 1;
-pub const LEX_ERR_UNTERMINATED_STRING: i32 = 2;
-pub const LEX_ERR_DECIMAL_LITERAL_AS_INT: i32 = 3;
+pub const LEX_ERR_UNKNOWN_SYMBOL: u32 = 1;
+pub const LEX_ERR_UNTERMINATED_STRING: u32 = 2;
+pub const LEX_ERR_DECIMAL_LITERAL_AS_INT: u32 = 3;
+
+pub const LEXER_ERR_GROUP: u32 = 100;
+pub const PARSER_ERR_GROUP: u32 = 200;
+pub const TYPE_RESOLVER_ERR_GROUP: u32 = 300;
+pub const VAR_RESOLVER_ERR_GROUP: u32 = 400;
+pub const TYPE_CHECKER_ERR_GROUP: u32 = 500;
+pub const COMPILER_ERR_GROUP: u32 = 600;
 
 #[derive(Debug)]
 #[allow(dead_code)]
 pub struct Diagnostic {
-    pub err_code: i32,
+    pub err_code: u32,
     pub diagnostic_type: DiagnosticType,
     pub position: PositionRange,
     pub msg: String
@@ -69,7 +76,7 @@ impl fmt::Display for Diagnostic {
 }
 
 impl Diagnostic {
-    pub fn new(err_code: i32, diagnostic_type: DiagnosticType, position: PositionRange, msg: String) -> Diagnostic {
+    pub fn new(err_code: u32, diagnostic_type: DiagnosticType, position: PositionRange, msg: String) -> Diagnostic {
         Diagnostic {
             err_code,
             diagnostic_type,

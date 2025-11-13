@@ -16,11 +16,11 @@ impl fmt::Display for PutCharExpr {
 }
 
 impl PutCharExpr {
-    pub fn new(expr: Box<dyn Expr>, position: PositionRange) -> Box<dyn Expr> {
-        Box::new(PutCharExpr {
+    pub fn new(expr: Box<dyn Expr>, position: PositionRange) -> PutCharExpr {
+        PutCharExpr {
             expr,
             position
-        })
+        }
     }
 }
 

@@ -28,12 +28,12 @@ impl fmt::Display for StructInitializerExpr {
 }
 
 impl StructInitializerExpr {
-    pub fn new(type_name: String, member_inits: HashMap<String, Box<dyn Expr>>, position: PositionRange) -> Box<dyn Expr> {
-        Box::new(StructInitializerExpr {
+    pub fn new(type_name: String, member_inits: HashMap<String, Box<dyn Expr>>, position: PositionRange) -> StructInitializerExpr {
+        StructInitializerExpr {
             type_name: Rc::new(type_name),
             member_inits: Rc::new(member_inits),
             position
-        })
+        }
     }
 }
 

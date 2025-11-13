@@ -33,14 +33,14 @@ impl std::hash::Hash for DeclarationExpr {
 }
 
 impl DeclarationExpr {
-    pub fn new(id: i32, identifier: String, declaration_type: ParsedType, expr: Box<dyn Expr>, position: PositionRange) -> Box<dyn Expr> {
-        Box::new(DeclarationExpr {
+    pub fn new(id: i32, identifier: String, declaration_type: ParsedType, expr: Box<dyn Expr>, position: PositionRange) -> DeclarationExpr {
+        DeclarationExpr {
             id,
             identifier,
             declaration_type,
             expr,
             position,
-        })
+        }
     }
 }
 

@@ -33,34 +33,34 @@ impl fmt::Display for LoopExpr {
 }
 
 impl LoopExpr {
-    pub fn new(body: Box<dyn Expr>, position: PositionRange) -> Box<dyn Expr> {
-        Box::new(LoopExpr {
+    pub fn new(body: Box<dyn Expr>, position: PositionRange) -> LoopExpr {
+        LoopExpr {
             initial: None, 
             condition: None, 
             increment: None, 
             body,
             position
-        })
+        }
     }
     
-    pub fn new_while(condition: Box<dyn Expr>, body: Box<dyn Expr>, position: PositionRange) -> Box<dyn Expr> {
-        Box::new(LoopExpr {
+    pub fn new_while(condition: Box<dyn Expr>, body: Box<dyn Expr>, position: PositionRange) -> LoopExpr {
+        LoopExpr {
             initial: None, 
             condition: Some(condition), 
             increment: None, 
             body,
             position
-        })
+        }
     }
 
-    pub fn new_for(initial: Box<dyn Expr>, condition: Box<dyn Expr>, increment: Box<dyn Expr>, body: Box<dyn Expr>, position: PositionRange) -> Box<dyn Expr> {
-        Box::new(LoopExpr {
+    pub fn new_for(initial: Box<dyn Expr>, condition: Box<dyn Expr>, increment: Box<dyn Expr>, body: Box<dyn Expr>, position: PositionRange) -> LoopExpr {
+        LoopExpr {
             initial: Some(initial), 
             condition: Some(condition), 
             increment: Some(increment), 
             body,
             position
-        })
+        }
     }
 }
 

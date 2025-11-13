@@ -26,11 +26,11 @@ impl fmt::Display for BlockExpr {
 }
 
 impl BlockExpr {
-    pub fn new(exprs: Vec<Box<dyn Expr>>, position: PositionRange) -> Box<dyn Expr> {
-        Box::new(BlockExpr {
+    pub fn new(exprs: Vec<Box<dyn Expr>>, position: PositionRange) -> BlockExpr {
+        BlockExpr {
             exprs,
             position
-        })
+        }
     }    
 }
 

@@ -24,13 +24,13 @@ impl fmt::Display for IfExpr {
 }
 
 impl IfExpr {
-    pub fn new(condition: Box<dyn Expr>, success: Box<dyn Expr>, fail: Option<Box<dyn Expr>>, position: PositionRange) -> Box<dyn Expr> {
-        Box::new(IfExpr {
+    pub fn new(condition: Box<dyn Expr>, success: Box<dyn Expr>, fail: Option<Box<dyn Expr>>, position: PositionRange) -> IfExpr {
+        IfExpr {
             condition,
             success,
             fail,
             position
-        })
+        }
     }
 }
 

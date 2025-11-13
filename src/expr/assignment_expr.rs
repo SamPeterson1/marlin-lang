@@ -17,14 +17,14 @@ impl fmt::Display for AssignmentExpr {
 }
 
 impl AssignmentExpr {
-    pub fn new(asignee: VarExpr, expr: Box<dyn Expr>) -> Box<dyn Expr> {
+    pub fn new(asignee: VarExpr, expr: Box<dyn Expr>) -> AssignmentExpr {
         let position = PositionRange::concat(asignee.get_position(), expr.get_position());
 
-        Box::new(AssignmentExpr {
+        AssignmentExpr {
             asignee: Rc::new(asignee),
             expr,
             position
-        })
+        }
     }    
 }
 

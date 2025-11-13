@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 
-use crate::{error::{Diagnostic, DiagnosticType}, expr::{assignment_expr::AssignmentExpr, binary_expr::BinaryExpr, block_expr::BlockExpr, break_expr::BreakExpr, call_expr::CallExpr, declaration_expr::DeclarationExpr, get_address_expr::GetAddressExpr, get_char_expr::GetCharExpr, if_expr::IfExpr, literal_expr::LiteralExpr, loop_expr::LoopExpr, put_char_expr::PutCharExpr, static_array_expr::StaticArrayExpr, struct_initializer_expr::StructInitializerExpr, unary_expr::UnaryExpr, var_expr::VarExpr, ExprVisitable, ExprVisitor}, item::{FunctionItem, Item, ItemVisitor, StructItem}, logger::Logger, types::{parsed_type::{ParsedFunctionType, ParsedType, ParsedTypeName}, resolved_type::{FunctionType, PointerType, ResolvedType, StructType}}};
+use crate::{error::{Diagnostic, DiagnosticType}, expr::{ExprVisitable, ExprVisitor, assignment_expr::AssignmentExpr, binary_expr::BinaryExpr, block_expr::BlockExpr, break_expr::BreakExpr, call_expr::CallExpr, declaration_expr::DeclarationExpr, get_address_expr::GetAddressExpr, get_char_expr::GetCharExpr, if_expr::IfExpr, literal_expr::LiteralExpr, loop_expr::LoopExpr, put_char_expr::PutCharExpr, static_array_expr::StaticArrayExpr, struct_initializer_expr::StructInitializerExpr, unary_expr::UnaryExpr, var_expr::VarExpr}, item::{FunctionItem, Item, ItemVisitor, StructItem}, logger::{LogSource, Logger}, types::{parsed_type::{ParsedFunctionType, ParsedType, ParsedTypeName}, resolved_type::{FunctionType, PointerType, ResolvedType, StructType}}};
 
 struct VarDeclaration {
     is_defined: bool,
@@ -20,7 +20,12 @@ pub struct SymbolTable {
     pub types: HashMap<String, ResolvedType>,
     pub variables: HashMap<VarExpr, ResolvedVar>,
     pub functions: HashMap<String, ResolvedType>,
-    logger: Logger,
+}
+
+impl LogSource for SymbolTable {
+    fn get_source(&self) -> String {
+        "SymbolTable".to_string()
+    }
 }
 
 impl SymbolTable {
@@ -29,7 +34,6 @@ impl SymbolTable {
             types: HashMap::new(),
             variables: HashMap::new(),
             functions: HashMap::new(),
-            logger: Logger::new("SymbolTable"),
         }
     }
 
@@ -92,10 +96,10 @@ impl SymbolTable {
                 let resolved_type = self.types.get(&name_string);
 
                 if let Some(resolved_type) = resolved_type {
-                    self.logger.log_detailed_info(&format!("Resolved type {} to {:?}", name, resolved_type));
+                    Logger::log_debug(self, &format!("Resolved type {} to {:?}", name, resolved_type));
                     return Ok(resolved_type.clone());
                 } else {
-                    self.logger.log_brief_error(&format!("Unknown type name {:?}", name));
+                    Logger::log_error(self, &format!("Unknown type name {:?}", name));
                     return Err(Diagnostic::new(1, DiagnosticType::Error, *position, format!("Unknown type name {:?}", name)));
                 }
             }
@@ -125,8 +129,13 @@ pub struct TypeResolver<'a> {
     unresolved_types: HashMap<String, i32>,
     type_dependencies: HashMap<String, Vec<String>>,
     unresolved_struct_declarations: HashMap<String, StructItem>,
-    logger: Logger,
     diagnostics: Vec<Diagnostic>,
+}
+
+impl LogSource for TypeResolver<'_> {
+    fn get_source(&self) -> String {
+        "TypeResolver".to_string()
+    }
 }
 
 impl TypeResolver<'_> {
@@ -136,7 +145,6 @@ impl TypeResolver<'_> {
             unresolved_types: HashMap::new(),
             type_dependencies: HashMap::new(),
             unresolved_struct_declarations: HashMap::new(),
-            logger: Logger::new("TypeResolver"),
             diagnostics: Vec::new(),
         }
     }
@@ -153,16 +161,16 @@ impl TypeResolver<'_> {
     }
 
     fn push_diagnostic(&mut self, diagnostic: Diagnostic) {
-        self.logger.log_brief_error(&format!("Pushing diagnostic: {}", diagnostic));
+        Logger::log_error(self, &format!("Pushing diagnostic: {}", diagnostic));
         self.diagnostics.push(diagnostic);
     }
 
     fn err_unknown_type(&mut self, type_name: &str) {
-        self.logger.log_brief_error(&format!("Unknown type name {}", type_name));
+        Logger::log_error(self, &format!("Unknown type name {}", type_name));
     }
 
     fn resolve_struct(&mut self, type_name: String) {
-        self.logger.log_brief_info(&format!("Fully resolved struct {}", type_name));
+        Logger::log_info(self, &format!("Fully resolved struct {}", type_name));
 
         let struct_expr = self.unresolved_struct_declarations.remove(&type_name).unwrap();
             
@@ -176,9 +184,11 @@ impl TypeResolver<'_> {
 
                 *n_dependencies -= 1;
 
-                self.logger.log_detailed_info(&format!("Struct {:?} now has {:?} dependencies after resolving {:?}", dependency, *n_dependencies, type_name));
+                let n_dependencies = *n_dependencies;
 
-                if *n_dependencies == 0 {
+                Logger::log_debug(self, &format!("Struct {:?} now has {:?} dependencies after resolving {:?}", dependency, n_dependencies, type_name));
+
+                if n_dependencies == 0 {
                     self.resolve_struct(dependency);
                 }
             }
@@ -192,7 +202,7 @@ impl ItemVisitor<()> for TypeResolver<'_> {
 
         let struct_name = expr.name.clone();
 
-        self.logger.log_brief_info(&format!("Resolving struct {:?}", struct_name));
+        Logger::log_info(self, &format!("Resolving struct {:?}", struct_name));
 
         for (_, member_type) in expr.members.iter() {
             if let ParsedType::TypeName(ParsedTypeName {name: type_name, ..}) = member_type {
@@ -200,7 +210,7 @@ impl ItemVisitor<()> for TypeResolver<'_> {
                     let dependencies= self.type_dependencies.entry(type_name.to_string()).or_insert_with(|| Vec::new());
                     dependencies.push(struct_name.to_string());
 
-                    self.logger.log_brief_info(&format!("Struct {:?} depends on unresolved type {:?}", struct_name, type_name));
+                    Logger::log_info(self, &format!("Struct {:?} depends on unresolved type {:?}", struct_name, type_name));
                     
                     n_dependencies += 1;
 
@@ -209,7 +219,7 @@ impl ItemVisitor<()> for TypeResolver<'_> {
             }
         }
 
-        self.logger.log_brief_info(&format!("Struct {:?} has {:?} dependencies", struct_name, n_dependencies));
+        Logger::log_info(self, &format!("Struct {:?} has {:?} dependencies", struct_name, n_dependencies));
 
         self.unresolved_struct_declarations.insert(struct_name.to_string(), expr.clone());
 
@@ -228,7 +238,7 @@ impl ItemVisitor<()> for TypeResolver<'_> {
 
         match resolved_type {
             Ok(resolved_type) => {
-                self.logger.log_detailed_info(&format!("Resolved function {:?} to {:?}", item.name, resolved_type));
+                Logger::log_debug(self, &format!("Resolved function {:?} to {:?}", item.name, resolved_type));
                 self.symbol_table.insert_function(item.name.to_string(), resolved_type);
             },
             Err(diagnostic) => {
@@ -242,8 +252,13 @@ pub struct VariableResolver<'a> {
     symbol_table: &'a mut SymbolTable,
     num_scopes: usize,
     scopes: Vec<HashMap<String, VarDeclaration>>,
-    logger: Logger,
     diagnostics: Vec<Diagnostic>,
+}
+
+impl LogSource for VariableResolver<'_> {
+    fn get_source(&self) -> String {
+        "VariableResolver".to_string()
+    }
 }
 
 impl VariableResolver<'_> {
@@ -252,7 +267,6 @@ impl VariableResolver<'_> {
             symbol_table,
             num_scopes: 1,
             scopes: vec![HashMap::new()],
-            logger: Logger::new("VariableResolver"),
             diagnostics: Vec::new(),
         }
     }
@@ -268,7 +282,7 @@ impl VariableResolver<'_> {
     }
 
     fn push_diagnostic(&mut self, diagnostic: Diagnostic) {
-        self.logger.log_brief_error(&format!("Pushing diagnostic: {}", diagnostic));
+        Logger::log_error(self, &format!("Pushing diagnostic: {}", diagnostic));
         self.diagnostics.push(diagnostic);
     }
 
@@ -343,12 +357,12 @@ impl ItemVisitor<()> for VariableResolver<'_> {
         for (i, (arg_name, arg_type)) in item.args.iter().enumerate() {
             match self.symbol_table.get_resolved_type(arg_type) {
                 Ok(value_type) => {
-                    self.logger.log_detailed_info(&format!("Resolved function argument {:?} of type {:?}", arg_name, value_type));
+                    Logger::log_debug(self, &format!("Resolved function argument {:?} of type {:?}", arg_name, value_type));
                     self.declare(i as i32, true, arg_name, &value_type);
                     self.define(arg_name);
                 },
                 Err(diagnostic) => {
-                    self.logger.log_brief_error(&format!("Error resolving function argument {:?} of type {}", arg_name, arg_type));
+                    Logger::log_error(self, &format!("Error resolving function argument {:?} of type {}", arg_name, arg_type));
                     self.push_diagnostic(diagnostic);
                 }
             }
@@ -395,11 +409,11 @@ impl ExprVisitor<()> for VariableResolver<'_> {
     fn visit_declaration(&mut self, expr: &DeclarationExpr) {
         match self.symbol_table.get_resolved_type(&expr.declaration_type) {
             Ok(value_type) => {
-                self.logger.log_detailed_info(&format!("Resolved declaration of {:?} of type {}", expr.identifier, value_type));
+                Logger::log_debug(self, &format!("Resolved declaration of {:?} of type {}", expr.identifier, value_type));
                 self.declare(expr.id, false, &expr.identifier, &value_type);
             },
             Err(diagnostic) => {
-                self.logger.log_brief_error(&format!("Error resolving declaration of {:?} of type {}", expr.identifier, expr.declaration_type));
+                Logger::log_error(self, &format!("Error resolving declaration of {:?} of type {}", expr.identifier, expr.declaration_type));
                 self.push_diagnostic(diagnostic);
             }
         }
@@ -442,7 +456,7 @@ impl ExprVisitor<()> for VariableResolver<'_> {
 
     fn visit_call(&mut self, expr: &CallExpr) {
         if !self.symbol_table.functions.contains_key(&*expr.function) {
-            self.logger.log_brief_error(&format!("Unknown function {:?}", expr.function));
+            Logger::log_error(self, &format!("Unknown function {:?}", expr.function));
             self.push_diagnostic(Diagnostic::new(1, DiagnosticType::Error, expr.position, format!("Unknown function {:?}", expr.function)));
             return;
         }

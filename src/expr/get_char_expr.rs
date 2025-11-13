@@ -16,10 +16,10 @@ impl fmt::Display for GetCharExpr {
 }
 
 impl GetCharExpr {
-    pub fn new(position: PositionRange) -> Box<dyn Expr> {
-        Box::new(GetCharExpr {
+    pub fn new(position: PositionRange) -> GetCharExpr {
+        GetCharExpr {
             position
-        })
+        }
     }
 }
 

@@ -2,9 +2,7 @@ use std::env;
 use std::process;
 use dotenv::dotenv;
 use logger::LogLevel;
-use logger::LogSeverity;
 use logger::Logger;
-use logger::MasterLogger;
 
 mod run;
 mod error;
@@ -28,10 +26,7 @@ mod type_checker;
 fn main() {
     dotenv().unwrap();
 
-    MasterLogger::open();
-
-    let test = Logger::new("main");
-    test.log(LogLevel::Detailed, LogSeverity::Info, "Hello, world!");
+    Logger::open();
 
     let mut args: Vec<String> = env::args().collect();
     args.remove(0);
@@ -47,5 +42,5 @@ fn main() {
         run::run_prompt();
     }
 
-    MasterLogger::close();
+    Logger::close();
 }

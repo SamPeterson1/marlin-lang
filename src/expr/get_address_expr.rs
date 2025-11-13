@@ -16,11 +16,11 @@ impl fmt::Display for GetAddressExpr {
 }
 
 impl GetAddressExpr {
-    pub fn new(var_expr: VarExpr, position: PositionRange) -> Box<dyn Expr> {
-        Box::new(GetAddressExpr {
+    pub fn new(var_expr: VarExpr, position: PositionRange) -> GetAddressExpr {
+        GetAddressExpr {
             var_expr,
             position
-        })
+        }
     }
 }
 

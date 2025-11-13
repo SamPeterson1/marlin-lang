@@ -17,16 +17,16 @@ impl fmt::Display for UnaryExpr {
 }
 
 impl UnaryExpr {
-    pub fn new(expr: Box<dyn Expr>, operator_token: Token) -> Box<dyn Expr> {
+    pub fn new(expr: Box<dyn Expr>, operator_token: Token) -> UnaryExpr {
         let operator = operator::as_unary_operator(operator_token.token_type);
 
         let position = PositionRange::concat(expr.get_position(), &operator_token.position);
 
-        Box::new(UnaryExpr {
+        UnaryExpr {
             expr,
             operator,
             position
-        })
+        }
     }
 }
 

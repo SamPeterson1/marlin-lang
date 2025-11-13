@@ -27,14 +27,14 @@ impl fmt::Display for CallExpr {
 }
 
 impl CallExpr {
-    pub fn new(function: String, args: Vec<Box<dyn Expr>>) -> Box<dyn Expr> {
+    pub fn new(function: String, args: Vec<Box<dyn Expr>>) -> CallExpr {
         let position = PositionRange::new(Position::new(0, 0));
 
-        Box::new(CallExpr {
+        CallExpr {
             function,
             args,
             position
-        })
+        }
     }
 }
 

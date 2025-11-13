@@ -17,11 +17,11 @@ impl fmt::Display for StaticArrayExpr {
 }
 
 impl StaticArrayExpr {
-    pub fn new(len: usize, declaration_type: ParsedType, position: PositionRange) -> Box<dyn Expr> {
-        Box::new(StaticArrayExpr {
+    pub fn new(len: usize, declaration_type: ParsedType, position: PositionRange) -> StaticArrayExpr {
+        StaticArrayExpr {
             len, declaration_type,
             position
-        })
+        }
     }
 }
 

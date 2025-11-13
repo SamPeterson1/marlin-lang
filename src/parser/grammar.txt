@@ -1,0 +1,37 @@
+program: item*
+
+item: function | struct
+function: "fn" identifier "(" (type identifier)* ")" ["->" type] block
+expression: loop | if | alloc | getc | block | for | while | break | putc | struct_initializer | declaration
+declaration: ("let" type identifier "=" expression | assignment) ";"
+assignment: var "=" expression | inline-expression
+inline-expression: condition
+for: "for" "(" declaration inline-expression ";"" assignment ")" block
+while: "while" inline-expression block
+break: "break" [expression] ";"
+loop: "loop" block
+if: "if" inline-expression block elif* [else]
+elif: "else" "if" inline-expression block
+else: "else" block
+alloc: "alloc" type "[" positive-integer "]"
+block: "{" expression+ "}"
+struct_initializer: IDENTIFIER LEFT_CURLY [member_intializer] (COMMA, [member_intializer])* RIGHT_CURLY
+member_intializer: IDENTIFIER COLON [inline_expression]
+condition: [boolean_factor] (OR [boolean_factor])*
+boolean_factor: [comparison] (AND [comparison])*
+comparison: [arithmetic_term] ([comparator] [arithmetic_term])?
+comparator: LESS | LESS_EQUAL | EQUAL | NOT_EQUAL | GREATER | GREATER_EQUAL
+arithmetic_term: [arithmetic_factor] ((MINUS | PLUS) [arithmetic_factor])*
+arithmetic_factor: [unary] ((STAR | SLASH) [unary])*
+unary: (NOT | MINUS)* [call]
+call: IDENTIFIER LEFT_PAREN (([inline_expression], COMMA)* [inline_expression]?) | [primary]
+primary: [var] | [literal] | LEFT_PAREN inline_expression RIGHT_PAR===EN
+type: [STAR]* (INT | BOOL | DOUBLE)
+var: AMPERSAND? STAR* IDENTIFIER (DOT IDENTIFIER)* (LEFT_BRACKET inline_expression RIGHT_BRACKET)*
+struct: STRUCT IDENTIFIER LEFT_CURLY ([type] IDENTIFIER SEMICOLON)* RIGHT_CURLY
+
+
+TODO:
+
+positive-integer
+identifier
