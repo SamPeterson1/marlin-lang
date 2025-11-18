@@ -1,7 +1,0 @@
-fn foo(int a) -> int {
-    a
-}
-
-fn main() -> int {
-    foo(1)
-}

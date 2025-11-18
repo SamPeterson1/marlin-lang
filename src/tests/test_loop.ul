@@ -1,9 +1,0 @@
-let int a = 0;
-let int i = 0;
-
-while (i < 10) {
-    a = a + i;
-    i = i + 1;
-}
-
-a

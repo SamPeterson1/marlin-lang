@@ -1,3 +1,0 @@
-let int foo = 1;
-
-print foo;

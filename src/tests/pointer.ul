@@ -1,9 +1,0 @@
-fn make_five(*int num) {
-    *num = 5;
-}
-
-fn int main() {
-    let int num = 0;
-    make_five(&num);
-    num
-}
