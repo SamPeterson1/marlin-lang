@@ -1,4 +1,4 @@
-use crate::{expr::{Expr, put_char_expr::PutCharExpr}, logger::Log, parser::{ExprParser, ParseRule, rules::{array_allocation::ArrayAllocationRule, block::BlockRule, break_expr::BreakRule, declaration::DeclarationRule, for_loop::ForLoopRule, getc::GetcRule, if_block::IfBlockRule, loop_expr::LoopRule, putc::PutcRule, struct_initializer::StructInitializerRule, while_loop::{WhileLoopRule}}}, token::TokenType};
+use crate::{expr::{ASTNode, put_char_expr::PutCharExpr}, logger::Log, parser::{ExprParser, ParseRule, rules::{array_allocation::ArrayAllocationRule, block::BlockRule, break_expr::BreakRule, declaration::DeclarationRule, for_loop::ForLoopRule, getc::GetcRule, if_block::IfBlockRule, loop_expr::LoopRule, putc::PutcRule, struct_initializer::StructInitializerRule, while_loop::{WhileLoopRule}}}, token::TokenType};
 use std::fmt;
 
 pub struct ExprRule {}
@@ -9,8 +9,8 @@ impl fmt::Display for ExprRule {
     }
 }
 
-impl ParseRule<Box<dyn Expr>> for ExprRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn Expr>> {
+impl ParseRule<Box<dyn ASTNode>> for ExprRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
         parser.log_debug(&format!("Entering expression parser. Current token {:?}", parser.cur()));
     
         match parser.cur().token_type {

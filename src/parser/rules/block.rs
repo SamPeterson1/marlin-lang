@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{expr::{Expr, block_expr::BlockExpr}, logger::Log, parser::{ExprParser, ParseRule, diagnostic, rules::{statement::StatementRule}}, token::{Position, PositionRange, TokenType}};
+use crate::{expr::{ASTNode, ASTWrapper, block_expr::BlockExpr}, logger::Log, parser::{ExprParser, ParseRule, diagnostic, rules::statement::StatementRule}, token::{Position, PositionRange, TokenType}};
 
 pub struct BlockRule {}
 
@@ -11,12 +11,12 @@ impl fmt::Display for BlockRule {
 }
 
 //block: LEFT_CURLY [statement]* RIGHT_CURLY
-impl ParseRule<BlockExpr> for BlockRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<BlockExpr> {
+impl ParseRule<ASTWrapper<BlockExpr>> for BlockRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<BlockExpr>> {
         parser.log_debug(&format!("Entering block parser. Current token {:?}", parser.cur()));
         let start_token = parser.cur();
         parser.consume_or_diagnostic(TokenType::LeftCurly, diagnostic::err_expected_token(PositionRange::new(Position::new(0, 0)), TokenType::LeftCurly));
-        let mut exprs: Vec<Box<dyn Expr>> = Vec::new();
+        let mut exprs: Vec<Box<dyn ASTNode>> = Vec::new();
 
         while parser.try_match(&[TokenType::EOF, TokenType::RightCurly]).is_none() {
             let statement = parser.apply_rule(StatementRule {});
@@ -29,6 +29,6 @@ impl ParseRule<BlockExpr> for BlockRule {
 
         let position = PositionRange::concat(&start_token.position, &parser.prev().position);
 
-        Some(BlockExpr::new(exprs, position))
+        Some(ASTWrapper::new_block(exprs, position))
     }
 }

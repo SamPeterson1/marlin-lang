@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{expr::{Expr, break_expr::BreakExpr, call_expr::CallExpr, put_char_expr::PutCharExpr}, logger::Log, parser::{ExprParser, ParseRule, diagnostic, rules::{inline_expr::InlineExprRule, primary::PrimaryRule}}, token::{Position, PositionRange, TokenType}};
+use crate::{expr::{ASTNode, ASTWrapper, break_expr::BreakExpr, call_expr::CallExpr, put_char_expr::PutCharExpr}, logger::Log, parser::{ExprParser, ParseRule, diagnostic, rules::{inline_expr::InlineExprRule, primary::PrimaryRule}}, token::{Position, PositionRange, TokenType}};
 
 pub struct CallRule {}
 
@@ -11,8 +11,8 @@ impl fmt::Display for CallRule {
 }
 
 //call: IDENTIFIER LEFT_PAREN (([inline_expression], COMMA)* [inline_expression]?) | [primary]
-impl ParseRule<Box<dyn Expr>> for CallRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn Expr>> {
+impl ParseRule<Box<dyn ASTNode>> for CallRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
         parser.log_debug(&format!("Entering call parser. Current token {:?}", parser.cur()));
 
         if parser.cur().token_type == TokenType::Identifier {
@@ -22,7 +22,7 @@ impl ParseRule<Box<dyn Expr>> for CallRule {
 
                 parser.advance();
 
-                let mut args: Vec<Box<dyn Expr>> = Vec::new();
+                let mut args: Vec<Box<dyn ASTNode>> = Vec::new();
 
                 loop {
                     let arg = parser.apply_rule(InlineExprRule {});
@@ -39,7 +39,7 @@ impl ParseRule<Box<dyn Expr>> for CallRule {
                     }
                 }
 
-                Some(Box::new(CallExpr::new(function_name, args)))
+                Some(Box::new(ASTWrapper::new_call(function_name, args)))
             } else {
                 parser.apply_rule(PrimaryRule {})
             }

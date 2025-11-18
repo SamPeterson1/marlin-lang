@@ -14,6 +14,8 @@ pub mod static_array_expr;
 pub mod struct_initializer_expr;
 pub mod unary_expr;
 pub mod var_expr;
+pub mod struct_item;
+pub mod function_item;
 
 use std::fmt;
 
@@ -23,59 +25,71 @@ use block_expr::BlockExpr;
 use break_expr::BreakExpr;
 use call_expr::CallExpr;
 use declaration_expr::DeclarationExpr;
+use erased_serde::serialize_trait_object;
 use get_address_expr::GetAddressExpr;
 use get_char_expr::GetCharExpr;
 use if_expr::IfExpr;
 use literal_expr::LiteralExpr;
 use loop_expr::LoopExpr;
 use put_char_expr::PutCharExpr;
+use serde::Serialize;
 use static_array_expr::StaticArrayExpr;
 use struct_initializer_expr::StructInitializerExpr;
 use unary_expr::UnaryExpr;
 use var_expr::VarExpr;
 
-use crate::{token::PositionRange, types::resolved_type::ResolvedType};
+use crate::{expr::{function_item::FunctionItem, struct_item::StructItem}, token::{PositionRange, Positioned}, types::resolved_type::ResolvedType};
 
-pub trait Expr: ExprVisitable<Option<ResolvedType>> + ExprVisitable<()> + fmt::Display {
-    fn get_position(&self) -> &PositionRange;
+pub trait ASTVisitable: AcceptsASTVisitor<Option<ResolvedType>> + AcceptsASTVisitor<()> {}
+
+pub trait AcceptsASTVisitor<T> {
+    fn accept_visitor(&self, visitor: &mut dyn ASTVisitor<T>) -> T;
 }
 
-pub trait ExprVisitable<T> {
-    fn accept_visitor(&self, visitor: &mut dyn ExprVisitor<T>) -> T;
+pub trait ASTNode: ASTVisitable + Positioned + erased_serde::Serialize {}
+serialize_trait_object!(ASTNode);
+
+#[derive(Serialize)]
+pub struct ASTWrapper<E> {
+    pub data: E,
+    pub position: PositionRange
 }
 
-pub trait ExprVisitor<T> {
-    fn visit_binary(&mut self, expr: &BinaryExpr) -> T;
-    fn visit_unary(&mut self, expr: &UnaryExpr) -> T;
-    fn visit_literal(&mut self, expr: &LiteralExpr) -> T;
-    fn visit_var(&mut self, expr: &VarExpr) -> T;
-    fn visit_if(&mut self, expr: &IfExpr) -> T;
-    fn visit_assignment(&mut self, expr: &AssignmentExpr) -> T;
-    fn visit_declaration(&mut self, expr: &DeclarationExpr) -> T;
-    fn visit_block(&mut self, expr: &BlockExpr) -> T;
-    fn visit_loop(&mut self, expr: &LoopExpr) -> T;
-    fn visit_break(&mut self, expr: &BreakExpr) -> T;
-    fn visit_call(&mut self, expr: &CallExpr) -> T;
-    fn visit_struct_initializer(&mut self, expr: &StructInitializerExpr) -> T;
-    fn visit_get_address(&mut self, expr: &GetAddressExpr) -> T;
-    fn visit_static_array(&mut self, expr: &StaticArrayExpr) -> T;
-    fn visit_put_char(&mut self, expr: &PutCharExpr) -> T;
-    fn visit_get_char(&mut self, expr: &GetCharExpr) -> T;
+impl<E> Positioned for ASTWrapper<E> {
+    fn get_position(&self) -> &PositionRange {
+        &self.position
+    }
+}
+
+pub trait ASTVisitor<T> {
+    fn visit_binary(&mut self, node: &ASTWrapper<BinaryExpr>) -> T { unimplemented!() }
+    fn visit_unary(&mut self, node: &ASTWrapper<UnaryExpr>) -> T { unimplemented!() }
+    fn visit_literal(&mut self, node: &ASTWrapper<LiteralExpr>) -> T { unimplemented!() }
+    fn visit_var(&mut self, node: &ASTWrapper<VarExpr>) -> T { unimplemented!() }
+    fn visit_if(&mut self, node: &ASTWrapper<IfExpr>) -> T { unimplemented!() }
+    fn visit_assignment(&mut self, node: &ASTWrapper<AssignmentExpr>) -> T { unimplemented!() }
+    fn visit_declaration(&mut self, node: &ASTWrapper<DeclarationExpr>) -> T { unimplemented!() }
+    fn visit_block(&mut self, node: &ASTWrapper<BlockExpr>) -> T { unimplemented!() }
+    fn visit_loop(&mut self, node: &ASTWrapper<LoopExpr>) -> T { unimplemented!() }
+    fn visit_break(&mut self, node: &ASTWrapper<BreakExpr>) -> T { unimplemented!() }
+    fn visit_call(&mut self, node: &ASTWrapper<CallExpr>) -> T { unimplemented!() }
+    fn visit_struct_initializer(&mut self, node: &ASTWrapper<StructInitializerExpr>) -> T { unimplemented!() }
+    fn visit_get_address(&mut self, node: &ASTWrapper<GetAddressExpr>) -> T { unimplemented!() }
+    fn visit_static_array(&mut self, node: &ASTWrapper<StaticArrayExpr>) -> T { unimplemented!() }
+    fn visit_put_char(&mut self, node: &ASTWrapper<PutCharExpr>) -> T { unimplemented!() }
+    fn visit_get_char(&mut self, node: &ASTWrapper<GetCharExpr>) -> T { unimplemented!() }
+    fn visit_struct(&mut self, node: &ASTWrapper<StructItem>) -> T { unimplemented!() }
+    fn visit_function(&mut self, node: &ASTWrapper<FunctionItem>) -> T { unimplemented!() }
 }
 
 #[macro_export]
-macro_rules! impl_expr {
+macro_rules! impl_ast_node {
     ($Name: ident, $VisitFunction: ident) => {
-        use crate::expr::{ExprVisitor, ExprVisitable};
+        impl crate::expr::ASTNode for crate::expr::ASTWrapper<$Name> {}
+        impl crate::expr::ASTVisitable for crate::expr::ASTWrapper<$Name> {}
 
-        impl Expr for $Name {
-            fn get_position(&self) -> &PositionRange {
-                &self.position
-            }
-        }
-
-        impl<T> ExprVisitable<T> for $Name {
-            fn accept_visitor(&self, visitor: &mut dyn ExprVisitor<T>) -> T {
+        impl<T> crate::expr::AcceptsASTVisitor<T> for crate::expr::ASTWrapper<$Name> {
+            fn accept_visitor(&self, visitor: &mut dyn crate::expr::ASTVisitor<T>) -> T {
                 visitor.$VisitFunction(self)
             }
         }

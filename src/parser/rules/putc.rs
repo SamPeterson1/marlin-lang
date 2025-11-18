@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{expr::put_char_expr::PutCharExpr, parser::{ExprParser, ParseRule, rules::expr::ExprRule}, token::{Position, PositionRange}};
+use crate::{expr::{ASTWrapper, get_char_expr::GetCharExpr, put_char_expr::PutCharExpr}, parser::{ExprParser, ParseRule, rules::expr::ExprRule}, token::{Position, PositionRange}};
 
 pub struct PutcRule {}
 
@@ -10,14 +10,14 @@ impl fmt::Display for PutcRule {
     }
 }
 
-impl ParseRule<PutCharExpr> for PutcRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<PutCharExpr> {
+impl ParseRule<ASTWrapper<PutCharExpr>> for PutcRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<PutCharExpr>> {
         parser.advance();
     
         let expr = parser.apply_rule(ExprRule {});
     
         parser.log_parse_result(&expr, "putc expression");
     
-        Some(PutCharExpr::new(expr?,PositionRange::new(Position::new(0, 0))))
+        Some(ASTWrapper::new_put_char(expr?,PositionRange::new(Position::new(0, 0))))
     }
 }

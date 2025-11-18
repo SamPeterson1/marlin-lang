@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{expr::Expr, parser::{ExprParser, ParseRule, rules::condition::ConditionRule}};
+use crate::{expr::ASTNode, parser::{ExprParser, ParseRule, rules::condition::ConditionRule}};
 
 pub struct InlineExprRule {}
 
@@ -10,8 +10,8 @@ impl fmt::Display for InlineExprRule {
     }
 }
 
-impl ParseRule<Box<dyn Expr>> for InlineExprRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn Expr>> {    
+impl ParseRule<Box<dyn ASTNode>> for InlineExprRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {    
         parser.apply_rule(ConditionRule {})
     }
 }

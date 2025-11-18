@@ -1,5 +1,8 @@
 use std::fmt;
 
+use erased_serde::serialize_trait_object;
+use serde::{Serializer, Serialize};
+
 use crate::{error::{Diagnostic, DiagnosticType}, instruction::InstructionBuilder, token::{Position, PositionRange, TokenType}, types::resolved_type::ResolvedType};
 
 pub fn as_binary_operator(token_type: TokenType) -> Box<dyn BinaryOperator> {
@@ -29,17 +32,19 @@ pub fn as_unary_operator(token_type: TokenType) -> Box<dyn UnaryOperator> {
     }
 }
 
-pub trait UnaryOperator : fmt::Debug + fmt::Display {
+pub trait UnaryOperator : fmt::Debug + erased_serde::Serialize {
     fn interpret_type(&self, value_type: ResolvedType) -> Result<ResolvedType, Diagnostic>;
     fn compile(&self, dr: u8, sr1: u8, operation_type: ResolvedType) -> Vec<u64>;
 }
 
+serialize_trait_object!(UnaryOperator);
+
 #[derive(Debug)]
 struct Not;
 
-impl fmt::Display for Not {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "!")
+impl Serialize for Not {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.collect_str("!")
     }
 }
 
@@ -68,11 +73,11 @@ impl UnaryOperator for Not {
 #[derive(Debug)]
 struct Negative;
 
-impl fmt::Display for Negative {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "-")
+impl Serialize for Negative {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.collect_str("-")
     }
-}   
+}
 
 impl UnaryOperator for Negative {
     fn interpret_type(&self, value_type: ResolvedType) -> Result<ResolvedType, Diagnostic> {
@@ -102,9 +107,9 @@ impl UnaryOperator for Negative {
 
 struct Semicolon;
 
-impl fmt::Display for Semicolon {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, ";")
+impl Serialize for Semicolon {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.collect_str(";")
     }
 }
 
@@ -118,10 +123,12 @@ impl UnaryOperator for Semicolon {
     }
 }
 
-pub trait BinaryOperator : std::fmt::Debug + std::fmt::Display {
+pub trait BinaryOperator : erased_serde::Serialize {
     fn interpret_type(&self, left: ResolvedType, right: ResolvedType) -> Result<ResolvedType, Diagnostic>;
     fn compile(&self, dr: u8, sr1: u8, sr2: u8, operation_type: ResolvedType) -> Vec<u64>;
 }
+
+serialize_trait_object!(BinaryOperator);
 
 macro_rules! arithmetic_binary_operator {
     ($Name:ident, $Operator:tt, $OperatorName:expr, $Compile:item) => {
@@ -141,9 +148,9 @@ macro_rules! arithmetic_binary_operator {
             $Compile
         }
 
-        impl fmt::Display for $Name {
-            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-                write!(f, "{}", $OperatorName)
+        impl Serialize for $Name {
+            fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                serializer.collect_str($OperatorName)
             }
         }
     };
@@ -167,9 +174,9 @@ macro_rules! comparative_binary_operator {
             $Compile
         }
 
-        impl fmt::Display for $Name {
-            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-                write!(f, "{}", $OperatorName)
+        impl Serialize for $Name {
+            fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                serializer.collect_str($OperatorName)
             }
         }
     };
@@ -193,9 +200,9 @@ macro_rules! boolean_binary_operator {
             $Compile
         }
 
-        impl fmt::Display for $Name {
-            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-                write!(f, "{}", $OperatorName)
+        impl Serialize for $Name {
+            fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                serializer.collect_str($OperatorName)
             }
         }
     };

@@ -1,31 +1,28 @@
-use std::{fmt, rc::Rc};
+use std::rc::Rc;
 
-use crate::token::PositionRange;
+use serde::Serialize;
 
-use super::{var_expr::VarExpr, Expr};
+use crate::{expr::{ASTNode, ASTWrapper, Positioned, var_expr::VarExpr}, token::PositionRange};
 
+#[derive(Serialize)]
 pub struct AssignmentExpr {
-    pub asignee: Rc<VarExpr>,
-    pub expr: Box<dyn Expr>,
-    pub position: PositionRange
+    pub assignee: Rc<ASTWrapper<VarExpr>>,
+    pub expr: Box<dyn ASTNode>,
 }
 
-impl fmt::Display for AssignmentExpr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{{\"type\": \"Assignment\", \"asignee\": {}, \"expr\": {}, \"position\": \"{}\"}}", self.asignee, self.expr, self.position)
-    }
-}
+impl ASTWrapper<AssignmentExpr> {
+    pub fn new_assignment(assignee: ASTWrapper<VarExpr>, expr: Box<dyn ASTNode>) -> Self {
+        let position = PositionRange::concat(&assignee.get_position(), expr.get_position());
 
-impl AssignmentExpr {
-    pub fn new(asignee: VarExpr, expr: Box<dyn Expr>) -> AssignmentExpr {
-        let position = PositionRange::concat(asignee.get_position(), expr.get_position());
-
-        AssignmentExpr {
-            asignee: Rc::new(asignee),
-            expr,
+        ASTWrapper {
+            data: AssignmentExpr {
+                assignee: Rc::new(assignee),
+                expr
+            },
             position
         }
+        
     }    
 }
 
-crate::impl_expr!(AssignmentExpr, visit_assignment);
+crate::impl_ast_node!(AssignmentExpr, visit_assignment);

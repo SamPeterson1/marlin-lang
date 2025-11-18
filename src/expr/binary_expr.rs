@@ -1,35 +1,28 @@
-use std::fmt;
+use serde::Serialize;
 
-use crate::{operator::{self, BinaryOperator}, token::{PositionRange, TokenType}};
+use crate::{expr::{ASTNode, ASTWrapper}, operator::{self, BinaryOperator}, token::{PositionRange, TokenType}};
 
-use super::Expr;
-
+#[derive(Serialize)]
 pub struct BinaryExpr {
-    pub left: Box<dyn Expr>,
-    pub right: Box<dyn Expr>,
+    pub left: Box<dyn ASTNode>,
+    pub right: Box<dyn ASTNode>,
     pub operator: Box<dyn BinaryOperator>,
-    pub position: PositionRange
 }
 
-impl fmt::Display for BinaryExpr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{{\"type\": \"Binary\", \"left\": {}, \"right\": {}, \"operator\": \"{}\", \"position\": \"{}\"}}", self.left, self.right, self.operator, self.position)
-    }
-}
-
-impl BinaryExpr {
-    pub fn new(left: Box<dyn Expr>, right: Box<dyn Expr>, operator_token: TokenType) -> BinaryExpr {
+impl ASTWrapper<BinaryExpr> {
+    pub fn new_binary(left: Box<dyn ASTNode>, right: Box<dyn ASTNode>, operator_token: TokenType) -> Self {
         let operator = operator::as_binary_operator(operator_token);
-
         let position = PositionRange::concat(left.get_position(), right.get_position());
 
-        BinaryExpr {
-            left,
-            right,
-            operator,
+        ASTWrapper {
+            data: BinaryExpr {
+                left,
+                right,
+                operator,
+            },
             position
         }
     }
 }
 
-crate::impl_expr!(BinaryExpr, visit_binary);
+crate::impl_ast_node!(BinaryExpr, visit_binary);

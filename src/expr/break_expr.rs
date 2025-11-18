@@ -1,27 +1,21 @@
-use std::fmt;
+use serde::Serialize;
 
-use crate::token::PositionRange;
+use crate::{expr::{ASTNode, ASTWrapper}, token::PositionRange};
 
-use super::Expr;
-
+#[derive(Serialize)]
 pub struct BreakExpr {
-    pub expr: Box<dyn Expr>,
-    pub position: PositionRange
+    pub expr: Box<dyn ASTNode>,
 }
 
-impl fmt::Display for BreakExpr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{{\"type\": \"Break\", \"expr\": {}, \"position\": \"{}\"}}", self.expr, self.position)
-    }
-}
-
-impl BreakExpr {
-    pub fn new(expr: Box<dyn Expr>, position: PositionRange) -> BreakExpr {
-        BreakExpr {
-            expr,
+impl ASTWrapper<BreakExpr> {
+    pub fn new_break(expr: Box<dyn ASTNode>, position: PositionRange) -> Self {
+        ASTWrapper {
+            data: BreakExpr {
+                expr,
+            },
             position
         }
     }
 }
 
-crate::impl_expr!(BreakExpr, visit_break);
+crate::impl_ast_node!(BreakExpr, visit_break);

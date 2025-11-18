@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 
-use crate::{error::{Diagnostic, DiagnosticType}, expr::{ExprVisitable, ExprVisitor, assignment_expr::AssignmentExpr, binary_expr::BinaryExpr, block_expr::BlockExpr, break_expr::BreakExpr, call_expr::CallExpr, declaration_expr::DeclarationExpr, get_address_expr::GetAddressExpr, get_char_expr::GetCharExpr, if_expr::IfExpr, literal_expr::LiteralExpr, loop_expr::LoopExpr, put_char_expr::PutCharExpr, static_array_expr::StaticArrayExpr, struct_initializer_expr::StructInitializerExpr, unary_expr::UnaryExpr, var_expr::VarExpr}, item::{FunctionItem, Item, ItemVisitor, StructItem}, logger::{LogSource, Logger}, types::{parsed_type::{ParsedFunctionType, ParsedType, ParsedTypeName}, resolved_type::{FunctionType, PointerType, ResolvedType, StructType}}};
+use crate::{error::{Diagnostic, DiagnosticType}, expr::{ASTNode, ASTVisitor, ASTWrapper, AcceptsASTVisitor, assignment_expr::AssignmentExpr, binary_expr::BinaryExpr, block_expr::BlockExpr, break_expr::BreakExpr, call_expr::CallExpr, declaration_expr::DeclarationExpr, function_item::FunctionItem, get_address_expr::GetAddressExpr, get_char_expr::GetCharExpr, if_expr::IfExpr, literal_expr::LiteralExpr, loop_expr::LoopExpr, put_char_expr::PutCharExpr, static_array_expr::StaticArrayExpr, struct_initializer_expr::StructInitializerExpr, struct_item::StructItem, unary_expr::UnaryExpr, var_expr::VarExpr}, logger::{LogSource, Logger}, token::Positioned, types::{parsed_type::{ParsedFunctionType, ParsedType, ParsedTypeName}, resolved_type::{FunctionType, PointerType, ResolvedType, StructType}}};
 
 struct VarDeclaration {
     is_defined: bool,
@@ -37,7 +37,7 @@ impl SymbolTable {
         }
     }
 
-    pub fn resolve(&mut self, items: &[Box<dyn Item>]) -> Vec<Diagnostic> {
+    pub fn resolve(&mut self, items: &[Box<dyn ASTNode>]) -> Vec<Diagnostic> {
         let mut errors = Vec::new();
 
         let mut type_resolver = TypeResolver::new(self);
@@ -149,7 +149,7 @@ impl TypeResolver<'_> {
         }
     }
 
-    pub fn resolve(&mut self, items: &[Box<dyn Item>]) -> Vec<Diagnostic> {
+    pub fn resolve(&mut self, items: &[Box<dyn ASTNode>]) -> Vec<Diagnostic> {
         for item in items {
             item.accept_visitor(self);
         }
@@ -196,15 +196,16 @@ impl TypeResolver<'_> {
     }
 }
 
-impl ItemVisitor<()> for TypeResolver<'_> {
-    fn visit_struct(&mut self, expr: &StructItem) -> () {
+impl ASTVisitor<()> for TypeResolver<'_> {
+    fn visit_struct(&mut self, node: &ASTWrapper<StructItem>) -> () {
         let mut n_dependencies = 0;
+        let item = &node.data;
 
-        let struct_name = expr.name.clone();
+        let struct_name = item.name.clone();
 
         Logger::log_info(self, &format!("Resolving struct {:?}", struct_name));
 
-        for (_, member_type) in expr.members.iter() {
+        for (_, member_type) in item.members.iter() {
             if let ParsedType::TypeName(ParsedTypeName {name: type_name, ..}) = member_type {
                 if !self.symbol_table.has_type_name(type_name) {
                     let dependencies= self.type_dependencies.entry(type_name.to_string()).or_insert_with(|| Vec::new());
@@ -221,7 +222,7 @@ impl ItemVisitor<()> for TypeResolver<'_> {
 
         Logger::log_info(self, &format!("Struct {:?} has {:?} dependencies", struct_name, n_dependencies));
 
-        self.unresolved_struct_declarations.insert(struct_name.to_string(), expr.clone());
+        self.unresolved_struct_declarations.insert(struct_name.to_string(), item.clone());
 
         if n_dependencies != 0 {
             self.unresolved_types.insert(struct_name.to_string(), n_dependencies);
@@ -230,7 +231,9 @@ impl ItemVisitor<()> for TypeResolver<'_> {
         }
     }
     
-    fn visit_function(&mut self, item: &FunctionItem) -> () { 
+    fn visit_function(&mut self, node: &ASTWrapper<FunctionItem>) -> () { 
+        let item = &node.data;
+
         let resolved_type = self.symbol_table.get_resolved_type(&ParsedType::Function(ParsedFunctionType {
             arg_types: Rc::new(item.args.iter().map(|arg| arg.1.clone()).collect()),
             ret_type: Rc::new(item.ret_type.clone())
@@ -271,7 +274,7 @@ impl VariableResolver<'_> {
         }
     }
 
-    pub fn resolve(mut self, items: &[Box<dyn Item>]) -> Vec<Diagnostic> {
+    pub fn resolve(mut self, items: &[Box<dyn ASTNode>]) -> Vec<Diagnostic> {
         println!("Resolving");
 
         for item in items {
@@ -348,10 +351,11 @@ impl VariableResolver<'_> {
     }
 }
 
-impl ItemVisitor<()> for VariableResolver<'_> {
-    fn visit_struct(&mut self, item: &StructItem) {}
+impl ASTVisitor<()> for VariableResolver<'_> {
+    fn visit_struct(&mut self, node: &ASTWrapper<StructItem>) {}
 
-    fn visit_function(&mut self, item: &FunctionItem) {
+    fn visit_function(&mut self, node: &ASTWrapper<FunctionItem>) {
+        let item = &node.data;
         self.clear_scopes();
 
         for (i, (arg_name, arg_type)) in item.args.iter().enumerate() {
@@ -362,7 +366,7 @@ impl ItemVisitor<()> for VariableResolver<'_> {
                     self.define(arg_name);
                 },
                 Err(diagnostic) => {
-                    Logger::log_error(self, &format!("Error resolving function argument {:?} of type {}", arg_name, arg_type));
+                    Logger::log_error(self, &format!("Error resolving function argument {:?} of type {}", arg_name, serde_json::to_string(&arg_type).unwrap()));
                     self.push_diagnostic(diagnostic);
                 }
             }
@@ -370,21 +374,24 @@ impl ItemVisitor<()> for VariableResolver<'_> {
 
         item.expr.accept_visitor(self);
     }
-}
 
-impl ExprVisitor<()> for VariableResolver<'_> {
-    fn visit_binary(&mut self, expr: &BinaryExpr) {
+    fn visit_binary(&mut self, node: &ASTWrapper<BinaryExpr>) {
+        let expr = &node.data;
+
         expr.left.accept_visitor(self);
         expr.right.accept_visitor(self);
     }
 
-    fn visit_unary(&mut self, expr: &UnaryExpr) {
+    fn visit_unary(&mut self, node: &ASTWrapper<UnaryExpr>) {
+        let expr = &node.data;
         expr.expr.accept_visitor(self);
     }
 
-    fn visit_literal(&mut self, expr: &LiteralExpr) { }
+    fn visit_literal(&mut self, node: &ASTWrapper<LiteralExpr>) { }
 
-    fn visit_var(&mut self, expr: &VarExpr) {
+    fn visit_var(&mut self, node: &ASTWrapper<VarExpr>) {
+        let expr = &node.data;
+
         self.resolve_var(expr);
 
         for array_access in expr.array_accesses.iter() {
@@ -392,7 +399,9 @@ impl ExprVisitor<()> for VariableResolver<'_> {
         }
     }
 
-    fn visit_if(&mut self, expr: &IfExpr) {
+    fn visit_if(&mut self, node: &ASTWrapper<IfExpr>) {
+        let expr = &node.data;
+
         expr.condition.accept_visitor(self);
         expr.success.accept_visitor(self);
         
@@ -401,19 +410,23 @@ impl ExprVisitor<()> for VariableResolver<'_> {
         }
     }
 
-    fn visit_assignment(&mut self, expr: &AssignmentExpr) {
-        expr.asignee.accept_visitor(self);
+    fn visit_assignment(&mut self, node: &ASTWrapper<AssignmentExpr>) {
+        let expr = &node.data;
+
+        expr.assignee.accept_visitor(self);
         expr.expr.accept_visitor(self);
     }
 
-    fn visit_declaration(&mut self, expr: &DeclarationExpr) {
+    fn visit_declaration(&mut self, node: &ASTWrapper<DeclarationExpr>) {
+        let expr = &node.data;
+
         match self.symbol_table.get_resolved_type(&expr.declaration_type) {
             Ok(value_type) => {
                 Logger::log_debug(self, &format!("Resolved declaration of {:?} of type {}", expr.identifier, value_type));
                 self.declare(expr.id, false, &expr.identifier, &value_type);
             },
             Err(diagnostic) => {
-                Logger::log_error(self, &format!("Error resolving declaration of {:?} of type {}", expr.identifier, expr.declaration_type));
+                Logger::log_error(self, &format!("Error resolving declaration of {:?} of type {}", expr.identifier, serde_json::to_string(&expr.declaration_type).unwrap()));
                 self.push_diagnostic(diagnostic);
             }
         }
@@ -423,7 +436,9 @@ impl ExprVisitor<()> for VariableResolver<'_> {
         self.define(&expr.identifier);
     }
 
-    fn visit_block(&mut self, expr: &BlockExpr) {
+    fn visit_block(&mut self, node: &ASTWrapper<BlockExpr>) {
+        let expr = &node.data;
+
         self.push_scope();
         for expr in &expr.exprs {
             expr.accept_visitor(self);
@@ -431,7 +446,9 @@ impl ExprVisitor<()> for VariableResolver<'_> {
         self.pop_scope();
     }
 
-    fn visit_loop(&mut self, expr: &LoopExpr) {
+    fn visit_loop(&mut self, node: &ASTWrapper<LoopExpr>) {
+        let expr = &node.data;
+
         self.push_scope();
         
         if let Some(initial) = &expr.initial {
@@ -450,14 +467,17 @@ impl ExprVisitor<()> for VariableResolver<'_> {
         self.pop_scope();
     }
 
-    fn visit_break(&mut self, expr: &BreakExpr) {
+    fn visit_break(&mut self, node: &ASTWrapper<BreakExpr>) {
+        let expr = &node.data;
         expr.expr.accept_visitor(self);
     }
 
-    fn visit_call(&mut self, expr: &CallExpr) {
+    fn visit_call(&mut self, node: &ASTWrapper<CallExpr>) {
+        let expr = &node.data;
+
         if !self.symbol_table.functions.contains_key(&*expr.function) {
             Logger::log_error(self, &format!("Unknown function {:?}", expr.function));
-            self.push_diagnostic(Diagnostic::new(1, DiagnosticType::Error, expr.position, format!("Unknown function {:?}", expr.function)));
+            self.push_diagnostic(Diagnostic::new(1, DiagnosticType::Error, *node.get_position(), format!("Unknown function {:?}", expr.function)));
             return;
         }
 
@@ -466,25 +486,29 @@ impl ExprVisitor<()> for VariableResolver<'_> {
         }
     }
 
-    fn visit_struct_initializer(&mut self, expr: &StructInitializerExpr) {
+    fn visit_struct_initializer(&mut self, node: &ASTWrapper<StructInitializerExpr>) {
+        let expr = &node.data;
+
         for (_, value) in expr.member_inits.iter() {
             value.accept_visitor(self);
         }
     }
 
-    fn visit_get_address(&mut self, expr: &GetAddressExpr) -> () {
+    fn visit_get_address(&mut self, node: &ASTWrapper<GetAddressExpr>) -> () {
+        let expr = &node.data;
         expr.var_expr.accept_visitor(self);
     }
 
-    fn visit_static_array(&mut self, expr: &StaticArrayExpr) -> () {
+    fn visit_static_array(&mut self, node: &ASTWrapper<StaticArrayExpr>) -> () {
 
     }
 
-    fn visit_get_char(&mut self, expr: &GetCharExpr) -> () {
+    fn visit_get_char(&mut self, node: &ASTWrapper<GetCharExpr>) -> () {
         
     }
 
-    fn visit_put_char(&mut self, expr: &PutCharExpr) -> () {
+    fn visit_put_char(&mut self, node: &ASTWrapper<PutCharExpr>) -> () {
+        let expr = &node.data;
         expr.expr.accept_visitor(self);
     }
 }

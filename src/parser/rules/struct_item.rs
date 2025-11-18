@@ -1,4 +1,4 @@
-use crate::{item::StructItem, logger::Log, parser::{ExprParser, ParseRule, diagnostic}, token::{Position, PositionRange, TokenType}};
+use crate::{expr::{ASTWrapper, struct_item::StructItem}, logger::Log, parser::{ExprParser, ParseRule, diagnostic}, token::{Position, PositionRange, TokenType}};
 use std::fmt;
 use std::collections::HashMap;
 
@@ -10,8 +10,8 @@ impl fmt::Display for StructRule {
     }
 }
 
-impl ParseRule<StructItem> for StructRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<StructItem> {
+impl ParseRule<ASTWrapper<StructItem>> for StructRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<StructItem>> {
         let struct_token = parser.advance();
 
         let struct_name = parser.consume_or_diagnostic(TokenType::Identifier, diagnostic::err_expected_struct_name(PositionRange::new(Position::new(0, 0))))
@@ -45,6 +45,6 @@ impl ParseRule<StructItem> for StructRule {
 
         let position = PositionRange::concat(&struct_token.position, &parser.prev().position);
 
-        Some(StructItem::new(struct_name?, members, position))
+        Some(ASTWrapper::new_struct_item(struct_name?, members, position))
     }
 }

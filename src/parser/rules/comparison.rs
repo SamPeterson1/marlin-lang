@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{expr::{Expr, binary_expr::BinaryExpr}, logger::Log, parser::{ExprParser, ParseRule, rules::term::TermRule}, token::{Position, PositionRange, TokenType}};
+use crate::{expr::{ASTNode, ASTWrapper, binary_expr::BinaryExpr}, logger::Log, parser::{ExprParser, ParseRule, rules::term::TermRule}, token::{Position, PositionRange, TokenType}};
 
 pub struct ComparisonRule {}
 
@@ -11,8 +11,8 @@ impl fmt::Display for ComparisonRule {
 }
 
 //term ((">" | ">=" | "<" | "<=") term)*
-impl ParseRule<Box<dyn Expr>> for ComparisonRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn Expr>> {
+impl ParseRule<Box<dyn ASTNode>> for ComparisonRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
         parser.log_debug(&format!("Entering comparison parser. Current token {:?}", parser.cur()));
 
         let mut term = parser.apply_rule(TermRule {});
@@ -25,7 +25,7 @@ impl ParseRule<Box<dyn Expr>> for ComparisonRule {
             term = parser.apply_rule(TermRule {});
             parser.log_parse_result(&term, "term expression");
             
-            expr = Box::new(BinaryExpr::new(expr, term?, operator.token_type));
+            expr = Box::new(ASTWrapper::new_binary(expr, term?, operator.token_type));
         }
 
         Some(expr)

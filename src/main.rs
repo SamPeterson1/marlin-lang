@@ -11,7 +11,6 @@ mod lexer;
 mod token;
 mod parser;
 mod expr;
-mod item;
 mod instruction;
 mod compiler;
 mod opcodes;

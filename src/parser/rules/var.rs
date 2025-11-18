@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{expr::var_expr::{MemberAccess, VarExpr}, logger::Log, parser::{ExprParser, ParseRule, rules::inline_expr::InlineExprRule}, token::{PositionRange, TokenType}};
+use crate::{expr::{ASTWrapper, var_expr::{MemberAccess, VarExpr}}, logger::Log, parser::{ExprParser, ParseRule, rules::inline_expr::InlineExprRule}, token::{PositionRange, TokenType}};
 
 pub struct VarRule {}
 
@@ -11,8 +11,8 @@ impl fmt::Display for VarRule {
 }
 
 //var: STAR* IDENTIFIER (DOT IDENTIFIER)* (LEFT_BRACKET inline_expression RIGHT_BRACKET)*
-impl ParseRule<VarExpr> for VarRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<VarExpr> {
+impl ParseRule<ASTWrapper<VarExpr>> for VarRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<VarExpr>> {
         parser.log_debug(&format!("Entering var parser. Current token {:?}", parser.cur()));
     
         let first_position = parser.cur().position.clone();
@@ -59,6 +59,6 @@ impl ParseRule<VarExpr> for VarRule {
 
         let position = PositionRange::concat(&first_position, &parser.prev().position);
 
-        Some(VarExpr::new_unboxed(parser.var_expr_id_counter, n_derefs, identifier, member_accesses, array_accesses, position))
+        Some(ASTWrapper::new_var(parser.var_expr_id_counter, n_derefs, identifier, member_accesses, array_accesses, position))
     }
 }

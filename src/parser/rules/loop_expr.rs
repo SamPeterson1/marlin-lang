@@ -1,4 +1,4 @@
-use crate::{expr::loop_expr::LoopExpr, item::Item, logger::Log, parser::{ExprParser, ParseRule, rules::block::BlockRule}, token::{PositionRange, TokenType}};
+use crate::{expr::{ASTWrapper, loop_expr::LoopExpr}, logger::Log, parser::{ExprParser, ParseRule, rules::block::BlockRule}, token::{PositionRange, TokenType}};
 use std::fmt;
 
 pub struct LoopRule {}
@@ -10,8 +10,8 @@ impl fmt::Display for LoopRule {
 }
 
 //loop: LOOP [block]
-impl ParseRule<LoopExpr> for LoopRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<LoopExpr> {
+impl ParseRule<ASTWrapper<LoopExpr>> for LoopRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<LoopExpr>> {
         parser.log_debug(&format!("Entering loop parser. Current token {:?}", parser.cur()));
         let loop_token = parser.advance();
     
@@ -21,6 +21,6 @@ impl ParseRule<LoopExpr> for LoopRule {
     
         let position = PositionRange::concat(&loop_token.position, &parser.prev().position);
     
-        Some(LoopExpr::new(body?, position))
+        Some(ASTWrapper::new_loop(body?, position))
     }
 }

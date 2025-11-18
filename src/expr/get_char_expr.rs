@@ -1,26 +1,17 @@
-use std::fmt;
+use serde::Serialize;
 
-use crate::token::PositionRange;
+use crate::{expr::ASTWrapper, token::PositionRange};
 
-use super::Expr;
+#[derive(Serialize)]
+pub struct GetCharExpr {}
 
-#[derive(Debug)]
-pub struct GetCharExpr {
-    pub position: PositionRange
-}
-
-impl fmt::Display for GetCharExpr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{{\"type\": \"GetChar\", \"position\": \"{}\"}}", self.position)
-    }
-}
-
-impl GetCharExpr {
-    pub fn new(position: PositionRange) -> GetCharExpr {
-        GetCharExpr {
+impl ASTWrapper<GetCharExpr> {
+    pub fn new_get_char(position: PositionRange) -> Self {
+        ASTWrapper {
+            data: GetCharExpr {},
             position
         }
     }
 }
 
-crate::impl_expr!(GetCharExpr, visit_get_char);
+crate::impl_ast_node!(GetCharExpr, visit_get_char);

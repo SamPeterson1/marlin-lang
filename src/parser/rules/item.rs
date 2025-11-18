@@ -1,4 +1,4 @@
-use crate::{item::Item, parser::{ExprParser, ParseRule, diagnostic}, token::{Position, PositionRange, TokenType}};
+use crate::{expr::ASTNode, parser::{ExprParser, ParseRule, diagnostic}, token::{Position, PositionRange, TokenType}};
 use std::fmt;
 
 use super::{function_item::FunctionRule, struct_item::StructRule};
@@ -11,13 +11,13 @@ impl fmt::Display for ItemRule {
     }
 }
 
-impl ParseRule<Box<dyn Item>> for ItemRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn Item>> {
+impl ParseRule<Box<dyn ASTNode>> for ItemRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
         let cur = parser.cur();
 
         match cur.token_type {
-            TokenType::Struct => parser.apply_item_rule_boxed(StructRule {}),
-            TokenType::Fn => parser.apply_item_rule_boxed(FunctionRule {}),
+            TokenType::Struct => parser.apply_rule_boxed(StructRule {}),
+            TokenType::Fn => parser.apply_rule_boxed(FunctionRule {}),
             _ => {
                 parser.push_diagnostic(diagnostic::err_expected_item(PositionRange::new(Position::new(0, 0))));
                 parser.advance();

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{expr::{Expr, binary_expr::BinaryExpr, declaration_expr::DeclarationExpr, loop_expr::LoopExpr}, logger::Log, parser::{ExprParser, ParseRule, diagnostic, rules::{assignment::AssignmentRule, block::BlockRule, boolean_factor::BooleanFactorRule, comparison::ComparisonRule, declaration::DeclarationRule, expr::ExprRule, inline_expr::InlineExprRule}}, token::{Position, PositionRange, TokenType}};
+use crate::{expr::{ASTNode, ASTWrapper, binary_expr::BinaryExpr, declaration_expr::DeclarationExpr, loop_expr::LoopExpr}, logger::Log, parser::{ExprParser, ParseRule, diagnostic, rules::{assignment::AssignmentRule, block::BlockRule, boolean_factor::BooleanFactorRule, comparison::ComparisonRule, declaration::DeclarationRule, expr::ExprRule, inline_expr::InlineExprRule}}, token::{Position, PositionRange, TokenType}};
 
 pub struct ForLoopRule {}
 
@@ -11,8 +11,8 @@ impl fmt::Display for ForLoopRule {
 }
 
 //for: FOR LEFT_PAREN [declaration] [inline_expression] SEMICOLON [assignment] RIGHT_PAREN [block]
-impl ParseRule<LoopExpr> for ForLoopRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<LoopExpr> {
+impl ParseRule<ASTWrapper<LoopExpr>> for ForLoopRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<LoopExpr>> {
         parser.log_debug(&format!("Entering for parser. Current token {:?}", parser.cur()));
         let for_token = parser.advance();
 
@@ -37,7 +37,7 @@ impl ParseRule<LoopExpr> for ForLoopRule {
         
         let position= PositionRange::concat(&for_token.position, &parser.prev().position);
 
-        let result = LoopExpr::new_for(initial?, condition?, increment?, body?, position);
+        let result = ASTWrapper::new_for(initial?, condition?, increment?, body?, position);
         
         Some(result)
     }

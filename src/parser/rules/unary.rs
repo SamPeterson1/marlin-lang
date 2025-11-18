@@ -1,6 +1,5 @@
-use crate::{expr::{Expr, binary_expr::BinaryExpr, unary_expr::UnaryExpr}, item::StructItem, logger::Log, parser::{ExprParser, ParseRule, rules::call::CallRule}, token::{Position, PositionRange, TokenType}};
+use crate::{expr::{ASTNode, ASTWrapper, unary_expr::UnaryExpr}, logger::Log, parser::{ExprParser, ParseRule, rules::call::CallRule}, token::{Position, PositionRange, TokenType}};
 use std::fmt;
-use std::collections::HashMap;
 
 pub struct UnaryRule {}
 
@@ -11,14 +10,14 @@ impl fmt::Display for UnaryRule {
 }
 
 //(("!" | "-") unary) | call
-impl ParseRule<Box<dyn Expr>> for UnaryRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn Expr>> {
+impl ParseRule<Box<dyn ASTNode>> for UnaryRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
         parser.log_debug(&format!("Entering unary parser. Current token {:?}", parser.cur()));
 
         if let Some(operator) = parser.try_match(&[TokenType::Not, TokenType::Minus]) {
             let unary = parser.apply_rule(UnaryRule {});
             parser.log_parse_result(&unary, "unary expression");
-            Some(Box::new(UnaryExpr::new(unary?, operator)))
+            Some(Box::new(ASTWrapper::new_unary(unary?, operator)))
         } else {
             parser.apply_rule(CallRule {})
         }

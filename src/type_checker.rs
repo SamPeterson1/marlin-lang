@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{error::Diagnostic, expr::{ExprVisitor, assignment_expr::AssignmentExpr, binary_expr::BinaryExpr, block_expr::BlockExpr, break_expr::BreakExpr, call_expr::CallExpr, declaration_expr::DeclarationExpr, get_address_expr::GetAddressExpr, get_char_expr::GetCharExpr, if_expr::IfExpr, literal_expr::LiteralExpr, loop_expr::LoopExpr, put_char_expr::PutCharExpr, static_array_expr::StaticArrayExpr, struct_initializer_expr::StructInitializerExpr, unary_expr::UnaryExpr, var_expr::{MemberAccess, VarExpr}}, item::{FunctionItem, Item, ItemVisitor, StructItem}, logger::{LogSource, Logger}, resolver::SymbolTable, types::resolved_type::{PointerType, ResolvedType, StructType}};
+use crate::{error::Diagnostic, expr::{ASTNode, ASTVisitor, ASTWrapper, assignment_expr::AssignmentExpr, binary_expr::BinaryExpr, block_expr::BlockExpr, break_expr::BreakExpr, call_expr::CallExpr, declaration_expr::DeclarationExpr, function_item::FunctionItem, get_address_expr::GetAddressExpr, get_char_expr::GetCharExpr, if_expr::IfExpr, literal_expr::LiteralExpr, loop_expr::LoopExpr, put_char_expr::PutCharExpr, static_array_expr::StaticArrayExpr, struct_initializer_expr::StructInitializerExpr, struct_item::StructItem, unary_expr::UnaryExpr, var_expr::{MemberAccess, VarExpr}}, logger::{LogSource, Logger}, resolver::SymbolTable, types::resolved_type::{PointerType, ResolvedType, StructType}};
 
 pub struct TypeChecker<'a> {
     symbol_table: &'a SymbolTable,
@@ -25,7 +25,7 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
-    pub fn check_types(mut self, items: &[Box<dyn Item>]) -> Vec<Diagnostic> {        
+    pub fn check_types(mut self, items: &[Box<dyn ASTNode>]) -> Vec<Diagnostic> {        
         for item in items {
             item.accept_visitor(&mut self);
         }
@@ -37,16 +37,17 @@ impl<'a> TypeChecker<'a> {
         Logger::log_error(self, &format!("Pushing diagnostic: {}", diagnostic));
         self.diagnostics.push(diagnostic);
     }
-}
+}    
 
-impl ItemVisitor<()> for TypeChecker<'_> {
-    fn visit_struct(&mut self, item: &StructItem) {  }
+impl ASTVisitor<Option<ResolvedType>> for TypeChecker<'_> {
+    fn visit_struct(&mut self, node: &ASTWrapper<StructItem>) -> Option<ResolvedType> { None }
 
-    fn visit_function(&mut self, item: &FunctionItem) {
+    fn visit_function(&mut self, node: &ASTWrapper<FunctionItem>) -> Option<ResolvedType> {
+        let item = &node.data;
         let return_type = item.expr.accept_visitor(self);
 
         if return_type.is_none() {
-            return;
+            return None;
         }
 
         let function_ret_type = self.symbol_table.get_resolved_type(&item.ret_type);
@@ -60,12 +61,13 @@ impl ItemVisitor<()> for TypeChecker<'_> {
             Err(diagnostic) => {
                 self.diagnostics.push(diagnostic);
             }
-         }
-    }
-}
+        }
 
-impl ExprVisitor<Option<ResolvedType>> for TypeChecker<'_> {
-    fn visit_binary(&mut self, expr: &BinaryExpr) -> Option<ResolvedType> {
+        None
+    }
+
+    fn visit_binary(&mut self, node: &ASTWrapper<BinaryExpr>) -> Option<ResolvedType> {
+        let expr = &node.data;
         let left_type = expr.left.accept_visitor(self)?;
         let right_type = expr.right.accept_visitor(self)?;
 
@@ -78,7 +80,8 @@ impl ExprVisitor<Option<ResolvedType>> for TypeChecker<'_> {
         }
     }
 
-    fn visit_unary(&mut self, expr: &UnaryExpr) -> Option<ResolvedType> {
+    fn visit_unary(&mut self, node: &ASTWrapper<UnaryExpr>) -> Option<ResolvedType> {
+        let expr = &node.data;
         let operand_type = expr.expr.accept_visitor(self)?;
 
         match expr.operator.interpret_type(operand_type) {
@@ -90,11 +93,13 @@ impl ExprVisitor<Option<ResolvedType>> for TypeChecker<'_> {
         }
     }
 
-    fn visit_literal(&mut self, expr: &LiteralExpr) -> Option<ResolvedType> {
+    fn visit_literal(&mut self, node: &ASTWrapper<LiteralExpr>) -> Option<ResolvedType> {
+        let expr = &node.data;
         Some(self.symbol_table.get_resolved_type(&expr.parsed_type).unwrap())
     }
 
-    fn visit_var(&mut self, expr: &VarExpr) -> Option<ResolvedType> {
+    fn visit_var(&mut self, node: &ASTWrapper<VarExpr>) -> Option<ResolvedType> {
+        let expr = &node.data;
         let mut base_type = self.symbol_table.get_variable(expr).value_type.clone();
 
         for member_access in expr.member_accesses.iter() {
@@ -121,7 +126,6 @@ impl ExprVisitor<Option<ResolvedType>> for TypeChecker<'_> {
         }
 
         for array_access in expr.array_accesses.iter() {
-            println!("array access {}", array_access);
             let index_type = array_access.accept_visitor(self)?;
 
             if index_type != ResolvedType::Integer {
@@ -146,7 +150,8 @@ impl ExprVisitor<Option<ResolvedType>> for TypeChecker<'_> {
         Some(base_type)
     }
 
-    fn visit_if(&mut self, expr: &IfExpr) -> Option<ResolvedType> {
+    fn visit_if(&mut self, node: &ASTWrapper<IfExpr>) -> Option<ResolvedType> {
+        let expr = &node.data;
         let condition_type = expr.condition.accept_visitor(self)?;
 
         if condition_type != ResolvedType::Boolean {
@@ -168,10 +173,11 @@ impl ExprVisitor<Option<ResolvedType>> for TypeChecker<'_> {
         Some(success_type)
     }
 
-    fn visit_assignment(&mut self, expr: &AssignmentExpr) -> Option<ResolvedType> {
-        let mut var_type = self.symbol_table.get_variable(&expr.asignee).value_type.clone();
+    fn visit_assignment(&mut self, node: &ASTWrapper<AssignmentExpr>) -> Option<ResolvedType> {
+        let expr = &node.data;
+        let mut var_type = self.symbol_table.get_variable(&expr.assignee.data).value_type.clone();
         
-        for member_access in expr.asignee.member_accesses.iter() {
+        for member_access in expr.assignee.data.member_accesses.iter() {
             match member_access {
                 MemberAccess::Indirect(member_name) => {
                     if let ResolvedType::Pointer(pointer_type) = var_type {
@@ -195,7 +201,7 @@ impl ExprVisitor<Option<ResolvedType>> for TypeChecker<'_> {
             }
         }
 
-        for array_access in expr.asignee.array_accesses.iter() {
+        for array_access in expr.assignee.data.array_accesses.iter() {
             let index_type = array_access.accept_visitor(self)?;
 
             if index_type != ResolvedType::Integer {
@@ -209,7 +215,7 @@ impl ExprVisitor<Option<ResolvedType>> for TypeChecker<'_> {
             }
         }
 
-        for _ in 0..expr.asignee.n_derefs {
+        for _ in 0..expr.assignee.data.n_derefs {
             if let ResolvedType::Pointer(pointer_type) = var_type {
                 var_type = (*pointer_type.pointee).clone();
             } else {
@@ -228,7 +234,9 @@ impl ExprVisitor<Option<ResolvedType>> for TypeChecker<'_> {
         Some(ResolvedType::Empty)
     }
 
-    fn visit_declaration(&mut self, expr: &DeclarationExpr) -> Option<ResolvedType> {
+    fn visit_declaration(&mut self, node: &ASTWrapper<DeclarationExpr>) -> Option<ResolvedType> {
+        let expr = &node.data;
+
         let value_type = expr.expr.accept_visitor(self)?;
 
         println!("declaring {:?} as {:?}", expr.identifier, value_type);
@@ -248,7 +256,9 @@ impl ExprVisitor<Option<ResolvedType>> for TypeChecker<'_> {
         Some(ResolvedType::Empty)
     }
 
-    fn visit_block(&mut self, expr: &BlockExpr) -> Option<ResolvedType> {
+    fn visit_block(&mut self, node: &ASTWrapper<BlockExpr>) -> Option<ResolvedType> {
+        let expr = &node.data;
+
         let mut block_type = Some(ResolvedType::Empty);
 
         for expr in &expr.exprs {
@@ -258,7 +268,9 @@ impl ExprVisitor<Option<ResolvedType>> for TypeChecker<'_> {
         block_type
     }
 
-    fn visit_loop(&mut self, expr: &LoopExpr) -> Option<ResolvedType> {
+    fn visit_loop(&mut self, node: &ASTWrapper<LoopExpr>) -> Option<ResolvedType> {
+        let expr = &node.data;
+
         let loop_idx = self.loop_types.len();
         self.current_loop_idx = Some(loop_idx);
         self.loop_types.push(None);
@@ -271,7 +283,8 @@ impl ExprVisitor<Option<ResolvedType>> for TypeChecker<'_> {
         })
     }
 
-    fn visit_break(&mut self, expr: &BreakExpr) -> Option<ResolvedType> {
+    fn visit_break(&mut self, node: &ASTWrapper<BreakExpr>) -> Option<ResolvedType> {
+        let expr = &node.data;
         let expr_type = expr.expr.accept_visitor(self)?;
 
         if self.current_loop_idx.is_none() {
@@ -295,7 +308,8 @@ impl ExprVisitor<Option<ResolvedType>> for TypeChecker<'_> {
         })
     }
 
-    fn visit_call(&mut self, expr: &CallExpr) -> Option<ResolvedType> {
+    fn visit_call(&mut self, node: &ASTWrapper<CallExpr>) -> Option<ResolvedType> {
+        let expr = &node.data;
         let expr_type = self.symbol_table.get_function(&expr.function);
 
         println!("calling {:?}", expr_type);
@@ -322,7 +336,8 @@ impl ExprVisitor<Option<ResolvedType>> for TypeChecker<'_> {
         })
     }
 
-    fn visit_struct_initializer(&mut self, expr: &StructInitializerExpr) -> Option<ResolvedType> {
+    fn visit_struct_initializer(&mut self, node: &ASTWrapper<StructInitializerExpr>) -> Option<ResolvedType> {
+        let expr = &node.data;
         let mut member_types = Vec::new();
 
         for entry in expr.member_inits.iter() {
@@ -332,23 +347,26 @@ impl ExprVisitor<Option<ResolvedType>> for TypeChecker<'_> {
         Some(ResolvedType::Struct(StructType::new(member_types)))
     }
 
-    fn visit_get_address(&mut self, expr: &GetAddressExpr) -> Option<ResolvedType> {
+    fn visit_get_address(&mut self, node: &ASTWrapper<GetAddressExpr>) -> Option<ResolvedType> {
+        let expr = &node.data;
+
         Some(ResolvedType::Pointer(PointerType {
             pointee: Rc::new(self.visit_var(&expr.var_expr)?)
         }))
     }
 
-    fn visit_static_array(&mut self, expr: &StaticArrayExpr) -> Option<ResolvedType> {
+    fn visit_static_array(&mut self, node: &ASTWrapper<StaticArrayExpr>) -> Option<ResolvedType> {
+        let expr = &node.data;
         Some(ResolvedType::Pointer(PointerType {
             pointee: Rc::new(self.symbol_table.get_resolved_type(&expr.declaration_type).unwrap())
         }))
     }
 
-    fn visit_get_char(&mut self, expr: &GetCharExpr) -> Option<ResolvedType> {
+    fn visit_get_char(&mut self, node: &ASTWrapper<GetCharExpr>) -> Option<ResolvedType> {
         Some(ResolvedType::Integer)
     }
 
-    fn visit_put_char(&mut self, expr: &PutCharExpr) -> Option<ResolvedType> {
+    fn visit_put_char(&mut self, node: &ASTWrapper<PutCharExpr>) -> Option<ResolvedType> {
         Some(ResolvedType::Empty)
     }
 }

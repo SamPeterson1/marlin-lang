@@ -1,27 +1,22 @@
-use std::fmt;
+use serde::Serialize;
 
-use crate::token::PositionRange;
+use crate::{expr::{ASTNode, ASTWrapper}, token::PositionRange};
 
-use super::Expr;
-
+#[derive(Serialize)]
 pub struct PutCharExpr {
-    pub expr: Box<dyn Expr>,
-    pub position: PositionRange
+    pub expr: Box<dyn ASTNode>,
 }
 
-impl fmt::Display for PutCharExpr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{{\"type\": \"PutChar\", \"expr\": {}, \"position\": \"{}\"}}", self.expr, self.position)
-    }
-}
-
-impl PutCharExpr {
-    pub fn new(expr: Box<dyn Expr>, position: PositionRange) -> PutCharExpr {
-        PutCharExpr {
-            expr,
+impl ASTWrapper<PutCharExpr> {
+    pub fn new_put_char(expr: Box<dyn ASTNode>, position: PositionRange) -> Self {
+        ASTWrapper {
+            data: PutCharExpr {
+                expr,
+            },
             position
         }
+        
     }
 }
 
-crate::impl_expr!(PutCharExpr, visit_put_char);
+crate::impl_ast_node!(PutCharExpr, visit_put_char);

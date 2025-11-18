@@ -1,28 +1,23 @@
-use std::fmt;
+use serde::Serialize;
 
-use crate::{token::PositionRange, types::parsed_type::ParsedType};
+use crate::{expr::ASTWrapper, token::PositionRange, types::parsed_type::ParsedType};
 
-use super::Expr;
-
+#[derive(Serialize)]
 pub struct StaticArrayExpr {
     pub len: usize,
     pub declaration_type: ParsedType,
-    pub position: PositionRange
 }
 
-impl fmt::Display for StaticArrayExpr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{{\"type\": \"StaticArray\", \"len\": {}, \"declaration_type\": {}, \"position\": \"{}\"}}", self.len, self.declaration_type, self.position)
-    }
-}
-
-impl StaticArrayExpr {
-    pub fn new(len: usize, declaration_type: ParsedType, position: PositionRange) -> StaticArrayExpr {
-        StaticArrayExpr {
-            len, declaration_type,
+impl ASTWrapper<StaticArrayExpr> {
+    pub fn new_static_array(len: usize, declaration_type: ParsedType, position: PositionRange) -> Self {
+        ASTWrapper {
+            data: StaticArrayExpr {
+                len, 
+                declaration_type,
+            },
             position
         }
     }
 }
 
-crate::impl_expr!(StaticArrayExpr, visit_static_array);
+crate::impl_ast_node!(StaticArrayExpr, visit_static_array);

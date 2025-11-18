@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{expr::{break_expr::BreakExpr, put_char_expr::PutCharExpr}, parser::{self, ExprParser, ParseRule, diagnostic, rules::expr::ExprRule}, token::{Position, PositionRange, TokenType}};
+use crate::{expr::{ASTWrapper, break_expr::BreakExpr, put_char_expr::PutCharExpr}, parser::{self, ExprParser, ParseRule, diagnostic, rules::expr::ExprRule}, token::{Position, PositionRange, TokenType}};
 
 pub struct BreakRule {}
 
@@ -10,8 +10,8 @@ impl fmt::Display for BreakRule {
     }
 }
 
-impl ParseRule<BreakExpr> for BreakRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<BreakExpr> {
+impl ParseRule<ASTWrapper<BreakExpr>> for BreakRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<BreakExpr>> {
         let break_token = parser.advance();
 
         let expr = parser.apply_rule(ExprRule {});
@@ -21,6 +21,6 @@ impl ParseRule<BreakExpr> for BreakRule {
 
         let position = PositionRange::concat(&break_token.position, &parser.prev().position);
 
-        Some(BreakExpr::new(expr?, position))
+        Some(ASTWrapper::new_break(expr?, position))
     }
 }

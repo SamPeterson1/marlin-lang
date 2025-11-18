@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{item::FunctionItem, logger::Log, parser::{ExprParser, ParseRule, diagnostic, rules::block::BlockRule}, token::{Position, PositionRange, TokenType}, types::parsed_type::ParsedType};
+use crate::{expr::{ASTWrapper, function_item::FunctionItem}, logger::Log, parser::{ExprParser, ParseRule, diagnostic, rules::block::BlockRule}, token::{Position, PositionRange, TokenType}, types::parsed_type::ParsedType};
 
 pub struct FunctionRule {}
 
@@ -10,8 +10,8 @@ impl fmt::Display for FunctionRule {
     }
 }
 
-impl ParseRule<FunctionItem> for FunctionRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<FunctionItem> {
+impl ParseRule<ASTWrapper<FunctionItem>> for FunctionRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<FunctionItem>> {
         let fn_token = parser.advance();
 
         let function_name = parser.consume_or_diagnostic(TokenType::Identifier, diagnostic::err_expected_fn_name(PositionRange::new(Position::new(0, 0))))
@@ -64,6 +64,6 @@ impl ParseRule<FunctionItem> for FunctionRule {
 
         let position = PositionRange::concat(&fn_token.position, &parser.prev().position);
 
-        Some(FunctionItem::new(function_name?, args, Box::new(block?), return_type?, position))
+        Some(ASTWrapper::new_function(function_name?, args, Box::new(block?), return_type?, position))
     }
 }

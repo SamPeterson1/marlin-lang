@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use chrono::format::Parsed;
 
-use crate::{expr::{assignment_expr::AssignmentExpr, binary_expr::BinaryExpr, block_expr::BlockExpr, break_expr::BreakExpr, call_expr::CallExpr, declaration_expr::DeclarationExpr, get_address_expr::GetAddressExpr, get_char_expr::GetCharExpr, if_expr::IfExpr, literal_expr::{Literal, LiteralExpr}, loop_expr::LoopExpr, put_char_expr::PutCharExpr, static_array_expr::StaticArrayExpr, struct_initializer_expr::StructInitializerExpr, unary_expr::UnaryExpr, var_expr::{MemberAccess, VarExpr}, ExprVisitor}, instruction::InstructionBuilder, item::{FunctionItem, Item, ItemVisitor, StructItem}, resolver::SymbolTable, token::{Position, PositionRange}, type_checker::TypeChecker, types::{parsed_type::{ParsedType, ParsedTypeName}, resolved_type::ResolvedType}};
+use crate::{expr::{ASTNode, ASTVisitor, ASTWrapper, assignment_expr::AssignmentExpr, binary_expr::BinaryExpr, block_expr::BlockExpr, break_expr::BreakExpr, call_expr::CallExpr, declaration_expr::DeclarationExpr, function_item::FunctionItem, get_address_expr::GetAddressExpr, get_char_expr::GetCharExpr, if_expr::IfExpr, literal_expr::{Literal, LiteralExpr}, loop_expr::LoopExpr, put_char_expr::PutCharExpr, static_array_expr::StaticArrayExpr, struct_initializer_expr::StructInitializerExpr, struct_item::StructItem, unary_expr::UnaryExpr, var_expr::{MemberAccess, VarExpr}}, instruction::InstructionBuilder, resolver::SymbolTable, token::{Position, PositionRange}, type_checker::TypeChecker, types::{parsed_type::{ParsedType, ParsedTypeName}, resolved_type::ResolvedType}};
 
 const RET_ADDR_REG: u8 = 15;
 const STACK_PTR_REG: u8 = 14;
@@ -156,7 +156,7 @@ impl Compiler<'_> {
         index
     }
 
-    pub fn compile(mut self, items: &[Box<dyn Item>]) -> CompilerResult {
+    pub fn compile(mut self, items: &[Box<dyn ASTNode>]) -> CompilerResult {
         self.instructions.push(InstructionBuilder::and_imm(STACK_PTR_REG, STACK_PTR_REG, 0));
         self.instructions.push(InstructionBuilder::addi_imm(STACK_PTR_REG, STACK_PTR_REG, 3000));
 
@@ -185,10 +185,12 @@ impl Compiler<'_> {
     }
 }
 
-impl ItemVisitor<()> for Compiler<'_> {
-    fn visit_struct(&mut self, item: &StructItem) -> () { }
+impl ASTVisitor<()> for Compiler<'_> {
+    fn visit_struct(&mut self, node: &ASTWrapper<StructItem>) -> () { }
 
-    fn visit_function(&mut self, item: &FunctionItem) -> () {
+    fn visit_function(&mut self, node: &ASTWrapper<FunctionItem>) -> () {
+        let item = &node.data;
+
         for arg in item.args.iter() {
             let resolved_type = self.symbol_table.get_resolved_type(&arg.1).unwrap();
             self.current_function.add_argument(resolved_type.n_bytes() / 8);
@@ -213,10 +215,10 @@ impl ItemVisitor<()> for Compiler<'_> {
             self.constant_pool[*function_address_location as usize] = function_address;
         }
     }
-}
 
-impl ExprVisitor<()> for Compiler<'_> {
-    fn visit_binary(&mut self, expr: &BinaryExpr) -> () {
+    fn visit_binary(&mut self, node: &ASTWrapper<BinaryExpr>) -> () {
+        let expr = &node.data;
+
         expr.left.accept_visitor(self);
         let intermmediate_var_index = self.current_function.define_intermediate_var(1);
         self.current_function.push_instruction(InstructionBuilder::stfp(0, intermmediate_var_index as i32 + 1));
@@ -227,14 +229,17 @@ impl ExprVisitor<()> for Compiler<'_> {
         self.current_function.push_instructions(expr.operator.compile(0, 1, 0, operation_type));
     }
 
-    fn visit_unary(&mut self, expr: &UnaryExpr) -> () {
+    fn visit_unary(&mut self, node: &ASTWrapper<UnaryExpr>) -> () {
+        let expr = &node.data;
+
         expr.expr.accept_visitor(self);
         let operation_type = expr.expr.accept_visitor(&mut self.type_checker).unwrap();
         self.current_function.push_instructions(expr.operator.compile(0, 0, operation_type));
     }
 
-    fn visit_literal(&mut self, expr: &LiteralExpr) -> () {
-        println!("Literal");
+    fn visit_literal(&mut self, node: &ASTWrapper<LiteralExpr>) -> () {
+        let expr = &node.data;
+
         let instructions = match &expr.value {
             Literal::Int(x) => vec![
                 InstructionBuilder::and_imm(0, 0, 0),
@@ -264,7 +269,8 @@ impl ExprVisitor<()> for Compiler<'_> {
         self.current_function.push_instructions(instructions);
     }
 
-    fn visit_var(&mut self, expr: &VarExpr) -> () {
+    fn visit_var(&mut self, node: &ASTWrapper<VarExpr>) -> () {
+        let expr = &node.data;
         let resolved_var = self.symbol_table.get_variable(expr);
         
         if resolved_var.is_argument {
@@ -330,7 +336,8 @@ impl ExprVisitor<()> for Compiler<'_> {
     <false block> or nothing
     END
      */
-    fn visit_if(&mut self, expr: &IfExpr) -> () {
+    fn visit_if(&mut self, node: &ASTWrapper<IfExpr>) -> () {
+        let expr = &node.data;
         expr.condition.accept_visitor(self);
 
         let jmp_else_instruction_index = self.current_function.n_instructions() as i32;
@@ -352,8 +359,9 @@ impl ExprVisitor<()> for Compiler<'_> {
         self.current_function.set_instruction(jmp_end_instruction_index as usize, InstructionBuilder::jmp(true, true, true, jmp_end_pc_offset));
     }
 
-    fn visit_assignment(&mut self, expr: &AssignmentExpr) -> () {
-        let resolved_var = self.symbol_table.get_variable(&expr.asignee);
+    fn visit_assignment(&mut self, node: &ASTWrapper<AssignmentExpr>) -> () {
+        let expr = &node.data;
+        let resolved_var = self.symbol_table.get_variable(&expr.assignee.data);
         
         expr.expr.accept_visitor(self);
         let value_var_index = self.current_function.define_intermediate_var(1);
@@ -369,7 +377,7 @@ impl ExprVisitor<()> for Compiler<'_> {
 
         let mut var_type = resolved_var.value_type.clone();
 
-        for member_access in expr.asignee.member_accesses.iter() {
+        for member_access in expr.assignee.data.member_accesses.iter() {
             match member_access {
                 MemberAccess::Direct(member_name) => {
                     if let ResolvedType::Struct(struct_type) = &var_type {
@@ -405,7 +413,7 @@ impl ExprVisitor<()> for Compiler<'_> {
 
         let addr_var_index = self.current_function.define_intermediate_var(1);
 
-        for array_access in expr.asignee.array_accesses.iter() {
+        for array_access in expr.assignee.data.array_accesses.iter() {
             self.current_function.push_instruction(InstructionBuilder::ldr_imm(1, 1, 0));
             self.current_function.push_instruction(InstructionBuilder::stfp(1, addr_var_index as i32 + 1));
             array_access.accept_visitor(self);
@@ -413,7 +421,7 @@ impl ExprVisitor<()> for Compiler<'_> {
             self.current_function.push_instruction(InstructionBuilder::addi(1, 1, 0));
         }
 
-        for _ in 0..expr.asignee.n_derefs {
+        for _ in 0..expr.assignee.data.n_derefs {
             self.current_function.push_instruction(InstructionBuilder::ldr_imm(1, 1, 0));
         }
 
@@ -422,7 +430,8 @@ impl ExprVisitor<()> for Compiler<'_> {
         self.current_function.push_instruction(InstructionBuilder::str_imm(0, 1, 0));
     }
 
-    fn visit_declaration(&mut self, expr: &DeclarationExpr) -> () {
+    fn visit_declaration(&mut self, node: &ASTWrapper<DeclarationExpr>) -> () {
+        let expr = &node.data;
         let stack_index = self.current_function.define_local_var(expr.id, 1);
 
         expr.expr.accept_visitor(self);
@@ -430,7 +439,8 @@ impl ExprVisitor<()> for Compiler<'_> {
         self.current_function.push_instruction(InstructionBuilder::stfp(0, stack_index as i32 + 1))
     }
 
-    fn visit_block(&mut self, expr: &BlockExpr) -> () {
+    fn visit_block(&mut self, node: &ASTWrapper<BlockExpr>) -> () {
+        let expr = &node.data;
         expr.exprs.iter().for_each(|expr| expr.accept_visitor(self));
     }
 
@@ -441,7 +451,8 @@ impl ExprVisitor<()> for Compiler<'_> {
     JMP to START
     END
      */
-    fn visit_loop(&mut self, expr: &LoopExpr) -> () {
+    fn visit_loop(&mut self, node: &ASTWrapper<LoopExpr>) -> () {
+        let expr = &node.data;
         if let Some(initial) = &expr.initial {
             initial.accept_visitor(self);
         }
@@ -472,12 +483,14 @@ impl ExprVisitor<()> for Compiler<'_> {
         }
     }
 
-    fn visit_break(&mut self, expr: &BreakExpr) -> () {
+    fn visit_break(&mut self, node: &ASTWrapper<BreakExpr>) -> () {
         todo!()
     }
 
-    fn visit_call(&mut self, expr: &CallExpr) -> () {
+    fn visit_call(&mut self, node: &ASTWrapper<CallExpr>) -> () {
+        let expr = &node.data;
         let function_name = &expr.function;
+
         let function_address_location = if self.function_address_locations.contains_key(function_name) {
             *self.function_address_locations.get(function_name).unwrap()
         } else {
@@ -500,7 +513,9 @@ impl ExprVisitor<()> for Compiler<'_> {
         self.current_function.push_instruction(InstructionBuilder::addi_imm(STACK_PTR_REG, STACK_PTR_REG, -(expr.args.len() as i32)));
     }
 
-    fn visit_struct_initializer(&mut self, expr: &StructInitializerExpr) -> () {
+    fn visit_struct_initializer(&mut self, node: &ASTWrapper<StructInitializerExpr>) -> () {
+        let expr = &node.data;
+
         if let ResolvedType::Struct(struct_type) = self.symbol_table.get_resolved_type(&ParsedType::TypeName(ParsedTypeName {
                 name: (*expr.type_name).clone().into(), 
                 position: PositionRange::new(Position::new(0, 0))
@@ -521,8 +536,10 @@ impl ExprVisitor<()> for Compiler<'_> {
 
     }
 
-    fn visit_get_address(&mut self, expr: &GetAddressExpr) -> () {
-        let resolved_var = self.symbol_table.get_variable(&expr.var_expr);
+    fn visit_get_address(&mut self, node: &ASTWrapper<GetAddressExpr>) -> () {
+        let expr = &node.data;
+
+        let resolved_var = self.symbol_table.get_variable(&expr.var_expr.data);
 
         if resolved_var.is_argument {
             let arg_index = self.current_function.get_arg(resolved_var.id as usize) as i32;
@@ -533,7 +550,9 @@ impl ExprVisitor<()> for Compiler<'_> {
         }
     }
 
-    fn visit_static_array(&mut self, expr: &StaticArrayExpr) -> () {
+    fn visit_static_array(&mut self, node: &ASTWrapper<StaticArrayExpr>) -> () {
+        let expr = &node.data;
+
         let type_size = self.symbol_table.get_resolved_type(&expr.declaration_type).unwrap().n_bytes() / 8;
         let array_addr = self.current_function.allocate_array(type_size * expr.len);
 
@@ -541,11 +560,12 @@ impl ExprVisitor<()> for Compiler<'_> {
         self.current_function.push_instruction(InstructionBuilder::addi_imm(0, FRAME_PTR_REG, array_addr as i32 + 1));
     }
 
-    fn visit_get_char(&mut self, expr: &GetCharExpr) -> () {
+    fn visit_get_char(&mut self, node: &ASTWrapper<GetCharExpr>) -> () {
         self.current_function.push_instruction(InstructionBuilder::getc(0));
     }
 
-    fn visit_put_char(&mut self, expr: &PutCharExpr) -> () {
+    fn visit_put_char(&mut self, node: &ASTWrapper<PutCharExpr>) -> () {
+        let expr = &node.data;
         expr.expr.accept_visitor(self);
         self.current_function.push_instruction(InstructionBuilder::putc(0));
     }

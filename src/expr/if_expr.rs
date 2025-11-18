@@ -1,37 +1,26 @@
-use std::fmt;
+use serde::Serialize;
 
-use crate::token::PositionRange;
+use crate::{expr::{ASTNode, ASTWrapper}, token::PositionRange};
 
-use super::Expr;
-
+#[derive(Serialize)]
 pub struct IfExpr {
-    pub condition: Box<dyn Expr>,
-    pub success: Box<dyn Expr>,
-    pub fail: Option<Box<dyn Expr>>,
-    pub position: PositionRange
+    pub condition: Box<dyn ASTNode>,
+    pub success: Box<dyn ASTNode>,
+    pub fail: Option<Box<dyn ASTNode>>,
 }
 
-impl fmt::Display for IfExpr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{{\"type\": \"If\", \"condition\": {}, \"success\": {},", self.condition, self.success)?;
-
-        if let Some(fail) = &self.fail {
-            write!(f, " \"fail\": {},", fail)?;
-        }
-
-        write!(f, " \"position\": \"{}\"}}", self.position)
-    }
-}
-
-impl IfExpr {
-    pub fn new(condition: Box<dyn Expr>, success: Box<dyn Expr>, fail: Option<Box<dyn Expr>>, position: PositionRange) -> IfExpr {
-        IfExpr {
-            condition,
-            success,
-            fail,
+impl ASTWrapper<IfExpr> {
+    pub fn new_if(condition: Box<dyn ASTNode>, success: Box<dyn ASTNode>, fail: Option<Box<dyn ASTNode>>, position: PositionRange) -> Self {
+        ASTWrapper {
+            data: IfExpr {
+                condition,
+                success,
+                fail,
+            },
             position
         }
+        
     }
 }
 
-crate::impl_expr!(IfExpr, visit_if);
+crate::impl_ast_node!(IfExpr, visit_if);

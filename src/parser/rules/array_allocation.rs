@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{expr::{static_array_expr::StaticArrayExpr}, parser::{ExprParser, ParseRule, diagnostic}, token::{Position, PositionRange, TokenType}};
+use crate::{expr::{ASTWrapper, static_array_expr::StaticArrayExpr}, parser::{ExprParser, ParseRule, diagnostic}, token::{Position, PositionRange, TokenType}};
 
 pub struct ArrayAllocationRule {}
 
@@ -10,8 +10,8 @@ impl fmt::Display for ArrayAllocationRule {
     }
 }
 
-impl ParseRule<StaticArrayExpr> for ArrayAllocationRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<StaticArrayExpr> {
+impl ParseRule<ASTWrapper<StaticArrayExpr>> for ArrayAllocationRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<StaticArrayExpr>> {
         let alloc_token = parser.advance();
         let array_type = parser.try_type();
     
@@ -28,6 +28,6 @@ impl ParseRule<StaticArrayExpr> for ArrayAllocationRule {
     
         let position = PositionRange::concat(&alloc_token.position, &parser.prev().position);
     
-        Some(StaticArrayExpr::new(array_size?, array_type?, position))
+        Some(ASTWrapper::new_static_array(array_size?, array_type?, position))
     }
 }

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{expr::{Expr, binary_expr::BinaryExpr, declaration_expr::DeclarationExpr}, logger::Log, parser::{ExprParser, ParseRule, diagnostic, rules::{assignment::AssignmentRule, boolean_factor::BooleanFactorRule, expr::ExprRule}}, token::{Position, PositionRange, TokenType}};
+use crate::{expr::{ASTNode, ASTWrapper, binary_expr::BinaryExpr, declaration_expr::DeclarationExpr}, logger::Log, parser::{ExprParser, ParseRule, diagnostic, rules::{assignment::AssignmentRule, boolean_factor::BooleanFactorRule, expr::ExprRule}}, token::{Position, PositionRange, TokenType}};
 
 pub struct DeclarationRule {}
 
@@ -11,8 +11,8 @@ impl fmt::Display for DeclarationRule {
 }
 
 //declaration: LET [type] IDENTIFIER ASSIGNMENT [expression]? SEMICOLON | [assignment]
-impl ParseRule<Box<dyn Expr>> for DeclarationRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn Expr>> {
+impl ParseRule<Box<dyn ASTNode>> for DeclarationRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
         parser.log_debug(&format!("Entering declaration parser. Current token {:?}", parser.cur()));
         if let Some(let_token) = parser.try_consume(TokenType::Let) {
             let opt_type = parser.try_type();
@@ -33,7 +33,7 @@ impl ParseRule<Box<dyn Expr>> for DeclarationRule {
             let position = PositionRange::concat(&let_token.position, &parser.prev().position);
     
             parser.declaration_expr_id_counter += 1;
-            Some(Box::new(DeclarationExpr::new(parser.declaration_expr_id_counter, declaration_name?, declaration_type?, expr?, position)))
+            Some(Box::new(ASTWrapper::new_declaration(parser.declaration_expr_id_counter, declaration_name?, declaration_type?, expr?, position)))
         } else {
             Some(parser.apply_rule(AssignmentRule {})?)
         }

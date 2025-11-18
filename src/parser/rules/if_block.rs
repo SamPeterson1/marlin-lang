@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{expr::{get_char_expr::GetCharExpr, if_expr::IfExpr, put_char_expr::PutCharExpr}, logger::Log, parser::{ExprParser, ParseRule, rules::{block::BlockRule, inline_expr::InlineExprRule}}, token::{Position, PositionRange, TokenType}};
+use crate::{expr::{ASTWrapper, get_char_expr::GetCharExpr, if_expr::IfExpr, put_char_expr::PutCharExpr}, logger::Log, parser::{ExprParser, ParseRule, rules::{block::BlockRule, inline_expr::InlineExprRule}}, token::{Position, PositionRange, TokenType}};
 
 pub struct IfBlockRule {}
 
@@ -12,8 +12,8 @@ impl fmt::Display for IfBlockRule {
 
 //if: IF [inline_expression] [block] [elif]* [else]?
 
-impl ParseRule<IfExpr> for IfBlockRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<IfExpr> {
+impl ParseRule<ASTWrapper<IfExpr>> for IfBlockRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<IfExpr>> {
         parser.log_debug(&format!("Entering if parser. Current token {:?}", parser.cur()));
         let if_token = parser.advance();  
         
@@ -38,6 +38,6 @@ impl ParseRule<IfExpr> for IfBlockRule {
     
         let position = PositionRange::concat(&if_token.position, &parser.prev().position);
     
-        Some(IfExpr::new(condition?, success?, fail, position))
+        Some(ASTWrapper::new_if(condition?, success?, fail, position))
     }
 }

@@ -1,27 +1,24 @@
-use std::fmt;
+use serde::Serialize;
 
-use crate::token::PositionRange;
+use crate::{expr::ASTWrapper, token::PositionRange};
 
-use super::{var_expr::VarExpr, Expr};
+use super::var_expr::VarExpr;
 
+#[derive(Serialize)]
 pub struct GetAddressExpr {
-    pub var_expr: VarExpr,
-    pub position: PositionRange
+    pub var_expr: ASTWrapper<VarExpr>,
 }
 
-impl fmt::Display for GetAddressExpr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{{\"type\": \"GetAddress\", \"var_expr\": {}, \"position\": \"{}\"}}", self.var_expr, self.position)
-    }
-}
-
-impl GetAddressExpr {
-    pub fn new(var_expr: VarExpr, position: PositionRange) -> GetAddressExpr {
-        GetAddressExpr {
-            var_expr,
+impl ASTWrapper<GetAddressExpr> {
+    pub fn new_get_address(var_expr: ASTWrapper<VarExpr>, position: PositionRange) -> Self {
+        ASTWrapper {
+            data: GetAddressExpr {
+                var_expr,
+            },
             position
         }
+        
     }
 }
 
-crate::impl_expr!(GetAddressExpr, visit_get_address);
+crate::impl_ast_node!(GetAddressExpr, visit_get_address);

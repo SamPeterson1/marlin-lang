@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{expr::{get_char_expr::GetCharExpr, put_char_expr::PutCharExpr}, logger::Log, parser::{ExprParser, ParseRule}, token::{Position, PositionRange}};
+use crate::{expr::{ASTWrapper, get_char_expr::GetCharExpr, put_char_expr::PutCharExpr}, logger::Log, parser::{ExprParser, ParseRule}, token::{Position, PositionRange}};
 
 pub struct GetcRule {}
 
@@ -10,11 +10,11 @@ impl fmt::Display for GetcRule {
     }
 }
 
-impl ParseRule<GetCharExpr> for GetcRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<GetCharExpr> {
+impl ParseRule<ASTWrapper<GetCharExpr>> for GetcRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<GetCharExpr>> {
         parser.log_debug(&format!("Entering getc parser. Current token {:?}", parser.cur()));
         parser.advance();
     
-        Some(GetCharExpr::new(PositionRange::new(Position::new(0, 0))))
+        Some(ASTWrapper::new_get_char(PositionRange::new(Position::new(0, 0))))
     }
 }

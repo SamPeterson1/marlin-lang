@@ -1,4 +1,4 @@
-use crate::{expr::{Expr, struct_initializer_expr::StructInitializerExpr, unary_expr::UnaryExpr}, logger::Log, parser::{ExprParser, ParseRule, diagnostic, rules::expr::ExprRule}, token::{Position, PositionRange, TokenType}};
+use crate::{expr::{ASTNode, ASTWrapper, struct_initializer_expr::StructInitializerExpr, unary_expr::UnaryExpr}, logger::Log, parser::{ExprParser, ParseRule, diagnostic, rules::expr::ExprRule}, token::{Position, PositionRange, TokenType}};
 use std::{collections::HashMap, fmt};
 
 pub struct StructInitializerRule {}
@@ -11,8 +11,8 @@ impl fmt::Display for StructInitializerRule {
 
 //struct_initializer: IDENTIFIER LEFT_CURLY [member_intializer] (COMMA, [member_intializer])* RIGHT_CURLY
 //member_intializer: IDENTIFIER COLON [inline_expression]
-impl ParseRule<StructInitializerExpr> for StructInitializerRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<StructInitializerExpr> {
+impl ParseRule<ASTWrapper<StructInitializerExpr>> for StructInitializerRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<StructInitializerExpr>> {
         parser.log_debug(&format!("Entering struct initializer parser. Current token {:?}", parser.cur()));
 
         let type_name_token = parser.consume_or_diagnostic(TokenType::Identifier, diagnostic::err_expected_struct_name(PositionRange::new(Position::new(0, 0))));
@@ -45,6 +45,6 @@ impl ParseRule<StructInitializerExpr> for StructInitializerRule {
 
         let position = PositionRange::concat(&type_name_token?.position, &parser.prev().position);
 
-        Some(StructInitializerExpr::new(type_name?, member_inits, position))
+        Some(ASTWrapper::new_struct_initializer(type_name?, member_inits, position))
     }
 }

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{expr::{get_char_expr::GetCharExpr, loop_expr::LoopExpr, put_char_expr::PutCharExpr}, logger::Log, parser::{ExprParser, ParseRule, rules::{block::BlockRule, inline_expr::InlineExprRule}}, token::{Position, PositionRange}};
+use crate::{expr::{ASTWrapper, get_char_expr::GetCharExpr, loop_expr::LoopExpr, put_char_expr::PutCharExpr}, logger::Log, parser::{ExprParser, ParseRule, rules::{block::BlockRule, inline_expr::InlineExprRule}}, token::{Position, PositionRange}};
 
 pub struct WhileLoopRule {}
 
@@ -10,8 +10,8 @@ impl fmt::Display for WhileLoopRule {
     }
 }
 
-impl ParseRule<LoopExpr> for WhileLoopRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<LoopExpr> {
+impl ParseRule<ASTWrapper<LoopExpr>> for WhileLoopRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<LoopExpr>> {
         parser.log_info(&format!("Entering while parser. Current token {:?}", parser.cur()));
         let while_token = parser.advance();
     
@@ -23,6 +23,6 @@ impl ParseRule<LoopExpr> for WhileLoopRule {
     
         let position = PositionRange::concat(&while_token.position, &parser.prev().position);
     
-        Some(LoopExpr::new_while(condition?, body?, position))
+        Some(ASTWrapper::new_while(condition?, body?, position))
     }
 }

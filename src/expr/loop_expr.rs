@@ -1,67 +1,51 @@
-use std::fmt;
+use serde::Serialize;
 
-use crate::token::PositionRange;
+use crate::{expr::{ASTNode, ASTWrapper}, token::PositionRange};
 
-use super::Expr;
-
+#[derive(Serialize)]
 pub struct LoopExpr {
-    pub initial: Option<Box<dyn Expr>>,
-    pub condition: Option<Box<dyn Expr>>,
-    pub increment: Option<Box<dyn Expr>>,
-    pub body: Box<dyn Expr>,
-    pub position: PositionRange
+    pub initial: Option<Box<dyn ASTNode>>,
+    pub condition: Option<Box<dyn ASTNode>>,
+    pub increment: Option<Box<dyn ASTNode>>,
+    pub body: Box<dyn ASTNode>,
 }
 
-impl fmt::Display for LoopExpr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{{\"type\": \"Loop\"")?;
-
-        if let Some(initial) = &self.initial {
-            write!(f, ", \"initial\": {}", initial)?;
-        }
-
-        if let Some(condition) = &self.condition {
-            write!(f, ", \"condition\": {}", condition)?;
-        }
-
-        if let Some(increment) = &self.increment {
-            write!(f, ", \"increment\": {}", increment)?;
-        }
-
-        write!(f, ", \"body\": {}, \"position\": \"{}\"}}", self.body, self.position)
-    }
-}
-
-impl LoopExpr {
-    pub fn new(body: Box<dyn Expr>, position: PositionRange) -> LoopExpr {
-        LoopExpr {
-            initial: None, 
-            condition: None, 
-            increment: None, 
-            body,
+impl ASTWrapper<LoopExpr> {
+    pub fn new_loop(body: Box<dyn ASTNode>, position: PositionRange) -> Self {
+        ASTWrapper {
+            data: LoopExpr {
+                initial: None, 
+                condition: None, 
+                increment: None, 
+                body,
+            },
             position
         }
     }
     
-    pub fn new_while(condition: Box<dyn Expr>, body: Box<dyn Expr>, position: PositionRange) -> LoopExpr {
-        LoopExpr {
-            initial: None, 
-            condition: Some(condition), 
-            increment: None, 
-            body,
+    pub fn new_while(condition: Box<dyn ASTNode>, body: Box<dyn ASTNode>, position: PositionRange) -> Self {
+        ASTWrapper {
+            data: LoopExpr {
+                initial: None, 
+                condition: Some(condition), 
+                increment: None, 
+                body,
+            },
             position
         }
     }
 
-    pub fn new_for(initial: Box<dyn Expr>, condition: Box<dyn Expr>, increment: Box<dyn Expr>, body: Box<dyn Expr>, position: PositionRange) -> LoopExpr {
-        LoopExpr {
-            initial: Some(initial), 
-            condition: Some(condition), 
-            increment: Some(increment), 
-            body,
+    pub fn new_for(initial: Box<dyn ASTNode>, condition: Box<dyn ASTNode>, increment: Box<dyn ASTNode>, body: Box<dyn ASTNode>, position: PositionRange) -> Self {
+        ASTWrapper {
+            data: LoopExpr {
+                initial: Some(initial), 
+                condition: Some(condition), 
+                increment: Some(increment), 
+                body,
+            },
             position
         }
     }
 }
 
-crate::impl_expr!(LoopExpr, visit_loop);
+crate::impl_ast_node!(LoopExpr, visit_loop);

@@ -1,21 +1,15 @@
-use std::{fmt, hash::Hasher};
+use std::hash::Hasher;
 
-use crate::{token::PositionRange, types::parsed_type::ParsedType};
+use serde::Serialize;
 
-use super::Expr;
+use crate::{expr::{ASTNode, ASTWrapper}, token::PositionRange, types::parsed_type::ParsedType};
 
+#[derive(Serialize)]
 pub struct DeclarationExpr {
     pub id: i32,
     pub identifier: String,
     pub declaration_type: ParsedType,
-    pub expr: Box<dyn Expr>,
-    pub position: PositionRange
-}
-
-impl fmt::Display for DeclarationExpr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{{\"type\": \"Declaration\", \"identifier\": \"{}\", \"declaration_type\": {}, \"expr\": {}, \"position\": \"{}\"}}", self.identifier, self.declaration_type, self.expr, self.position)
-    }
+    pub expr: Box<dyn ASTNode>,
 }
 
 impl Eq for DeclarationExpr {}
@@ -32,16 +26,19 @@ impl std::hash::Hash for DeclarationExpr {
     }
 }
 
-impl DeclarationExpr {
-    pub fn new(id: i32, identifier: String, declaration_type: ParsedType, expr: Box<dyn Expr>, position: PositionRange) -> DeclarationExpr {
-        DeclarationExpr {
-            id,
-            identifier,
-            declaration_type,
-            expr,
-            position,
+impl ASTWrapper<DeclarationExpr> {
+    pub fn new_declaration(id: i32, identifier: String, declaration_type: ParsedType, expr: Box<dyn ASTNode>, position: PositionRange) -> Self {
+        ASTWrapper {
+            data: DeclarationExpr {
+                id,
+                identifier,
+                declaration_type,
+                expr,
+            },
+            position
         }
+        
     }
 }
 
-crate::impl_expr!(DeclarationExpr, visit_declaration);
+crate::impl_ast_node!(DeclarationExpr, visit_declaration);

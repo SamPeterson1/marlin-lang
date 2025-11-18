@@ -1,6 +1,6 @@
 use std::fmt::{self, Binary};
 
-use crate::{expr::{Expr, binary_expr::BinaryExpr}, logger::Log, parser::{ExprParser, ParseRule, rules::equality::EqualityRule}, token::TokenType};
+use crate::{expr::{ASTNode, ASTWrapper, binary_expr::BinaryExpr}, logger::Log, parser::{ExprParser, ParseRule, rules::equality::EqualityRule}, token::TokenType};
 
 pub struct BooleanFactorRule {}
 
@@ -11,8 +11,8 @@ impl fmt::Display for BooleanFactorRule {
 }
 
 //equality (or equality)*
-impl ParseRule<Box<dyn Expr>> for BooleanFactorRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn Expr>> {
+impl ParseRule<Box<dyn ASTNode>> for BooleanFactorRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
         parser.log_debug(&format!("Entering boolean factor parser. Current token {:?}", parser.cur()));
 
         let mut equality = parser.apply_rule(EqualityRule {});
@@ -23,7 +23,7 @@ impl ParseRule<Box<dyn Expr>> for BooleanFactorRule {
             equality = parser.apply_rule(EqualityRule {});
             parser.log_parse_result(&equality, "equality expression");
 
-            expr = Box::new(BinaryExpr::new(expr, equality?, operator.token_type));
+            expr = Box::new(ASTWrapper::new_binary(expr, equality?, operator.token_type));
         }
 
         Some(expr)

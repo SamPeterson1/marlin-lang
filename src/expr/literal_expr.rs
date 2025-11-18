@@ -1,9 +1,8 @@
-use std::fmt;
+use serde::Serialize;
 
-use crate::{token::PositionRange, types::parsed_type::ParsedType};
+use crate::{expr::ASTWrapper, token::PositionRange, types::parsed_type::ParsedType};
 
-use super::Expr;
-
+#[derive(Serialize)]
 pub enum Literal {
     Int (i64),
     Double (f64),
@@ -11,37 +10,23 @@ pub enum Literal {
     String (String),
 }
 
-impl fmt::Display for Literal {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Literal::Int(i) => write!(f, "{{\"type\": \"Integer\", \"value\": {}}}", i),
-            Literal::Double(d) => write!(f, "{{\"type\": \"Double\", \"value\": {}}}", d),
-            Literal::Bool(b) => write!(f, "{{\"type\": \"Boolean\", \"value\": {}}}", b),
-            Literal::String(s) => write!(f, "{{\"type\": \"String\", \"value\": \"{}\"}}", s),
-        }
-    }
-}
-
+#[derive(Serialize)]
 pub struct LiteralExpr {
     pub value: Literal,
     pub parsed_type: ParsedType,
-    pub position: PositionRange,
 }
 
-impl fmt::Display for LiteralExpr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{{\"type\": \"Literal\", \"value\": {}, \"parsed_type\": \"{}\", \"position\": \"{}\"}}", self.value, self.parsed_type, self.position)
-    }
-}
-
-impl LiteralExpr {
-    pub fn new(value: Literal, parsed_type: ParsedType, position: PositionRange) -> LiteralExpr {
-        LiteralExpr {
-            value,
-            parsed_type,
+impl ASTWrapper<LiteralExpr> {
+    pub fn new_literal(value: Literal, parsed_type: ParsedType, position: PositionRange) -> Self {
+        ASTWrapper {
+            data: LiteralExpr {
+                value,
+                parsed_type,
+            },
             position
         }
+        
     }
 }
 
-crate::impl_expr!(LiteralExpr, visit_literal);
+crate::impl_ast_node!(LiteralExpr, visit_literal);

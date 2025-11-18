@@ -1,9 +1,15 @@
 use std::{cmp, fmt};
 
-#[derive(Debug, Clone, Copy)]
+use serde::Serialize;
+
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct Position {
     pub line: i32,
     pub char: i32
+}
+
+pub trait Positioned {
+    fn get_position(&self) -> &PositionRange;
 }
 
 impl fmt::Display for Position {
@@ -27,7 +33,7 @@ impl Position {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct PositionRange {
     pub start: Position,
     pub end: Position

@@ -1,6 +1,5 @@
-use crate::{expr::{Expr, binary_expr::BinaryExpr}, item::StructItem, logger::Log, parser::{ExprParser, ParseRule, rules::factor::FactorRule}, token::{Position, PositionRange, TokenType}};
-use std::fmt::{self, Binary};
-use std::collections::HashMap;
+use crate::{expr::{ASTNode, ASTWrapper, binary_expr::BinaryExpr}, logger::Log, parser::{ExprParser, ParseRule, rules::factor::FactorRule}, token::{Position, PositionRange, TokenType}};
+use std::fmt;
 
 pub struct TermRule {}
 
@@ -11,8 +10,8 @@ impl fmt::Display for TermRule {
 }
 
 //factor (("-" | "+") factor)*
-impl ParseRule<Box<dyn Expr>> for TermRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn Expr>> {
+impl ParseRule<Box<dyn ASTNode>> for TermRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
         parser.log_debug(&format!("Entering term parser. Current token {:?}", parser.cur()));
 
         let mut factor = parser.apply_rule(FactorRule {});
@@ -22,7 +21,7 @@ impl ParseRule<Box<dyn Expr>> for TermRule {
         while let Some(operator) = parser.try_match(&[TokenType::Minus, TokenType::Plus]) {
             factor = parser.apply_rule(FactorRule {});
             parser.log_parse_result(&factor, "factor expression");
-            expr = Box::new(BinaryExpr::new(expr, factor?, operator.token_type));
+            expr = Box::new(ASTWrapper::new_binary(expr, factor?, operator.token_type));
         }
 
         Some(expr)

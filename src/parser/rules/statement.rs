@@ -1,4 +1,4 @@
-use crate::{expr::{Expr, unary_expr::UnaryExpr}, logger::Log, parser::{ExprParser, ParseRule, rules::expr::ExprRule}, token::TokenType};
+use crate::{expr::{ASTNode, ASTWrapper, unary_expr::UnaryExpr}, logger::Log, parser::{ExprParser, ParseRule, rules::expr::ExprRule}, token::TokenType};
 use std::fmt;
 
 pub struct StatementRule {}
@@ -9,8 +9,8 @@ impl fmt::Display for StatementRule {
     }
 }
 
-impl ParseRule<Box<dyn Expr>> for StatementRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn Expr>> {
+impl ParseRule<Box<dyn ASTNode>> for StatementRule {
+    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
         parser.log_debug(&format!("Entering statement parser. Current token {:?}", parser.cur()));
     
         let expr = parser.apply_rule(ExprRule {});
@@ -19,7 +19,7 @@ impl ParseRule<Box<dyn Expr>> for StatementRule {
     
         if let Some(semicolon_token) = parser.try_consume(TokenType::Semicolon) {
             parser.log_debug(&format!("Parsed semicolon token"));
-            Some(Box::new(UnaryExpr::new(expr?, semicolon_token)))
+            Some(Box::new(ASTWrapper::new_unary(expr?, semicolon_token)))
         } else {
             parser.log_debug(&format!("No semicolon found"));
             expr

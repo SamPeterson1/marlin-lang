@@ -1,37 +1,21 @@
-use std::fmt;
+use serde::Serialize;
 
-use crate::token::PositionRange;
+use crate::{expr::{ASTNode, ASTWrapper}, impl_ast_node, token::PositionRange};
 
-use super::Expr;
-
+#[derive(Serialize)]
 pub struct BlockExpr {
-    pub exprs: Vec<Box<dyn Expr>>,
-    pub position: PositionRange
+    pub exprs: Vec<Box<dyn ASTNode>>,
 }
 
-impl fmt::Display for BlockExpr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{{\"type\": \"Block\", \"exprs\": [")?;
-
-        for (i, expr) in self.exprs.iter().enumerate() {
-            write!(f, "{}", expr)?;
-
-            if i + 1 < self.exprs.len() {
-                write!(f, ", ")?;
-            }
-        }
-
-        write!(f, "], \"position\": \"{}\"}}", self.position)
-    }
-}
-
-impl BlockExpr {
-    pub fn new(exprs: Vec<Box<dyn Expr>>, position: PositionRange) -> BlockExpr {
-        BlockExpr {
-            exprs,
+impl ASTWrapper<BlockExpr> {
+    pub fn new_block(exprs: Vec<Box<dyn ASTNode>>, position: PositionRange) -> Self {
+        ASTWrapper {
+            data: BlockExpr {
+                exprs
+            },
             position
         }
     }    
 }
 
-crate::impl_expr!(BlockExpr, visit_block);
+impl_ast_node!(BlockExpr, visit_block);

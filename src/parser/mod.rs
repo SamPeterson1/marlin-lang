@@ -4,12 +4,14 @@ mod rules;
 use std::collections::VecDeque;
 use std::{collections::HashMap, fmt, rc::Rc};
 
-use crate::item::{FunctionItem, Item, StructItem};
+use serde::Serialize;
+
+use crate::expr::ASTNode;
 
 use crate::logger::{Log, LogLevel, LogSource};
 use crate::parser::rules::item::ItemRule;
 use crate::types::parsed_type::{ParsedPointerType, ParsedType, ParsedTypeName};
-use crate::{error::{Diagnostic, DiagnosticType}, expr::{assignment_expr::AssignmentExpr, binary_expr::BinaryExpr, block_expr::BlockExpr, break_expr::BreakExpr, call_expr::CallExpr, declaration_expr::DeclarationExpr, get_address_expr::GetAddressExpr, get_char_expr::GetCharExpr, if_expr::IfExpr, literal_expr::LiteralExpr, loop_expr::LoopExpr, put_char_expr::PutCharExpr, static_array_expr::StaticArrayExpr, struct_initializer_expr::StructInitializerExpr, unary_expr::UnaryExpr, var_expr::{MemberAccess, VarExpr}, Expr}, logger::{Logger}, token::{Position, PositionRange, Token, TokenType, TokenValue}};
+use crate::{error::{Diagnostic, DiagnosticType}, expr::{assignment_expr::AssignmentExpr, binary_expr::BinaryExpr, block_expr::BlockExpr, break_expr::BreakExpr, call_expr::CallExpr, declaration_expr::DeclarationExpr, get_address_expr::GetAddressExpr, get_char_expr::GetCharExpr, if_expr::IfExpr, literal_expr::LiteralExpr, loop_expr::LoopExpr, put_char_expr::PutCharExpr, static_array_expr::StaticArrayExpr, struct_initializer_expr::StructInitializerExpr, unary_expr::UnaryExpr, var_expr::{MemberAccess, VarExpr}}, logger::{Logger}, token::{Position, PositionRange, Token, TokenType, TokenValue}};
 
 pub struct ExprParser<'a> {
     ptr: usize,
@@ -22,7 +24,7 @@ pub struct ExprParser<'a> {
 }
 
 pub struct ParseResult {
-    pub items: Vec<Box<dyn Item>>,
+    pub items: Vec<Box<dyn ASTNode>>,
     pub diagnostics: Vec<Diagnostic>
 }
 
@@ -75,11 +77,7 @@ impl<'a> ExprParser<'a> {
         self.ptr = self.ptr_stack.pop_front().unwrap();
     }
 
-    pub fn apply_item_rule_boxed<T: Item + 'static>(&mut self, rule: impl ParseRule<T>) -> Option<Box<dyn Item>> {
-        Some(Box::new(self.apply_rule(rule)?))
-    }
-
-    pub fn apply_rule_boxed<T: Expr + 'static>(&mut self, rule: impl ParseRule<T>) -> Option<Box<dyn Expr>> {
+    pub fn apply_rule_boxed<T: ASTNode + 'static>(&mut self, rule: impl ParseRule<T>) -> Option<Box<dyn ASTNode>> {
         Some(Box::new(self.apply_rule(rule)?))
     }
 
@@ -95,9 +93,9 @@ impl<'a> ExprParser<'a> {
         result
     }
 
-    fn log_parse_result(&self, expr: &Option<impl fmt::Display>, name: &str) {
+    fn log_parse_result(&self, expr: &Option<impl Serialize>, name: &str) {
         if let Some(expr) = expr {
-            Logger::log_debug(self, &format!("Parsed {}: {}", name, expr));
+            Logger::log_debug(self, &format!("Parsed {}: {}", name, serde_json::to_string(expr).unwrap()));
         } else {
             Logger::log_error(self, &format!("Failed to parse {}", name));
         }
@@ -111,7 +109,7 @@ impl<'a> ExprParser<'a> {
         while !self.is_at_end() {
             if let Some(expr) = self.apply_rule(ItemRule {}) {
                 Logger::log_info(&self, &format!("Parsed item successfully"));
-                Logger::log_debug(&self, &format!("Parsed item: {}", expr));
+                Logger::log_debug(&self, &format!("Parsed item: {}", serde_json::to_string(&expr).unwrap()));
                 items.push(expr);
             } else {
                 Logger::log_error(&self, &format!("Failed to parse item. Current token: {:?}", self.cur()));

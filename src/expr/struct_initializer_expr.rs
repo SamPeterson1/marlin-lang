@@ -1,40 +1,25 @@
-use std::{collections::HashMap, fmt, rc::Rc};
+use std::{collections::HashMap, rc::Rc};
 
-use crate::token::PositionRange;
+use serde::Serialize;
 
-use super::Expr;
+use crate::{expr::{ASTNode, ASTWrapper}, impl_ast_node, token::PositionRange};
 
-#[derive(Clone)]
+#[derive(Clone, Serialize)]
 pub struct StructInitializerExpr {
     pub type_name: Rc<String>,
-    pub member_inits: Rc<HashMap<String, Box<dyn Expr>>>,
-    pub position: PositionRange
+    pub member_inits: Rc<HashMap<String, Box<dyn ASTNode>>>,
 }
 
-impl fmt::Display for StructInitializerExpr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{{\"type\": \"StructInitializer\", \"type_name\": \"{}\", \"member_inits\": {{", self.type_name)?;
-
-        for (i, (name, expr)) in self.member_inits.iter().enumerate() {
-            write!(f, "\"{}\": {}", name, expr)?;
-
-            if i + 1 < self.member_inits.len() {
-                write!(f, ", ")?;
-            }
-        }
-
-        write!(f, "}}, \"position\": \"{}\"}}", self.position)
-    }
-}
-
-impl StructInitializerExpr {
-    pub fn new(type_name: String, member_inits: HashMap<String, Box<dyn Expr>>, position: PositionRange) -> StructInitializerExpr {
-        StructInitializerExpr {
-            type_name: Rc::new(type_name),
-            member_inits: Rc::new(member_inits),
+impl ASTWrapper<StructInitializerExpr> {
+    pub fn new_struct_initializer(type_name: String, member_inits: HashMap<String, Box<dyn ASTNode>>, position: PositionRange) -> Self {
+        ASTWrapper {
+            data: StructInitializerExpr {
+                type_name: Rc::new(type_name),
+                member_inits: Rc::new(member_inits),
+            },
             position
         }
     }
 }
 
-crate::impl_expr!(StructInitializerExpr, visit_struct_initializer);
+impl_ast_node!(StructInitializerExpr, visit_struct_initializer);

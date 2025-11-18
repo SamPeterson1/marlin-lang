@@ -1,41 +1,26 @@
-use std::fmt;
+use serde::Serialize;
 
-use crate::token::{Position, PositionRange};
+use crate::{expr::{ASTNode, ASTWrapper}, token::{Position, PositionRange}};
 
-use super::Expr;
-
+#[derive(Serialize)]
 pub struct CallExpr {
     pub function: String,
-    pub args: Vec<Box<dyn Expr>>,
-    pub position: PositionRange
+    pub args: Vec<Box<dyn ASTNode>>,
 }
 
-impl fmt::Display for CallExpr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{{\"type\": \"Call\", \"function\": \"{}\", \"args\": [", self.function)?;
-
-        for (i, arg) in self.args.iter().enumerate() {
-            write!(f, "{}", arg)?;
-
-            if i + 1 < self.args.len() {
-                write!(f, ", ")?;
-            }
-        }
-
-        write!(f, "], \"position\": \"{}\"}}", self.position)
-    }
-}
-
-impl CallExpr {
-    pub fn new(function: String, args: Vec<Box<dyn Expr>>) -> CallExpr {
+impl ASTWrapper<CallExpr> {
+    pub fn new_call(function: String, args: Vec<Box<dyn ASTNode>>) -> Self {
         let position = PositionRange::new(Position::new(0, 0));
 
-        CallExpr {
-            function,
-            args,
+        ASTWrapper {
+            data: CallExpr {
+                function,
+                args,
+            },
             position
         }
+        
     }
 }
 
-crate::impl_expr!(CallExpr, visit_call);
+crate::impl_ast_node!(CallExpr, visit_call);
