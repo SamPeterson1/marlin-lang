@@ -145,7 +145,7 @@ impl VM {
         }
     }
 
-    pub fn write_log(&self, message: &str) {
+    pub fn write_log(&self, _message: &str) {
         //println!("{}", message);
     }
 

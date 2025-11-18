@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::{expr::{ASTNode, ASTWrapper}, token::PositionRange};
+use crate::{ast::{ASTNode, ASTWrapper}, token::PositionRange};
 
 #[derive(Serialize)]
 pub struct LoopExpr {

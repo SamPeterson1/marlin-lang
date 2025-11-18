@@ -1,4 +1,4 @@
-use crate::{expr::ASTNode, parser::{ExprParser, ParseRule, diagnostic}, token::{Position, PositionRange, TokenType}};
+use crate::{ast::ASTNode, parser::{ExprParser, ParseRule, diagnostic}, token::{Position, PositionRange, TokenType}};
 use std::fmt;
 
 use super::{function_item::FunctionRule, struct_item::StructRule};

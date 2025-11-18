@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{expr::{ASTNode, ASTWrapper, binary_expr::BinaryExpr}, logger::Log, parser::{ExprParser, ParseRule, rules::term::TermRule}, token::{Position, PositionRange, TokenType}};
+use crate::{ast::{ASTNode, ASTWrapper}, logger::Log, parser::{ExprParser, ParseRule, rules::term::TermRule}, token::TokenType};
 
 pub struct ComparisonRule {}
 

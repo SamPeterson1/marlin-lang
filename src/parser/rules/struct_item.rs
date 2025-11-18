@@ -1,4 +1,4 @@
-use crate::{expr::{ASTWrapper, struct_item::StructItem}, logger::Log, parser::{ExprParser, ParseRule, diagnostic}, token::{Position, PositionRange, TokenType}};
+use crate::{ast::{ASTWrapper, struct_item::StructItem}, logger::Log, parser::{ExprParser, ParseRule, diagnostic}, token::{Position, PositionRange, TokenType}};
 use std::fmt;
 use std::collections::HashMap;
 

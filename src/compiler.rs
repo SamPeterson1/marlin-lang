@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 
-use chrono::format::Parsed;
-
-use crate::{expr::{ASTNode, ASTVisitor, ASTWrapper, assignment_expr::AssignmentExpr, binary_expr::BinaryExpr, block_expr::BlockExpr, break_expr::BreakExpr, call_expr::CallExpr, declaration_expr::DeclarationExpr, function_item::FunctionItem, get_address_expr::GetAddressExpr, get_char_expr::GetCharExpr, if_expr::IfExpr, literal_expr::{Literal, LiteralExpr}, loop_expr::LoopExpr, put_char_expr::PutCharExpr, static_array_expr::StaticArrayExpr, struct_initializer_expr::StructInitializerExpr, struct_item::StructItem, unary_expr::UnaryExpr, var_expr::{MemberAccess, VarExpr}}, instruction::InstructionBuilder, resolver::SymbolTable, token::{Position, PositionRange}, type_checker::TypeChecker, types::{parsed_type::{ParsedType, ParsedTypeName}, resolved_type::ResolvedType}};
+use crate::{ast::{ASTNode, ASTVisitor, ASTWrapper, assignment_expr::AssignmentExpr, binary_expr::BinaryExpr, block_expr::BlockExpr, break_expr::BreakExpr, call_expr::CallExpr, declaration_expr::DeclarationExpr, function_item::FunctionItem, get_address_expr::GetAddressExpr, get_char_expr::GetCharExpr, if_expr::IfExpr, literal_expr::{Literal, LiteralExpr}, loop_expr::LoopExpr, put_char_expr::PutCharExpr, static_array_expr::StaticArrayExpr, struct_initializer_expr::StructInitializerExpr, struct_item::StructItem, unary_expr::UnaryExpr, var_expr::{MemberAccess, VarExpr}}, instruction::InstructionBuilder, resolver::SymbolTable, token::{Position, PositionRange}, type_checker::TypeChecker, types::{parsed_type::{ParsedType, ParsedTypeName}, resolved_type::ResolvedType}};
 
 const RET_ADDR_REG: u8 = 15;
 const STACK_PTR_REG: u8 = 14;
@@ -26,10 +24,6 @@ impl CompilerFunction {
             args: Vec::new(),
             args_size: 0,
         }
-    }
-
-    pub fn get_args_size(&self) -> usize {
-        self.args_size
     }
 
     pub fn add_argument(&mut self, size: usize) -> usize {
@@ -186,7 +180,7 @@ impl Compiler<'_> {
 }
 
 impl ASTVisitor<()> for Compiler<'_> {
-    fn visit_struct(&mut self, node: &ASTWrapper<StructItem>) -> () { }
+    fn visit_struct(&mut self, _node: &ASTWrapper<StructItem>) -> () { }
 
     fn visit_function(&mut self, node: &ASTWrapper<FunctionItem>) -> () {
         let item = &node.data;
@@ -483,7 +477,7 @@ impl ASTVisitor<()> for Compiler<'_> {
         }
     }
 
-    fn visit_break(&mut self, node: &ASTWrapper<BreakExpr>) -> () {
+    fn visit_break(&mut self, _node: &ASTWrapper<BreakExpr>) -> () {
         todo!()
     }
 
@@ -560,7 +554,7 @@ impl ASTVisitor<()> for Compiler<'_> {
         self.current_function.push_instruction(InstructionBuilder::addi_imm(0, FRAME_PTR_REG, array_addr as i32 + 1));
     }
 
-    fn visit_get_char(&mut self, node: &ASTWrapper<GetCharExpr>) -> () {
+    fn visit_get_char(&mut self, _node: &ASTWrapper<GetCharExpr>) -> () {
         self.current_function.push_instruction(InstructionBuilder::getc(0));
     }
 

@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{error::Diagnostic, expr::{ASTNode, ASTVisitor, ASTWrapper, assignment_expr::AssignmentExpr, binary_expr::BinaryExpr, block_expr::BlockExpr, break_expr::BreakExpr, call_expr::CallExpr, declaration_expr::DeclarationExpr, function_item::FunctionItem, get_address_expr::GetAddressExpr, get_char_expr::GetCharExpr, if_expr::IfExpr, literal_expr::LiteralExpr, loop_expr::LoopExpr, put_char_expr::PutCharExpr, static_array_expr::StaticArrayExpr, struct_initializer_expr::StructInitializerExpr, struct_item::StructItem, unary_expr::UnaryExpr, var_expr::{MemberAccess, VarExpr}}, logger::{LogSource, Logger}, resolver::SymbolTable, types::resolved_type::{PointerType, ResolvedType, StructType}};
+use crate::{error::Diagnostic, ast::{ASTNode, ASTVisitor, ASTWrapper, assignment_expr::AssignmentExpr, binary_expr::BinaryExpr, block_expr::BlockExpr, break_expr::BreakExpr, call_expr::CallExpr, declaration_expr::DeclarationExpr, function_item::FunctionItem, get_address_expr::GetAddressExpr, get_char_expr::GetCharExpr, if_expr::IfExpr, literal_expr::LiteralExpr, loop_expr::LoopExpr, put_char_expr::PutCharExpr, static_array_expr::StaticArrayExpr, struct_initializer_expr::StructInitializerExpr, struct_item::StructItem, unary_expr::UnaryExpr, var_expr::{MemberAccess, VarExpr}}, logger::{LogSource, Logger}, resolver::SymbolTable, types::resolved_type::{PointerType, ResolvedType, StructType}};
 
 pub struct TypeChecker<'a> {
     symbol_table: &'a SymbolTable,
@@ -40,7 +40,7 @@ impl<'a> TypeChecker<'a> {
 }    
 
 impl ASTVisitor<Option<ResolvedType>> for TypeChecker<'_> {
-    fn visit_struct(&mut self, node: &ASTWrapper<StructItem>) -> Option<ResolvedType> { None }
+    fn visit_struct(&mut self, _node: &ASTWrapper<StructItem>) -> Option<ResolvedType> { None }
 
     fn visit_function(&mut self, node: &ASTWrapper<FunctionItem>) -> Option<ResolvedType> {
         let item = &node.data;

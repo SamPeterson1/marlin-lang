@@ -2,7 +2,7 @@ use std::hash::Hasher;
 
 use serde::Serialize;
 
-use crate::{expr::{ASTNode, ASTWrapper}, token::PositionRange, types::parsed_type::ParsedType};
+use crate::{ast::{ASTNode, ASTWrapper}, token::PositionRange, types::parsed_type::ParsedType};
 
 #[derive(Serialize)]
 pub struct DeclarationExpr {

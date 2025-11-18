@@ -2,7 +2,7 @@ use std::{collections::HashMap, rc::Rc};
 
 use serde::Serialize;
 
-use crate::{expr::{ASTNode, ASTWrapper}, impl_ast_node, token::PositionRange};
+use crate::{ast::{ASTNode, ASTWrapper}, impl_ast_node, token::PositionRange};
 
 #[derive(Clone, Serialize)]
 pub struct StructInitializerExpr {

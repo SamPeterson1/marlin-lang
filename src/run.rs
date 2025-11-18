@@ -99,7 +99,7 @@ fn run(code: String) {
     
     if all_errors.len() == 0 {
         Logger::log_info(&runner, "Checking types");
-        let mut type_checker = TypeChecker::new(&symbol_table);
+        let type_checker = TypeChecker::new(&symbol_table);
         let type_errors = type_checker.check_types(&items);
         all_errors.extend(type_errors);
         Logger::log_info(&runner, "Done checking types");
@@ -123,7 +123,7 @@ fn run(code: String) {
         Logger::log_info(&runner, "No errors found");
     }
 
-    let mut compiler = Compiler::new(&symbol_table);
+    let compiler = Compiler::new(&symbol_table);
     let CompilerResult {instructions, constant_pool} = compiler.compile(&items);
 
     let mut vm = VM::new();

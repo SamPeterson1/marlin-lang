@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::{expr::{ASTNode, ASTWrapper}, operator::{self, BinaryOperator}, token::{PositionRange, TokenType}};
+use crate::{ast::{ASTNode, ASTWrapper}, operator::{self, BinaryOperator}, token::{PositionRange, TokenType}};
 
 #[derive(Serialize)]
 pub struct BinaryExpr {

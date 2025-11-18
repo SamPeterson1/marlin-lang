@@ -1,6 +1,6 @@
-use std::fmt::{self, Binary};
+use std::fmt;
 
-use crate::{expr::{ASTNode, ASTWrapper, binary_expr::BinaryExpr}, logger::Log, parser::{ExprParser, ParseRule, rules::equality::EqualityRule}, token::TokenType};
+use crate::{ast::{ASTNode, ASTWrapper}, logger::Log, parser::{ExprParser, ParseRule, rules::equality::EqualityRule}, token::TokenType};
 
 pub struct BooleanFactorRule {}
 

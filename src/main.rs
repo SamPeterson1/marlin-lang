@@ -1,7 +1,6 @@
 use std::env;
 use std::process;
 use dotenv::dotenv;
-use logger::LogLevel;
 use logger::Logger;
 
 mod run;
@@ -10,7 +9,7 @@ mod logger;
 mod lexer;
 mod token;
 mod parser;
-mod expr;
+mod ast;
 mod instruction;
 mod compiler;
 mod opcodes;

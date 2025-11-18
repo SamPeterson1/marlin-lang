@@ -2,7 +2,7 @@ use std::{collections::HashMap, rc::Rc};
 
 use serde::Serialize;
 
-use crate::{expr::ASTWrapper, impl_ast_node, token::PositionRange, types::parsed_type::ParsedType};
+use crate::{ast::ASTWrapper, impl_ast_node, token::PositionRange, types::parsed_type::ParsedType};
 
 
 #[derive(Clone, Serialize)]

@@ -1,4 +1,4 @@
-use std::{fmt, rc::Rc};
+use std::rc::Rc;
 
 use serde::Serialize;
 

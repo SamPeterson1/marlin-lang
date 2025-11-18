@@ -2,7 +2,6 @@ use crate::{error::{Diagnostic, DiagnosticType, PARSER_ERR_GROUP}, token::{Posit
 
 const ERR_EXPECTED_STRUCT_NAME: u32 = 1;
 const ERR_EXPECTED_MEMBER_NAME: u32 = 2;
-const ERR_EXPECTED_MEMBER_TYPE: u32 = 3;
 const ERR_EXPECTED_FN_NAME: u32 = 4;
 const ERR_UNEXPECTED_TOKEN: u32 = 5;
 const ERR_EXPECTED_ITEM: u32 = 6;
@@ -25,11 +24,6 @@ pub fn err_expected_struct_name(position: PositionRange) -> Diagnostic {
 pub fn err_expected_member_name(position: PositionRange) -> Diagnostic {
     let msg = String::from("expected member name");
     new_diagnostic(ERR_EXPECTED_MEMBER_NAME, position, msg)
-}
-
-pub fn err_expected_member_type(position: PositionRange) -> Diagnostic {
-    let msg = String::from("expected member type");
-    new_diagnostic(ERR_EXPECTED_MEMBER_TYPE, position, msg)
 }
 
 pub fn err_expected_fn_name(position: PositionRange) -> Diagnostic {

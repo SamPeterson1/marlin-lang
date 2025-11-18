@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use serde::Serialize;
 
-use crate::{expr::{ASTNode, ASTWrapper}, impl_ast_node, token::PositionRange, types::parsed_type::ParsedType};
+use crate::{ast::{ASTNode, ASTWrapper}, impl_ast_node, token::PositionRange, types::parsed_type::ParsedType};
 
 #[derive(Serialize)]
 pub struct FunctionItem {

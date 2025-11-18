@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{expr::{ASTWrapper, var_expr::{MemberAccess, VarExpr}}, logger::Log, parser::{ExprParser, ParseRule, rules::inline_expr::InlineExprRule}, token::{PositionRange, TokenType}};
+use crate::{ast::{ASTWrapper, var_expr::{MemberAccess, VarExpr}}, logger::Log, parser::{ExprParser, ParseRule, rules::inline_expr::InlineExprRule}, token::{PositionRange, TokenType}};
 
 pub struct VarRule {}
 

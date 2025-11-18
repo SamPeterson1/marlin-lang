@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{expr::{ASTWrapper, static_array_expr::StaticArrayExpr}, parser::{ExprParser, ParseRule, diagnostic}, token::{Position, PositionRange, TokenType}};
+use crate::{ast::{ASTWrapper, static_array_expr::StaticArrayExpr}, parser::{ExprParser, ParseRule, diagnostic}, token::{Position, PositionRange, TokenType}};
 
 pub struct ArrayAllocationRule {}
 

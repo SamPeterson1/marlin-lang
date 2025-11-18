@@ -2,16 +2,16 @@ mod diagnostic;
 mod rules;
 
 use std::collections::VecDeque;
-use std::{collections::HashMap, fmt, rc::Rc};
+use std::rc::Rc;
 
 use serde::Serialize;
 
-use crate::expr::ASTNode;
+use crate::ast::ASTNode;
 
 use crate::logger::{Log, LogLevel, LogSource};
 use crate::parser::rules::item::ItemRule;
 use crate::types::parsed_type::{ParsedPointerType, ParsedType, ParsedTypeName};
-use crate::{error::{Diagnostic, DiagnosticType}, expr::{assignment_expr::AssignmentExpr, binary_expr::BinaryExpr, block_expr::BlockExpr, break_expr::BreakExpr, call_expr::CallExpr, declaration_expr::DeclarationExpr, get_address_expr::GetAddressExpr, get_char_expr::GetCharExpr, if_expr::IfExpr, literal_expr::LiteralExpr, loop_expr::LoopExpr, put_char_expr::PutCharExpr, static_array_expr::StaticArrayExpr, struct_initializer_expr::StructInitializerExpr, unary_expr::UnaryExpr, var_expr::{MemberAccess, VarExpr}}, logger::{Logger}, token::{Position, PositionRange, Token, TokenType, TokenValue}};
+use crate::{error::{Diagnostic, DiagnosticType}, logger::{Logger}, token::{Token, TokenType, TokenValue}};
 
 pub struct ExprParser<'a> {
     ptr: usize,
@@ -26,11 +26,6 @@ pub struct ExprParser<'a> {
 pub struct ParseResult {
     pub items: Vec<Box<dyn ASTNode>>,
     pub diagnostics: Vec<Diagnostic>
-}
-
-pub enum ParseRuleExit {
-    NoMatch,
-    ParseError
 }
 
 trait ParseRule<T>: std::fmt::Display {
@@ -77,11 +72,11 @@ impl<'a> ExprParser<'a> {
         self.ptr = self.ptr_stack.pop_front().unwrap();
     }
 
-    pub fn apply_rule_boxed<T: ASTNode + 'static>(&mut self, rule: impl ParseRule<T>) -> Option<Box<dyn ASTNode>> {
+    fn apply_rule_boxed<T: ASTNode + 'static>(&mut self, rule: impl ParseRule<T>) -> Option<Box<dyn ASTNode>> {
         Some(Box::new(self.apply_rule(rule)?))
     }
 
-    pub fn apply_rule<T>(&mut self, rule: impl ParseRule<T>) -> Option<T> {
+    fn apply_rule<T>(&mut self, rule: impl ParseRule<T>) -> Option<T> {
         self.parser_stack.push_front(format!("{}", rule));
         self.log_debug(&format!("Entering rule {}", rule));
 

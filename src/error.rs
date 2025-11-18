@@ -1,38 +1,6 @@
 use crate::token::PositionRange;
 use std::fmt;
 
-/*
-pub struct TypeError {
-    msg: String
-}
-
-impl TypeError {
-    pub fn new_unary(value_type: &Type, operator_name: &str) -> TypeError {
-        let msg = format!("Invalid type {:?} for operator {}", value_type, operator_name);
-
-        TypeError {msg}
-    }
-
-    pub fn new_binary(left_type: &Type, right_type: &Type, operator_name: &str) -> TypeError {
-        let msg = format!("Invalid types {:?}, {:?} for operator {}", left_type, right_type, operator_name);
-
-        TypeError {msg}
-    }
-}
-
-impl fmt::Display for TypeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.msg)
-    }
-}
-
-impl fmt::Debug for TypeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.msg)
-    }
-}
-*/
-
 #[derive(Debug)]
 #[allow(dead_code)]
 pub enum DiagnosticType {

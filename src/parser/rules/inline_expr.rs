@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{expr::ASTNode, parser::{ExprParser, ParseRule, rules::condition::ConditionRule}};
+use crate::{ast::ASTNode, parser::{ExprParser, ParseRule, rules::condition::ConditionRule}};
 
 pub struct InlineExprRule {}
 

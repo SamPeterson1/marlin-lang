@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::{expr::ASTWrapper, token::PositionRange};
+use crate::{ast::ASTWrapper, token::PositionRange};
 
 use super::var_expr::VarExpr;
 

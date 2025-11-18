@@ -118,7 +118,7 @@ impl UnaryOperator for Semicolon {
         Ok(ResolvedType::Empty)
     }
 
-    fn compile(&self, dr: u8, sr1: u8, operation_type: ResolvedType) -> Vec<u64> {
+    fn compile(&self, _dr: u8, _sr1: u8, _operation_type: ResolvedType) -> Vec<u64> {
         Vec::new()
     }
 }
