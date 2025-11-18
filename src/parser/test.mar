@@ -1,0 +1,127 @@
+scope Lists {
+    contract IntegerList {
+        func clear() -> Self
+        func append(int x) -> Self;
+        ref func get(int i) -> int;
+    }
+
+    struct ArrayList requires IntegerList {
+        public int size = 0;
+        private int capacity = 0;
+        private int[] array;
+
+        $ArrayList(int capacity) {
+            self.capacity = capacity;
+            array = alloc int[capacity];
+        }
+    }
+
+    struct ListNode {
+        int value;
+        ListNode next;
+
+        $ListNode(int value, ListNode next) {
+            self.value = value;
+            self.next = next;
+        }
+
+        $ListNode(int value) {
+            self.value = value;
+        }
+    }
+
+    struct LinkedList requires IntegerList {
+        ListNode head;
+    }
+
+    func clear() -> Self {
+        on ArrayList list {
+            result size(0)@list;
+        }
+
+        on LinkedList list {
+            list = head(None)@list;
+            result list;
+        }
+    }
+
+    func append(int x) -> Self {
+        on ArrayList list {
+            if size@list == capacity@list {
+                let int[] newArray = alloc int[2 * capacity@list];
+
+                for (let int i = 0; i < size@list; i = i + 1) {
+                    newArray = [i, [i]@array@list]@newArray;
+                }
+
+                list = array(newArray)@list;
+                list = capacity(2 * capacity@list)@list;
+            }
+
+
+            list = array([size@list, x]@array@list)@list;
+            list = size(size@list + 1)@list;
+
+            result list;
+        }
+
+        on LinkedList list {
+            if (head@list == None) {
+                ListNode toAdd = new $ListNode(x);
+                list = head(toAdd)@list;
+            } else {
+                let ListNode newHead = append(x)@head@list;
+                list = head(newHead)@list;
+            }
+
+            result list;
+        }
+
+        on ListNode node {
+            if (next@node == None) {
+                let ListNode toAdd = new $ListNode(x);
+                node = next(toAdd)@node;
+            } else {
+                node = append(x)@next@node;
+            }
+
+            result node;
+        }
+    }
+
+    func get(int i) -> int {
+        on &ArrayList list {
+            result [i]@array@list;
+        }
+
+        on &LinkedList list {
+            let &ListNode node = &head@list;
+
+            for (let int j = 0; j < i; j = j + 1) {
+                node = &next@node;
+            }
+
+            result value@node;
+        }
+    }
+}
+
+main {
+    let int n = 100;
+
+    let ArrayList arrayList = $ArrayList(10);
+    let LinkedList linkedList = $LinkedList();
+    let IntegerList integerList = new $LinkedList();
+
+    for (let int i = 0; i < n; i = i + 1) {
+        arrayList = append(i)@arrayList;
+        linkedList = append(i)@linkedList;
+        integerList = append(i)@integerList;
+    }
+
+    for (let int i = 0; i < n; i = i + 1) {
+        print(get(i)@arrayList);
+        print(get(i)@linkedList);
+        print(get(i)@integerList);
+    }
+}

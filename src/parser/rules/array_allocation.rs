@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{expr::{get_char_expr::GetCharExpr, put_char_expr::PutCharExpr, static_array_expr::StaticArrayExpr}, parser::{ExprParser, ParseRule, diagnostic}, token::{Position, PositionRange, TokenType}};
+use crate::{expr::{static_array_expr::StaticArrayExpr}, parser::{ExprParser, ParseRule, diagnostic}, token::{Position, PositionRange, TokenType}};
 
 pub struct ArrayAllocationRule {}
 
@@ -9,11 +9,6 @@ impl fmt::Display for ArrayAllocationRule {
         write!(f, "ArrayAlloc")
     }
 }
-
-//ArrayAllocation: alloc Type[IntLiteral]
-//Ex: alloc int[5]
-
-//statement = 
 
 impl ParseRule<StaticArrayExpr> for ArrayAllocationRule {
     fn parse(&self, parser: &mut ExprParser) -> Option<StaticArrayExpr> {

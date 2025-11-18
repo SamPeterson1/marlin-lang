@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{expr::{Expr, assignment_expr::AssignmentExpr, block_expr::BlockExpr, static_array_expr::StaticArrayExpr, var_expr::VarExpr}, logger::{Log, Logger}, parser::{ExprParser, ParseRule, diagnostic, rules::{statement::StatementRule, var::VarRule}}, token::{Position, PositionRange, TokenType}};
+use crate::{expr::{Expr, block_expr::BlockExpr}, logger::Log, parser::{ExprParser, ParseRule, diagnostic, rules::{statement::StatementRule}}, token::{Position, PositionRange, TokenType}};
 
 pub struct BlockRule {}
 

@@ -1,37 +1,71 @@
 program: item*
+item: import | scope | main
 
-item: function | struct
-function: "fn" identifier "(" (type identifier)* ")" ["->" type] block
-expression: loop | if | alloc | getc | block | for | while | break | putc | struct_initializer | declaration
+main: "main" block-expression
+
+import: "using" identifier ["." (import | import-group)] ";"
+import-group: "{" import ("," import)* "}"
+
+scope: "scope" identifier "{" scope-item* "}"
+scope-item: contract | struct | func
+contract: "contract" identifier "{" (function-prototype ";") "}"
+
+struct: "struct" identifier ["requires" identifier*] "{" struct-body "}"
+struct-body: (struct-member | struct-constructor)*
+struct-member: ["public" | "private"] type identifier ["=" literal]
+struct-constructor: identifier arguments block-expression
+
+func: function-prototype "{" func-implementation* "}"
+func-implementation: "on" identifier identifier block-expression
+function-prototype: "func" identifier parameters "->" type
+parameters: "(" [type identifier (type identifier ",")*] ")"
+
+statement: block-expression | leave | declaration | putc
+expression: block-expression | getc | alloc 
+block-expression: loop | if | block | for | while
+block: "{" statement* "}"
 declaration: ("let" type identifier "=" expression | assignment) ";"
-assignment: var "=" expression | inline-expression
+assignment: identifier "=" expression | inline-expression
+constructor: ["new"] "$" identifier arguments
 inline-expression: condition
-for: "for" "(" declaration inline-expression ";"" assignment ")" block
+for: "for" "(" declaration inline-expression ";" assignment ")" block
 while: "while" inline-expression block
-break: "break" [expression] ";"
+leave: "leave" [expression] ";"
 loop: "loop" block
 if: "if" inline-expression block elif* [else]
 elif: "else" "if" inline-expression block
 else: "else" block
-alloc: "alloc" type "[" positive-integer "]"
-block: "{" expression+ "}"
-struct_initializer: IDENTIFIER LEFT_CURLY [member_intializer] (COMMA, [member_intializer])* RIGHT_CURLY
-member_intializer: IDENTIFIER COLON [inline_expression]
-condition: [boolean_factor] (OR [boolean_factor])*
-boolean_factor: [comparison] (AND [comparison])*
-comparison: [arithmetic_term] ([comparator] [arithmetic_term])?
-comparator: LESS | LESS_EQUAL | EQUAL | NOT_EQUAL | GREATER | GREATER_EQUAL
-arithmetic_term: [arithmetic_factor] ((MINUS | PLUS) [arithmetic_factor])*
-arithmetic_factor: [unary] ((STAR | SLASH) [unary])*
-unary: (NOT | MINUS)* [call]
-call: IDENTIFIER LEFT_PAREN (([inline_expression], COMMA)* [inline_expression]?) | [primary]
-primary: [var] | [literal] | LEFT_PAREN inline_expression RIGHT_PAR===EN
-type: [STAR]* (INT | BOOL | DOUBLE)
-var: AMPERSAND? STAR* IDENTIFIER (DOT IDENTIFIER)* (LEFT_BRACKET inline_expression RIGHT_BRACKET)*
-struct: STRUCT IDENTIFIER LEFT_CURLY ([type] IDENTIFIER SEMICOLON)* RIGHT_CURLY
+alloc: "alloc" type ("[" inline-expression "]")+
+condition: boolean-factor ("or" boolean-factor)*
+boolean-factor: comparison ("and" comparison)*
+comparison: arithmetic-term (comparator arithmetic-term)*
+comparator: "<" | "<=" | "==" | "!=" | ">" | ">="
+arithmetic-term: arithmetic-factor (("-" | "+") arithmetic-factor)*
+arithmetic-factor: unary (("*" | "/") unary)*
+unary: ("!" | "-")* call
+call: [identifier arguments "@"]* inline-expression | primary
+arguments: "(" [inline-expression (inline-expression ",")*] ")"
+primary: var | literal | "(" inline-expression ")"
+type: ["&"] (primitive-type | identifier) ("[]")*
+primitive-type: "byte" | "char" | "int" | "long" | "float" | "double" | "bool" | "Self";
+var: ["&"] identifier ("." identifier)* ("[" inline-expression "]")*
 
+literal: string | character-literal | number | bool
 
-TODO:
+string: """ (character | escape-sequence)* """
+character-literal: "'" character "'"
+escape-sequence: "\a" | "\b" | "\f" | "\n" | "\r" | "\t" | "\v" | "\'" | "\"" | "\\"
+character: " " | "!" | "#" | "$" | "%" | "&" | "(" | ")" | "*" | "+" | "," | "-" | "." | ":" | ";" | "<" | "=" | ">" | "?" | "@" | "[" | "/" | "]" | "^" | "_" | "`" | "{" | "|" | "}" | "~" | {"A"..."Z"} | {"a"..."z"} | {"0"..."9"} | escape-sequence
 
-positive-integer
-identifier
+number: decimal | integer
+decimal: ["-"] digit* ["." digit*] ["d"] | positive-integer "d"
+bool: "true" | "false"
+integer: ["-"] positive-integer ["i"]
+nonnegative-integer: digit+
+positive-integer: nonzero-digit digit*
+identifier: alphabetic alpha-numeric*
+
+alpha-numeric: alphabetic | digit
+alphabetic: {"A"..."Z"} | {"a"..."z"} | "_"
+digit = "0" | nonzero-digit
+nonzero-digit: "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"

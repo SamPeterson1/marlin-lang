@@ -1,6 +1,6 @@
 use std::fmt::{self, Binary};
 
-use crate::{expr::{Expr, assignment_expr::AssignmentExpr, binary_expr::BinaryExpr, block_expr::BlockExpr, static_array_expr::StaticArrayExpr, var_expr::VarExpr}, logger::{Log, Logger}, parser::{ExprParser, ParseRule, rules::{equality::EqualityRule, statement::StatementRule, var::VarRule}}, token::{Position, PositionRange, TokenType}};
+use crate::{expr::{Expr, binary_expr::BinaryExpr}, logger::Log, parser::{ExprParser, ParseRule, rules::equality::EqualityRule}, token::TokenType};
 
 pub struct BooleanFactorRule {}
 
