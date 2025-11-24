@@ -1,9 +1,9 @@
 use serde::Serialize;
 
-use crate::{ast::ASTWrapper, token::PositionRange, types::parsed_type::ParsedType};
+use crate::{ast::{ASTWrapper, parsed_type::ParsedType}, token::PositionRange};
 
 #[derive(Serialize)]
-pub enum Literal {
+pub enum Literal {    
     Int (i64),
     Double (f64),
     Bool (bool),

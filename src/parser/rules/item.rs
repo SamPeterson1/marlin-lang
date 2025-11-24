@@ -1,4 +1,4 @@
-use crate::{ast::ASTNode, parser::{ExprParser, ParseRule, diagnostic}, token::{Position, PositionRange, TokenType}};
+use crate::{ast::ASTNode, parser::{ExprParser, ParseRule, ParserCursor, diagnostic, rules::main_item::MainItemRule}, token::{Position, PositionRange, TokenType}};
 use std::fmt;
 
 use super::{function_item::FunctionRule, struct_item::StructRule};
@@ -12,18 +12,23 @@ impl fmt::Display for ItemRule {
 }
 
 impl ParseRule<Box<dyn ASTNode>> for ItemRule {
+    fn check_match(&self, cursor: ParserCursor) -> bool {
+        true
+    }
+
     fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
-        let cur = parser.cur();
-
-        match cur.token_type {
-            TokenType::Struct => parser.apply_rule_boxed(StructRule {}),
-            TokenType::Fn => parser.apply_rule_boxed(FunctionRule {}),
-            _ => {
-                parser.push_diagnostic(diagnostic::err_expected_item(PositionRange::new(Position::new(0, 0))));
-                parser.advance();
-
-                None
-            }
+        if (MainItemRule {}).check_match(parser.get_cursor()) {
+            return parser.apply_rule_boxed(MainItemRule {}, "main item", None);
         }
+
+        if (FunctionRule {}).check_match(parser.get_cursor()) {
+            return parser.apply_rule_boxed(FunctionRule {}, "function item", None);
+        }
+
+        if ((StructRule {})).check_match(parser.get_cursor()) {
+            return parser.apply_rule_boxed(StructRule {}, "struct item", None);
+        }
+
+        None
     }
 }

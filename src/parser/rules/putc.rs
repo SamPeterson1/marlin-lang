@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{ast::{ASTWrapper, put_char_expr::PutCharExpr}, parser::{ExprParser, ParseRule, rules::expr::ExprRule}, token::{Position, PositionRange}};
+use crate::{ast::{ASTWrapper, put_char_expr::PutCharExpr}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::expr::ExprRule}, token::{Position, PositionRange, TokenType}};
 
 pub struct PutcRule {}
 
@@ -11,13 +11,19 @@ impl fmt::Display for PutcRule {
 }
 
 impl ParseRule<ASTWrapper<PutCharExpr>> for PutcRule {
+    fn check_match(&self, mut cursor: ParserCursor) -> bool {
+        cursor.try_consume(TokenType::Putc).is_some()
+    }
+
     fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<PutCharExpr>> {
-        parser.advance();
-    
-        let expr = parser.apply_rule(ExprRule {});
-    
-        parser.log_parse_result(&expr, "putc expression");
-    
-        Some(ASTWrapper::new_put_char(expr?,PositionRange::new(Position::new(0, 0))))
+        let putc_token = parser.try_consume(TokenType::Putc)?;
+        
+        let expr = parser.apply_rule(ExprRule {}, "putc expression", Some(ErrMsg::ExpectedExpression))?;
+        
+        parser.consume_or_diagnostic(TokenType::Semicolon)?;
+        
+        let position = PositionRange::concat(&putc_token.position, &parser.prev().position);
+
+        Some(ASTWrapper::new_put_char(expr, position))
     }
 }

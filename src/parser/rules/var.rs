@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{ast::{ASTWrapper, var_expr::{MemberAccess, VarExpr}}, logger::Log, parser::{ExprParser, ParseRule, rules::inline_expr::InlineExprRule}, token::{PositionRange, TokenType}};
+use crate::{ast::{ASTWrapper, var_expr::{VarExpr}}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor}, token::{PositionRange, TokenType}};
 
 pub struct VarRule {}
 
@@ -10,55 +10,20 @@ impl fmt::Display for VarRule {
     }
 }
 
-//var: STAR* IDENTIFIER (DOT IDENTIFIER)* (LEFT_BRACKET inline_expression RIGHT_BRACKET)*
 impl ParseRule<ASTWrapper<VarExpr>> for VarRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<VarExpr>> {
-        parser.log_debug(&format!("Entering var parser. Current token {:?}", parser.cur()));
+    fn check_match(&self, mut cursor: ParserCursor) -> bool {
+        cursor.try_consume(TokenType::Ampersand);
+        cursor.try_consume(TokenType::Identifier).is_some()
+    }
     
-        let first_position = parser.cur().position.clone();
-        let mut n_derefs = 0;
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<VarExpr>> {
+        let first_token = parser.cur();
 
-        while parser.try_consume(TokenType::Star).is_some() {
-            n_derefs += 1;
-        }
+        let is_reference = parser.try_consume(TokenType::Ampersand).is_some();
+        let identifier = parser.try_consume(TokenType::Identifier)?;
 
-        parser.log_debug(&format!("Parsed {} derefs", n_derefs));
+        let position = PositionRange::concat(&first_token.position, &identifier.position);
 
-        let identifier = parser.try_consume(TokenType::Identifier)
-            .map(|x| x.get_string().to_string())?;
-
-        let mut member_accesses = Vec::new();
-
-        while let Some(access_token) = parser.try_match(&[TokenType::Dot, TokenType::Arrow]) {
-            if let Some(identifier) = parser.try_consume(TokenType::Identifier) {
-                if access_token.token_type == TokenType::Dot {
-                    parser.log_debug("Parsed direct member access");
-                    member_accesses.push(MemberAccess::Direct(identifier.get_string().to_string()));
-                } else {
-                    parser.log_debug("Parsed indirect member access");
-                    member_accesses.push(MemberAccess::Indirect(identifier.get_string().to_string()));
-                }
-            } else {
-                return None;
-            }
-        }
-
-        let mut array_accesses = Vec::new();
-
-        while parser.try_consume(TokenType::LeftSquare).is_some() {
-            let expr = parser.apply_rule(InlineExprRule {});
-
-            if let Some(inline_expr) = expr {
-                array_accesses.push(inline_expr);   
-            }
-
-            parser.try_consume(TokenType::RightSquare)?;
-        }
-
-        parser.var_expr_id_counter += 1;
-
-        let position = PositionRange::concat(&first_position, &parser.prev().position);
-
-        Some(ASTWrapper::new_var(parser.var_expr_id_counter, n_derefs, identifier, member_accesses, array_accesses, position))
+        Some(ASTWrapper::new_var(0, identifier.get_string().to_string(), is_reference, position))
     }
 }

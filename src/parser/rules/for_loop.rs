@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{ast::{ASTWrapper, loop_expr::LoopExpr}, logger::Log, parser::{ExprParser, ParseRule, diagnostic, rules::{assignment::AssignmentRule, block::BlockRule, declaration::DeclarationRule, inline_expr::InlineExprRule}}, token::{Position, PositionRange, TokenType}};
+use crate::{ast::{ASTWrapper, loop_expr::LoopExpr}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::{self, ErrMsg}, rules::{assignment::AssignmentRule, block::BlockRule, declaration::DeclarationRule, expr::ExprRule}}, token::{Position, PositionRange, Positioned, TokenType}};
 
 pub struct ForLoopRule {}
 
@@ -10,35 +10,30 @@ impl fmt::Display for ForLoopRule {
     }
 }
 
-//for: FOR LEFT_PAREN [declaration] [inline_expression] SEMICOLON [assignment] RIGHT_PAREN [block]
 impl ParseRule<ASTWrapper<LoopExpr>> for ForLoopRule {
+    fn check_match(&self, mut cursor: ParserCursor) -> bool {
+        cursor.try_consume(TokenType::For).is_some()
+    }
+
     fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<LoopExpr>> {
-        parser.log_debug(&format!("Entering for parser. Current token {:?}", parser.cur()));
-        let for_token = parser.advance();
+        let for_token = parser.try_consume(TokenType::For)?;
 
-        parser.consume_or_diagnostic(TokenType::LeftParen, diagnostic::err_expected_token(PositionRange::new(Position::new(0, 0)), TokenType::LeftParen));
+        parser.consume_or_diagnostic(TokenType::LeftParen);
 
-        let initial = parser.apply_rule(DeclarationRule {});
-        parser.log_parse_result(&initial, "for initial");
+        let initial = parser.apply_rule(DeclarationRule {}, "for initial", Some(ErrMsg::ExpectedDeclaration))?;
 
-        let condition = parser.apply_rule(InlineExprRule {});
-        parser.log_parse_result(&condition, "for condition");
+        let condition = parser.apply_rule(ExprRule {}, "condition expression", Some(ErrMsg::ExpectedExpression))?;
 
-        parser.consume_or_diagnostic(TokenType::Semicolon, diagnostic::err_expected_token(PositionRange::new(Position::new(0, 0)), TokenType::Semicolon));
+        parser.consume_or_diagnostic(TokenType::Semicolon);
 
-        let increment = parser.apply_rule(AssignmentRule {});
-        parser.log_parse_result(&increment, "for increment");
+        let increment = parser.apply_rule(AssignmentRule {}, "for increment", Some(ErrMsg::ExpectedAssignment))?;
 
-        parser.consume_or_diagnostic(TokenType::RightParen, diagnostic::err_expected_token(PositionRange::new(Position::new(0, 0)), TokenType::RightParen));
+        parser.consume_or_diagnostic(TokenType::RightParen);
 
-
-        let body = parser.apply_rule_boxed(BlockRule {});    
-        parser.log_parse_result(&body, "for body");
+        let body = parser.apply_rule(BlockRule {}, "for body", Some(ErrMsg::ExpectedBlock))?;    
         
-        let position= PositionRange::concat(&for_token.position, &parser.prev().position);
-
-        let result = ASTWrapper::new_for(initial?, condition?, increment?, body?, position);
+        let position= PositionRange::concat(&for_token.position, body.get_position());
         
-        Some(result)
+        Some(ASTWrapper::new_for(initial, condition, increment, body, position))
     }
 }

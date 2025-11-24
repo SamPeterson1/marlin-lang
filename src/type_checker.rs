@@ -362,11 +362,11 @@ impl ASTVisitor<Option<ResolvedType>> for TypeChecker<'_> {
         }))
     }
 
-    fn visit_get_char(&mut self, node: &ASTWrapper<GetCharExpr>) -> Option<ResolvedType> {
+    fn visit_get_char(&mut self, _node: &ASTWrapper<GetCharExpr>) -> Option<ResolvedType> {
         Some(ResolvedType::Integer)
     }
 
-    fn visit_put_char(&mut self, node: &ASTWrapper<PutCharExpr>) -> Option<ResolvedType> {
+    fn visit_put_char(&mut self, _node: &ASTWrapper<PutCharExpr>) -> Option<ResolvedType> {
         Some(ResolvedType::Empty)
     }
 }

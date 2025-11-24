@@ -45,7 +45,7 @@ scope Lists {
         }
     }
 
-    func append(int x) -> Self {
+    func append(int x) -> Self @ ArrayList list {
         on ArrayList list {
             if size@list == capacity@list {
                 let int[] newArray = alloc int[2 * capacity@list];

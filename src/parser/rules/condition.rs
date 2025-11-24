@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{ast::{ASTNode, ASTWrapper}, logger::Log, parser::{ExprParser, ParseRule, rules::boolean_factor::BooleanFactorRule}, token::TokenType};
+use crate::{ast::{ASTNode, ASTWrapper}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, rules::boolean_factor::BooleanFactorRule}, token::TokenType};
 
 pub struct ConditionRule {}
 
@@ -10,19 +10,16 @@ impl fmt::Display for ConditionRule {
     }
 }
 
-//condition: [boolean_factor] (OR [boolean_factor])*
 impl ParseRule<Box<dyn ASTNode>> for ConditionRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
-        parser.log_debug(&format!("Entering condition parser. Current token {:?}", parser.cur()));
-    
-        let mut boolean_factor = parser.apply_rule(BooleanFactorRule {});
-        parser.log_parse_result(&boolean_factor, "boolean factor");
-        let mut expr = boolean_factor?;
+    fn check_match(&self, _cursor: ParserCursor) -> bool {
+        true
+    }
+
+    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {    
+        let mut expr = parser.apply_rule(BooleanFactorRule {}, "boolean factor", None)?;
     
         while let Some(operator) = parser.try_consume(TokenType::Or) {
-            boolean_factor = parser.apply_rule(BooleanFactorRule {});
-            parser.log_parse_result(&boolean_factor, "boolean factor");
-    
+            let boolean_factor = parser.apply_rule(BooleanFactorRule {}, "boolean factor", None);    
             expr = Box::new(ASTWrapper::new_binary(expr, boolean_factor?, operator.token_type));
         }
     

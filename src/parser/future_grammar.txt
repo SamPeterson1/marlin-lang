@@ -13,43 +13,38 @@ contract: "contract" identifier "{" (function-prototype ";") "}"
 struct: "struct" identifier ["requires" identifier*] "{" struct-body "}"
 struct-body: (struct-member | struct-constructor)*
 struct-member: ["public" | "private"] type identifier ["=" literal]
-struct-constructor: identifier arguments block-expression
+struct-constructor: identifier parameters block-expression
 
-func: function-prototype "{" func-implementation* "}"
-func-implementation: "on" identifier identifier block-expression
-function-prototype: "func" identifier parameters "->" type
+func: function-prototype "@" identifier identifier block-expression
+function-prototype: "fn" identifier parameters "->" type
 parameters: "(" [type identifier (type identifier ",")*] ")"
 
-statement: block-expression | leave | declaration | putc
-expression: block-expression | getc | alloc 
-block-expression: loop | if | block | for | while
+statement: loop | if | block | for | while | leave | declaration | putc | assignment
+expression: condition
 block: "{" statement* "}"
-declaration: ("let" type identifier "=" expression | assignment) ";"
-assignment: identifier "=" expression | inline-expression
+declaration: "let" type identifier "=" expression ";"
+assignment: identifier "=" expression
 constructor: ["new"] "$" identifier arguments
-inline-expression: condition
-for: "for" "(" declaration inline-expression ";" assignment ")" block
-while: "while" inline-expression block
+for: "for" "(" declaration expression ";" assignment ")" block
+while: "while" expression block
 leave: "leave" [expression] ";"
 loop: "loop" block
-if: "if" inline-expression block elif* [else]
-elif: "else" "if" inline-expression block
+if: "if" expression block elif* [else]
+elif: "else" "if" expression block
 else: "else" block
-alloc: "alloc" type ("[" inline-expression "]")+
+alloc: "new" type ("[" expression "]")+
 condition: boolean-factor ("or" boolean-factor)*
 boolean-factor: comparison ("and" comparison)*
 comparison: arithmetic-term (comparator arithmetic-term)*
 comparator: "<" | "<=" | "==" | "!=" | ">" | ">="
 arithmetic-term: arithmetic-factor (("-" | "+") arithmetic-factor)*
 arithmetic-factor: unary (("*" | "/") unary)*
-unary: ("!" | "-")* call
-call: [identifier arguments "@"]* inline-expression | primary
-arguments: "(" [inline-expression (inline-expression ",")*] ")"
-primary: var | literal | "(" inline-expression ")"
-type: ["&"] (primitive-type | identifier) ("[]")*
-primitive-type: "byte" | "char" | "int" | "long" | "float" | "double" | "bool" | "Self";
-var: ["&"] identifier ("." identifier)* ("[" inline-expression "]")*
-
+unary: ("!" | "-")* unary | primary
+arguments: "(" [expression (expression ",")*] ")"
+primary: call | getc | alloc | loop | if | block | for | while | "(" expression ")" | identifier | literal
+call: identifier [arguments] "@" expression
+type: ["&"] (primitive-type | identifier) | (primitive-type | identifier) ("[]")*
+primitive-type: "int" | "double" | "bool" | "Self";
 literal: string | character-literal | number | bool
 
 string: """ (character | escape-sequence)* """

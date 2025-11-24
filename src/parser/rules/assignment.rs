@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{ast::{ASTNode, ASTWrapper, var_expr::VarExpr}, logger::Log, parser::{ExprParser, ParseRule, diagnostic, rules::{expr::ExprRule, inline_expr::InlineExprRule, var::VarRule}}, token::{Position, PositionRange, TokenType}};
+use crate::{ast::{ASTNode, ASTWrapper, assignment_expr::AssignmentExpr, var_expr::VarExpr}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::{self, ErrMsg}, rules::{expr::ExprRule, var::VarRule}}, token::{Position, PositionRange, TokenType}};
 
 pub struct AssignmentRule {}
 
@@ -10,51 +10,20 @@ impl fmt::Display for AssignmentRule {
     }
 }
 
-//Assignment: [var] Type[IntLiteral]
-//Ex: alloc int[5]
-
-//assignment: [var] ASSIGNMENT [expression] SEMICOLON
-
-impl AssignmentRule {
-    fn try_assignment(&self, parser: &mut ExprParser) -> Option<ASTWrapper<VarExpr>> {
-        parser.push_ptr();
-
-        parser.log_debug("Trying to parse assignment");
-        let var_expr = parser.apply_rule(VarRule {});
-
-        if let Some(var_expr) = &var_expr {
-            parser.log_debug(&format!("Parsed var expr: {}", serde_json::to_string(var_expr).unwrap()));
-        } else {
-            parser.log_debug("Did not parse var expr");
-        }
-
-        if var_expr.is_none() || parser.try_consume(TokenType::Assignment).is_none() {
-            parser.log_debug("No assignment found");
-            parser.pop_ptr();
-
-            return None;
-        }
-
-        parser.commit_ptr();
-        parser.log_debug("Found assignment");
-
-        var_expr
+impl ParseRule<ASTWrapper<AssignmentExpr>> for AssignmentRule {
+    fn check_match(&self, mut cursor: ParserCursor) -> bool {
+        cursor.try_consume(TokenType::Identifier).is_some() && cursor.try_consume(TokenType::Assignment).is_some()
     }
-}
+    
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<AssignmentExpr>> {
+        let assignee = parser.try_consume(TokenType::Identifier)?;
+        
+        parser.try_consume(TokenType::Assignment)?;
 
-impl ParseRule<Box<dyn ASTNode>> for AssignmentRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
-        match self.try_assignment(parser) {
-            Some(asignee) => {
-                let expr = parser.apply_rule(ExprRule {});
+        let expr = parser.apply_rule(ExprRule {}, "assignment expression", Some(ErrMsg::ExpectedExpression))?;
 
-                parser.log_parse_result(&expr, "assignment expression");
-            
-                parser.consume_or_diagnostic(TokenType::Semicolon, diagnostic::err_expected_token(PositionRange::new(Position::new(0, 0)), TokenType::Semicolon));
-            
-                Some(Box::new(ASTWrapper::new_assignment(asignee, expr?)))
-            },
-            None => parser.apply_rule(InlineExprRule {})
-        }
+        parser.consume_or_diagnostic(TokenType::Semicolon);
+
+        Some(ASTWrapper::new_assignment(&assignee, expr))
     }
 }

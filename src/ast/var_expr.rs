@@ -4,19 +4,11 @@ use serde::Serialize;
 
 use crate::{ast::{ASTNode, ASTWrapper}, impl_ast_node, token::PositionRange};
 
-#[derive(Debug, Clone, Serialize)]
-pub enum MemberAccess {
-    Direct(String),
-    Indirect(String)
-}
-
 #[derive(Clone, Serialize)]
 pub struct VarExpr {
     pub id: i32,
+    pub is_reference: bool,
     pub identifier: Rc<String>,
-    pub member_accesses: Rc<Vec<MemberAccess>>,
-    pub array_accesses: Rc<Vec<Box<dyn ASTNode>>>,
-    pub n_derefs: i32,
 }
 
 impl Eq for VarExpr {}
@@ -34,14 +26,12 @@ impl std::hash::Hash for VarExpr {
 }
 
 impl ASTWrapper<VarExpr> {
-    pub fn new_var(id: i32, n_derefs: i32, identifier: String, member_accesses: Vec<MemberAccess>, array_accesses: Vec<Box<dyn ASTNode>>, position: PositionRange) -> Self {
+    pub fn new_var(id: i32, identifier: String, is_reference: bool, position: PositionRange) -> Self {
         ASTWrapper {
             data: VarExpr {
                 id,
-                n_derefs,
                 identifier: Rc::new(identifier),
-                member_accesses: Rc::new(member_accesses),
-                array_accesses: Rc::new(array_accesses),
+                is_reference,
             },
             position
         }

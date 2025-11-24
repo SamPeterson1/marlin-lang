@@ -1,4 +1,6 @@
-use crate::{ast::{ASTWrapper, struct_item::StructItem}, logger::Log, parser::{ExprParser, ParseRule, diagnostic}, token::{Position, PositionRange, TokenType}};
+use chrono::format::Parsed;
+
+use crate::{ast::{ASTWrapper, struct_item::StructItem}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic, rules::{constructor_item::ConstructorRule, parsed_type::ParsedTypeRule}}, token::{Position, PositionRange, TokenType}};
 use std::fmt;
 use std::collections::HashMap;
 
@@ -11,40 +13,34 @@ impl fmt::Display for StructRule {
 }
 
 impl ParseRule<ASTWrapper<StructItem>> for StructRule {
+    fn check_match(&self, mut cursor: ParserCursor) -> bool {
+        cursor.try_consume(TokenType::Struct).is_some()
+    }
+
     fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<StructItem>> {
-        let struct_token = parser.advance();
+        let struct_token = parser.try_consume(TokenType::Struct)?;
 
-        let struct_name = parser.consume_or_diagnostic(TokenType::Identifier, diagnostic::err_expected_struct_name(PositionRange::new(Position::new(0, 0))))
-            .map(|x| x.get_string().to_string());
+        let struct_identifier = parser.consume_or_diagnostic(TokenType::Identifier)?.get_string().to_string();
 
-        parser.log_parse_result(&struct_name, "struct name");
+        parser.consume_or_diagnostic(TokenType::LeftCurly);
 
-        parser.consume_or_diagnostic(TokenType::LeftCurly, diagnostic::err_expected_token(PositionRange::new(Position::new(0, 0)), TokenType::LeftCurly));
+        let mut members = Vec::new();
+        while !(ConstructorRule {}).check_match(parser.get_cursor()) {
+            let member_type = parser.apply_rule(ParsedTypeRule {}, "struct member type", None)?;
+            let member_identifier = parser.consume_or_diagnostic(TokenType::Identifier)?.get_string().to_string();
+            members.push((member_type, member_identifier));
+        }
+        
+        let mut constructors = Vec::new();
 
-        let mut members = HashMap::new();
-
-        loop {
-            let opt_type = parser.try_type();
-            let member_type = parser.some_or_diagnostic(opt_type, diagnostic::err_expected_member_name(PositionRange::new(Position::new(0, 0)), ));
-            let member_name = parser.consume_or_diagnostic(TokenType::Identifier, diagnostic::err_expected_member_name(PositionRange::new(Position::new(0, 0))))
-                .map(|x| x.get_string().to_string());
-
-            parser.log_parse_result(&member_type, "member type");
-            parser.log_parse_result(&member_name, "member name");
-
-            if let (Some(member_type), Some(member_name)) = (member_type, member_name) {
-                members.insert(member_name, member_type);
-            }
-
-            if parser.try_consume(TokenType::Comma).is_none() {
-                parser.log_debug(&format!("Done parsing struct members"));
-                parser.consume_or_diagnostic(TokenType::RightCurly, diagnostic::err_expected_token(PositionRange::new(Position::new(0, 0)), TokenType::RightCurly));
-                break;
-            }
+        while let Some(constructor) = parser.apply_rule(ConstructorRule {}, "struct constructor", None) {
+            constructors.push(constructor);
         }
 
-        let position = PositionRange::concat(&struct_token.position, &parser.prev().position);
+        parser.consume_or_diagnostic(TokenType::RightCurly);
 
-        Some(ASTWrapper::new_struct_item(struct_name?, members, position))
+        let position = PositionRange::concat(&struct_token.position, &parser.cur().position);
+
+        Some(ASTWrapper::new_struct_item(struct_identifier, members, constructors, position))
     }
 }

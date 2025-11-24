@@ -1,0 +1,32 @@
+main {
+}
+
+fn empty_function() -> int @ module name {
+}
+
+fn single_statement() -> bool @ test module {
+    break true;
+}
+
+struct SingleMember {
+    int x;
+}
+
+struct SingleConstructor {
+    $init() {
+    }
+}
+
+main {
+    let int x = 0;
+    let double y = 0.0;
+    let bool z = false;
+    
+    let int a = 1;
+    let int b = a;
+    
+    x = 1;
+    y = x;
+    
+    break;
+}

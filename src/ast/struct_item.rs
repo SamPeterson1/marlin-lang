@@ -1,22 +1,24 @@
-use std::{collections::HashMap, rc::Rc};
+use std::rc::Rc;
 
 use serde::Serialize;
 
-use crate::{ast::ASTWrapper, impl_ast_node, token::PositionRange, types::parsed_type::ParsedType};
+use crate::{ast::{ASTNode, ASTWrapper, constructor_item::ConstructorItem, parsed_type::ParsedType}, impl_ast_node, token::PositionRange};
 
-
-#[derive(Clone, Serialize)]
+#[derive(Serialize)]
 pub struct StructItem {
     pub name: Rc<String>,
-    pub members: HashMap<String, ParsedType>,
+    pub members: Vec<(ASTWrapper<ParsedType>, String)>,
+    pub constructors: Vec<ASTWrapper<ConstructorItem>>,
 }
 
+
 impl ASTWrapper<StructItem> {
-    pub fn new_struct_item(name: String, members: HashMap<String, ParsedType>, position: PositionRange) -> Self {
+    pub fn new_struct_item(name: String, members: Vec<(ASTWrapper<ParsedType>, String)>, constructors: Vec<ASTWrapper<ConstructorItem>>, position: PositionRange) -> Self {
         ASTWrapper {
             data: StructItem {
                 name: Rc::new(name),
                 members,
+                constructors,
             },
             position
         }

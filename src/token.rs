@@ -2,7 +2,7 @@ use std::{cmp, fmt};
 
 use serde::Serialize;
 
-#[derive(Debug, Clone, Copy, Serialize)]
+#[derive(Debug, Clone, Copy)]
 pub struct Position {
     pub line: i32,
     pub char: i32
@@ -33,7 +33,7 @@ impl Position {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize)]
+#[derive(Debug, Clone, Copy)]
 pub struct PositionRange {
     pub start: Position,
     pub end: Position
@@ -42,6 +42,24 @@ pub struct PositionRange {
 impl fmt::Display for PositionRange {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}-{}", self.start, self.end)
+    }
+}
+
+impl Serialize for Position {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&format!("{}", self))
+    }
+}
+
+impl Serialize for PositionRange {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&format!("[{} - {}]", self.start, self.end))
     }
 }
 
@@ -129,7 +147,7 @@ pub enum TokenValue {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum TokenType {
-    Semicolon, Dot, Comma, Colon, Assignment,
+    Semicolon, Dot, Comma, Colon, Assignment, DollarSign, AtSign,
 
     LeftCurly, RightCurly, 
     LeftSquare, RightSquare, 
@@ -146,7 +164,7 @@ pub enum TokenType {
     Arrow,
     Let,
 
-    If, Else, For, Return, Fn, Rand,
+    If, Else, For, Return, Fn, Rand, Main,
     This, While, Loop, Break, Print, Input,
 
     Int, Double, Bool, String,
@@ -166,6 +184,8 @@ impl fmt::Display for TokenType {
             TokenType::Comma => write!(f, "','"),
             TokenType::Colon => write!(f, "':'"),
             TokenType::Assignment => write!(f, "'='"),
+            TokenType::DollarSign => write!(f, "$"),
+            TokenType::AtSign => write!(f, "@"),
 
             TokenType::LeftCurly => write!(f, "'{{'"),
             TokenType::RightCurly => write!(f, "'}}'"),
@@ -201,6 +221,7 @@ impl fmt::Display for TokenType {
             TokenType::Return => write!(f, "'return'"),
             TokenType::Fn => write!(f, "'fn'"),
             TokenType::Rand => write!(f, "'rand'"),
+            TokenType::Main => write!(f, "'main'"),
             TokenType::This => write!(f, "'this'"),
             TokenType::While => write!(f, "'while'"),
             TokenType::Loop => write!(f, "'loop'"),

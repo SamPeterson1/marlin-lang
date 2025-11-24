@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{ast::{ASTNode, ASTWrapper}, logger::Log, parser::{ExprParser, ParseRule, diagnostic, rules::{inline_expr::InlineExprRule, primary::PrimaryRule}}, token::{Position, PositionRange, TokenType}};
+use crate::{ast::{ASTNode, ASTWrapper, call_expr::CallExpr}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::{self, ErrMsg}, rules::{arguments::ArgumentsRule, expr::ExprRule, primary::PrimaryRule}}, token::{Position, PositionRange, TokenType}};
 
 pub struct CallRule {}
 
@@ -10,41 +10,18 @@ impl fmt::Display for CallRule {
     }
 }
 
-//call: IDENTIFIER LEFT_PAREN (([inline_expression], COMMA)* [inline_expression]?) | [primary]
-impl ParseRule<Box<dyn ASTNode>> for CallRule {
-    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
-        parser.log_debug(&format!("Entering call parser. Current token {:?}", parser.cur()));
+impl ParseRule<ASTWrapper<CallExpr>> for CallRule {
+    fn check_match(&self, mut cursor: ParserCursor) -> bool {
+        cursor.try_consume(TokenType::Identifier).is_some() && cursor.try_consume(TokenType::AtSign).is_some()
+    }
+    
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<CallExpr>> {
+        let function_identifier = parser.try_consume(TokenType::Identifier)?;
 
-        if parser.cur().token_type == TokenType::Identifier {
-            if parser.peek().token_type == TokenType::LeftParen {
-                let function_name = parser.advance().get_string().to_string();
-                parser.log_debug(&format!("Parsed function name: {}", function_name));
+        let arguments = parser.apply_rule(ArgumentsRule {}, "call arguments", None);
 
-                parser.advance();
+        let applied_to = parser.apply_rule(ExprRule {}, "expression applied to", Some(ErrMsg::ExpectedExpression))?;
 
-                let mut args: Vec<Box<dyn ASTNode>> = Vec::new();
-
-                loop {
-                    let arg = parser.apply_rule(InlineExprRule {});
-                    parser.log_parse_result(&arg, "call arg");
-
-                    if let Some(arg) = arg {
-                        args.push(arg);
-                    }
-
-                    if parser.try_consume(TokenType::Comma).is_none() {
-                        parser.log_debug(&format!("Done parsing call args"));
-                        parser.consume_or_diagnostic(TokenType::RightParen, diagnostic::err_expected_token(PositionRange::new(Position::new(0, 0)), TokenType::RightParen));
-                        break;
-                    }
-                }
-
-                Some(Box::new(ASTWrapper::new_call(function_name, args)))
-            } else {
-                parser.apply_rule(PrimaryRule {})
-            }
-        } else {
-            parser.apply_rule(PrimaryRule {})
-        }
+        Some(ASTWrapper::new_call(&function_identifier, arguments, applied_to))
     }
 }

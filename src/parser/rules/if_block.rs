@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{ast::{ASTWrapper, if_expr::IfExpr}, logger::Log, parser::{ExprParser, ParseRule, rules::{block::BlockRule, inline_expr::InlineExprRule}}, token::{PositionRange, TokenType}};
+use crate::{ast::{ASTWrapper, if_expr::IfExpr}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::{block::BlockRule, expr::ExprRule}}, token::{PositionRange, TokenType}};
 
 pub struct IfBlockRule {}
 
@@ -10,34 +10,26 @@ impl fmt::Display for IfBlockRule {
     }
 }
 
-//if: IF [inline_expression] [block] [elif]* [else]?
-
 impl ParseRule<ASTWrapper<IfExpr>> for IfBlockRule {
+    fn check_match(&self, mut cursor: ParserCursor) -> bool {
+        cursor.try_consume(TokenType::If).is_some()
+    }
+
     fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<IfExpr>> {
-        parser.log_debug(&format!("Entering if parser. Current token {:?}", parser.cur()));
-        let if_token = parser.advance();  
+        let if_token = parser.try_consume(TokenType::If)?;
         
-        let condition = parser.apply_rule(InlineExprRule {});
-        parser.log_parse_result(&condition, "if condition");
+        let condition = parser.apply_rule(ExprRule {}, "if condition", Some(ErrMsg::ExpectedExpression))?;
     
-        let success = parser.apply_rule_boxed(BlockRule {});
-        parser.log_parse_result(&success, "if success");
-    
-        let fail = if parser.try_consume(TokenType::Else).is_some(){
-            let fail = match parser.cur().token_type {
-                TokenType::If => parser.apply_rule_boxed(IfBlockRule {}),
-                _ => parser.apply_rule_boxed(BlockRule {})
-            };
-    
-            parser.log_parse_result(&fail, "if fail");
-            fail
-        } else {
-            parser.log_debug(&format!("No else block found"));
-            None
-        };
+        let success = parser.apply_rule(ExprRule {}, "if success", Some(ErrMsg::ExpectedBlock))?;
+        
+        let mut fail = parser.apply_rule_boxed(IfBlockRule {}, "else if block", None);
+
+        if fail.is_none() {
+            fail = parser.apply_rule_boxed(BlockRule {}, "else block", None);
+        }
     
         let position = PositionRange::concat(&if_token.position, &parser.prev().position);
     
-        Some(ASTWrapper::new_if(condition?, success?, fail, position))
+        Some(ASTWrapper::new_if(condition, success, fail, position))
     }
 }

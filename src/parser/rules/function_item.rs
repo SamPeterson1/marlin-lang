@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{ast::{ASTWrapper, function_item::FunctionItem}, logger::Log, parser::{ExprParser, ParseRule, diagnostic, rules::block::BlockRule}, token::{Position, PositionRange, TokenType}, types::parsed_type::ParsedType};
+use crate::{ast::{ASTWrapper, function_item::FunctionItem}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::{self, ErrMsg}, rules::{block::BlockRule, function_prototype::FunctionPrototypeRule, parsed_type::ParsedTypeRule}}, token::{Position, PositionRange, TokenType}};
 
 pub struct FunctionRule {}
 
@@ -11,59 +11,20 @@ impl fmt::Display for FunctionRule {
 }
 
 impl ParseRule<ASTWrapper<FunctionItem>> for FunctionRule {
+    fn check_match(&self, cursor: ParserCursor) -> bool {
+        (FunctionPrototypeRule {}).check_match(cursor)
+    }
+
     fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<FunctionItem>> {
-        let fn_token = parser.advance();
+        let function_prototype = parser.apply_rule(FunctionPrototypeRule {}, "function prototype", None)?;
 
-        let function_name = parser.consume_or_diagnostic(TokenType::Identifier, diagnostic::err_expected_fn_name(PositionRange::new(Position::new(0, 0))))
-            .map(|x| x.get_string().to_string());
+        parser.consume_or_diagnostic(TokenType::AtSign);
+        
+        let src_type = parser.apply_rule(ParsedTypeRule {}, "function src type", None)?;
+        let src_identifier = parser.try_consume(TokenType::Identifier)?.get_string().to_string();
 
-        parser.log_parse_result(&function_name, "function name");
+        let block = parser.apply_rule(BlockRule {}, "function body", Some(ErrMsg::ExpectedBlock))?;
 
-        parser.consume_or_diagnostic(TokenType::LeftParen, diagnostic::err_expected_token(PositionRange::new(Position::new(0, 0)), TokenType::LeftParen));
-
-        let mut args = Vec::new();
-
-        loop {
-            if parser.try_consume(TokenType::RightParen).is_some() {
-                parser.log_debug(&format!("Done parsing function arguments"));
-                break;
-            }
-
-            let opt_type = parser.try_type();
-            let arg_type = parser.some_or_diagnostic(opt_type, diagnostic::err_expected_arg_type(PositionRange::new(Position::new(0, 0))));
-
-            let arg_name = parser.consume_or_diagnostic(TokenType::Identifier, diagnostic::err_expected_arg_name(PositionRange::new(Position::new(0, 0))))
-                .map(|x| x.get_string().to_string());
-
-            parser.log_parse_result(&arg_type, "argument type");
-            parser.log_parse_result(&arg_name, "argument name");
-
-            if let (Some(arg_type), Some(arg_name)) = (arg_type, arg_name) {
-                args.push((arg_name, arg_type));
-            }
-
-            if parser.try_consume(TokenType::Comma).is_none() {
-                parser.log_debug(&format!("Done parsing function arguments"));
-                parser.consume_or_diagnostic(TokenType::RightParen, diagnostic::err_expected_token(PositionRange::new(Position::new(0, 0)), TokenType::RightParen));
-                break;
-            }
-        }
-
-        let return_type = if parser.try_consume(TokenType::Arrow).is_some() {
-            let opt_type = parser.try_type();
-            parser.some_or_diagnostic(opt_type, diagnostic::err_expected_return_type(PositionRange::new(Position::new(0, 0))))
-        } else {
-            Some(ParsedType::Empty)
-        };
-
-        parser.log_parse_result(&return_type, "return type");
-
-        let block = parser.apply_rule(BlockRule {});
-
-        parser.log_parse_result(&block, "function block");
-
-        let position = PositionRange::concat(&fn_token.position, &parser.prev().position);
-
-        Some(ASTWrapper::new_function(function_name?, args, Box::new(block?), return_type?, position))
+        Some(ASTWrapper::new_function_item(function_prototype, block, src_type, src_identifier))
     }
 }

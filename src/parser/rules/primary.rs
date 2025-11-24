@@ -1,5 +1,5 @@
-use crate::{ast::{ASTNode, ASTWrapper, literal_expr::Literal}, logger::Log, parser::{ExprParser, ParseRule, diagnostic, rules::{expr::ExprRule, var::VarRule}}, token::{Position, PositionRange, TokenType, TokenValue}, types::parsed_type::{ParsedPointerType, ParsedType}};
-use std::{fmt, rc::Rc};
+use crate::{ast::{ASTNode, ASTWrapper, literal_expr::Literal, parsed_type::{ParsedType, ParsedUnitType}}, logger::Log, parser::{ExprParser, ParseRule, TokenCursor, diagnostic::{self, ErrMsg}, rules::{block::BlockRule, call::CallRule, expr::ExprRule, for_loop::ForLoopRule, getc::GetcRule, if_block::IfBlockRule, loop_expr::LoopRule, new_array::NewArrayRule, var::VarRule, while_loop::WhileLoopRule}}, token::{Position, PositionRange, TokenType, TokenValue}};
+use std::{arch::x86_64, fmt, rc::Rc};
 
 pub struct PrimaryRule {}
 
@@ -9,62 +9,69 @@ impl fmt::Display for PrimaryRule {
     }
 }
 
-//primary: &?[var] | [literal] | LEFT_PAREN inline_expression RIGHT_PAREN
 impl ParseRule<Box<dyn ASTNode>> for PrimaryRule {
+    fn check_match(&self, cursor: crate::parser::ParserCursor) -> bool {
+        true
+    }
+
     fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
-        parser.log_debug(&format!("Entering primary parser. Current token {:?}", parser.cur()));
+        if (CallRule {}).check_match(parser.get_cursor()) {
+            return parser.apply_rule_boxed(CallRule {}, "primary call", None);
+        }
+
+        if (GetcRule {}).check_match(parser.get_cursor()) {
+            return parser.apply_rule_boxed(GetcRule {}, "primary getc", None);
+        }
+        
+        if (NewArrayRule {}).check_match(parser.get_cursor()) {
+            return parser.apply_rule_boxed(NewArrayRule {}, "primary new array", None);
+        }
+
+        if (LoopRule {}).check_match(parser.get_cursor()) {
+            return parser.apply_rule_boxed(LoopRule {}, "primary loop", None);
+        }
+
+        if (IfBlockRule {}).check_match(parser.get_cursor()) {
+            return parser.apply_rule_boxed(IfBlockRule {}, "primary if", None);
+        }
+
+        if (BlockRule {}).check_match(parser.get_cursor()) {
+            return parser.apply_rule_boxed(BlockRule {}, "primary block", None);
+        }
+
+        if (ForLoopRule {}).check_match(parser.get_cursor()) {
+            return parser.apply_rule_boxed(ForLoopRule {}, "primary for", None);
+        }
+
+        if (WhileLoopRule {}).check_match(parser.get_cursor()) {
+            return parser.apply_rule_boxed(WhileLoopRule {}, "primary while", None);
+        }
+
+        if parser.try_consume(TokenType::LeftParen).is_some() {
+            let expr = parser.apply_rule(ExprRule {}, "primary grouped expression", Some(ErrMsg::ExpectedExpression))?;
+            parser.consume_or_diagnostic(TokenType::RightParen);
+
+            return Some(expr);
+        }
+
+        if (VarRule {}).check_match(parser.get_cursor()) {
+            return parser.apply_rule_boxed(VarRule {}, "primary var", None);
+        }
+        
         let cur = parser.cur();
 
-        match (cur.token_type, cur.value) {
-            (TokenType::IntLiteral, TokenValue::Int(value)) => {
-                parser.log_debug(&format!("Parsed int literal: {}", value));
-                parser.advance();
-                Some(Box::new(ASTWrapper::new_literal(Literal::Int(value), ParsedType::Integer, PositionRange::new(Position::new(0, 0)))))
-            },
-            (TokenType::DoubleLiteral, TokenValue::Double(value)) => {
-                parser.log_debug(&format!("Parsed double literal: {}", value));
-                parser.advance();
-                Some(Box::new(ASTWrapper::new_literal(Literal::Double(value), ParsedType::Double, PositionRange::new(Position::new(0, 0)))))
-            },
-            (TokenType::BoolLiteral, TokenValue::Bool(value)) => {
-                parser.log_debug(&format!("Parsed bool literal: {}", value));
-                parser.advance();
-                Some(Box::new(ASTWrapper::new_literal(Literal::Bool(value), ParsedType::Boolean, PositionRange::new(Position::new(0, 0)))))
-            },
-            (TokenType::StringLiteral, TokenValue::String(value)) => {
-                parser.log_debug(&format!("Parsed string literal: {}", value));
-                parser.advance();
-                Some(Box::new(ASTWrapper::new_literal(Literal::String(value), ParsedType::Pointer(ParsedPointerType {pointee: Rc::new(ParsedType::Integer)}), PositionRange::new(Position::new(0, 0)))))
-            },
-            (TokenType::Ampersand, TokenValue::None) => {
-                parser.advance();
-                let var_opt = parser.apply_rule(VarRule {});
-                let var_expr = parser.some_or_diagnostic(var_opt, diagnostic::err_expected_var(PositionRange::new(Position::new(0, 0))));
-                parser.log_parse_result(&var_expr, "get address var expression");
-                Some(Box::new(ASTWrapper::new_get_address(var_expr?, PositionRange::new(Position::new(0, 0)))))
-            },
-            (TokenType::LeftParen, TokenValue::None) => {
-                parser.advance();
-
-                let expr = parser.apply_rule(ExprRule {});
-                parser.log_parse_result(&expr, "parenthesized expression");
-
-                parser.consume_or_diagnostic(TokenType::RightParen, diagnostic::err_expected_token(PositionRange::new(Position::new(0, 0)), TokenType::RightParen));
-
-                expr
-            },
+        let literal = match (cur.token_type, cur.value) {
+            (TokenType::IntLiteral, TokenValue::Int(x)) => ASTWrapper::new_literal(Literal::Int(x), ParsedType::Unit(ParsedUnitType::Integer), cur.position),
+            (TokenType::DoubleLiteral, TokenValue::Double(x)) => ASTWrapper::new_literal(Literal::Double(x), ParsedType::Unit(ParsedUnitType::Double), cur.position),
+            (TokenType::BoolLiteral, TokenValue::Bool(x)) => ASTWrapper::new_literal(Literal::Bool(x), ParsedType::Unit(ParsedUnitType::Boolean), cur.position),
             _ => {
-                let var_opt = parser.apply_rule(VarRule {});
-                let var_expr= parser.some_or_diagnostic(var_opt, diagnostic::err_unexpected_token(PositionRange::new(Position::new(0, 0))));
+                parser.push_diagnostic(ErrMsg::ExpectedExpression.make_diagnostic(cur.position));
+                return None;
+            }
+        };
 
-                if var_expr.is_none() {
-                    let cur = parser.advance();
-                    parser.log_error(&format!("Reached bottom of parser stack. Skipping token {:?} and giving up", cur));
-                }
+        parser.next();
 
-                parser.log_parse_result(&var_expr, "var expression");
-                Some(Box::new(var_expr?))
-            } 
-        }
+        return Some(Box::new(literal));
     }
 }

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{ast::{ASTNode, ASTWrapper}, logger::Log, parser::{ExprParser, ParseRule, rules::comparison::ComparisonRule}, token::TokenType};
+use crate::{ast::{ASTNode, ASTWrapper}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, rules::comparison::ComparisonRule}, token::TokenType};
 
 pub struct EqualityRule {}
 
@@ -10,21 +10,17 @@ impl fmt::Display for EqualityRule {
     }
 }
 
-//comparison (( "!=" | "==") comparison)*
 impl ParseRule<Box<dyn ASTNode>> for EqualityRule {
+    fn check_match(&self, _cursor: ParserCursor) -> bool {
+        true
+    }
+
     fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
-        parser.log_debug(&format!("Entering equality parser. Current token {:?}", parser.cur()));
-
-        let mut comparison = parser.apply_rule(ComparisonRule {});
-        parser.log_parse_result(&comparison, "comparison expression");
-
-        let mut expr = comparison?;
+        let mut expr = parser.apply_rule(ComparisonRule {}, "comparison expression", None)?;
 
         while let Some(operator) = parser.try_match(&[TokenType::Equal, TokenType::NotEqual]) {
-            comparison = parser.apply_rule(ComparisonRule {});
-            parser.log_parse_result(&comparison, "comparison expression");
-
-            expr = Box::new(ASTWrapper::new_binary(expr, comparison?, operator.token_type));
+            let comparison = parser.apply_rule(ComparisonRule {}, "comparison expression", None)?;
+            expr = Box::new(ASTWrapper::new_binary(expr, comparison, operator.token_type));
         }
 
         Some(expr)

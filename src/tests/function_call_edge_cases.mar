@@ -1,0 +1,50 @@
+fn simple_func() -> int @ module name {
+    break 42;
+}
+
+fn complex_func(int a, &double b, bool[] c) -> &Point @ math utils {
+    let Point p = $Point(a, b);
+    break p;
+}
+
+fn recursive_func(int n) -> int @ recursive module {
+    if n <= 1 {
+        break 1;
+    }
+    break n * recursive_func(n - 1) @ recursive_module;
+}
+
+struct Calculator {
+    int value;
+    
+    $init(int initial) {
+        value = initial;
+    }
+    
+    $add(int x) {
+        value = value + x;
+    }
+}
+
+main {
+    let int result1 = simple_func() @ module;
+    
+    let double d = 3.14;
+    let bool[] arr = new bool[5];
+    let &Point p = complex_func(42, d, arr) @ math;
+    
+    let int nested_result = recursive_func(recursive_func(3) @ recursive) @ recursive;
+    
+    let int expr_result = simple_func() @ module + recursive_func(2) @ recursive * 3;
+    
+    let Calculator calc1 = $Calculator();
+    let Calculator calc2 = $Calculator(100);
+    let Calculator calc3 = new $Calculator(simple_func() @ module);
+    
+    let Point complex_point = $Point(
+        simple_func() @ module + 1,
+        recursive_func(3) @ recursive * 2.5
+    );
+    
+    let int empty_args = simple_func() @ module;
+}

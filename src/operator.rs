@@ -3,7 +3,7 @@ use std::fmt;
 use erased_serde::serialize_trait_object;
 use serde::{Serializer, Serialize};
 
-use crate::{error::{Diagnostic, DiagnosticType}, instruction::InstructionBuilder, token::{Position, PositionRange, TokenType}, types::resolved_type::ResolvedType};
+use crate::{instruction::InstructionBuilder, token::{Position, PositionRange, TokenType}};
 
 pub fn as_binary_operator(token_type: TokenType) -> Box<dyn BinaryOperator> {
     match token_type {
@@ -33,8 +33,7 @@ pub fn as_unary_operator(token_type: TokenType) -> Box<dyn UnaryOperator> {
 }
 
 pub trait UnaryOperator : fmt::Debug + erased_serde::Serialize {
-    fn interpret_type(&self, value_type: ResolvedType) -> Result<ResolvedType, Diagnostic>;
-    fn compile(&self, dr: u8, sr1: u8, operation_type: ResolvedType) -> Vec<u64>;
+
 }
 
 serialize_trait_object!(UnaryOperator);
@@ -49,25 +48,7 @@ impl Serialize for Not {
 }
 
 impl UnaryOperator for Not {
-    fn interpret_type(&self, value_type: ResolvedType) -> Result<ResolvedType, Diagnostic> {
-        if value_type == ResolvedType::Boolean {
-            Ok(value_type)
-        } else {
-            Err(Diagnostic::new(0, DiagnosticType::Error, PositionRange::new(Position::new(0, 0)), "placeholder".to_string()))
-            //Err(TypeError::new_unary(&value_type, "!"))
-        }
-    }
 
-    fn compile(&self, dr: u8, sr1: u8, operation_type: ResolvedType) -> Vec<u64> {
-        let mut instructions = Vec::new();
-        
-        instructions.push(match operation_type {
-            ResolvedType::Boolean => InstructionBuilder::notb(dr, sr1),
-            _ => panic!("Unsupported type for operator '!'")
-        });
-
-        instructions
-    }
 }
 
 #[derive(Debug)]
@@ -80,26 +61,6 @@ impl Serialize for Negative {
 }
 
 impl UnaryOperator for Negative {
-    fn interpret_type(&self, value_type: ResolvedType) -> Result<ResolvedType, Diagnostic> {
-        if value_type.is_numeric() {
-            Ok(value_type)
-        } else {
-            Err(Diagnostic::new(0, DiagnosticType::Error, PositionRange::new(Position::new(0, 0)), "placeholder".to_string()))
-            //Err(TypeError::new_unary(&value_type, "-"))
-        }
-    }
-
-    fn compile(&self, dr: u8, sr1: u8, operation_type: ResolvedType) -> Vec<u64> {
-        let mut instructions = Vec::new();
-        
-        instructions.push(match operation_type {
-            ResolvedType::Integer => InstructionBuilder::negi(dr, sr1),
-            ResolvedType::Double => InstructionBuilder::negd(dr, sr1),
-            _ => panic!("Unsupported type for operator '-'")
-        });
-
-        instructions
-    }
 
 }
 
@@ -114,18 +75,10 @@ impl Serialize for Semicolon {
 }
 
 impl UnaryOperator for Semicolon {
-    fn interpret_type(&self, _value_type: ResolvedType) -> Result<ResolvedType, Diagnostic> {
-        Ok(ResolvedType::Empty)
-    }
 
-    fn compile(&self, _dr: u8, _sr1: u8, _operation_type: ResolvedType) -> Vec<u64> {
-        Vec::new()
-    }
 }
 
 pub trait BinaryOperator : erased_serde::Serialize {
-    fn interpret_type(&self, left: ResolvedType, right: ResolvedType) -> Result<ResolvedType, Diagnostic>;
-    fn compile(&self, dr: u8, sr1: u8, sr2: u8, operation_type: ResolvedType) -> Vec<u64>;
 }
 
 serialize_trait_object!(BinaryOperator);
@@ -136,16 +89,7 @@ macro_rules! arithmetic_binary_operator {
         struct $Name;
 
         impl BinaryOperator for $Name {
-            fn interpret_type(&self, left: ResolvedType, right: ResolvedType) -> Result<ResolvedType, Diagnostic> {
-                if left == right && left.is_numeric(){
-                    Ok(left)
-                } else {
-                    Err(Diagnostic::new(0, DiagnosticType::Error, PositionRange::new(Position::new(0, 0)), "placeholder".to_string()))
-                    //Err(TypeError::new_binary(&left, &right, $OperatorName))
-                }
-            }
 
-            $Compile
         }
 
         impl Serialize for $Name {
@@ -162,16 +106,7 @@ macro_rules! comparative_binary_operator {
         struct $Name;
 
         impl BinaryOperator for $Name {
-            fn interpret_type(&self, left: ResolvedType, right: ResolvedType) -> Result<ResolvedType, Diagnostic> {
-                if left == right && left.is_numeric(){
-                    Ok(ResolvedType::Boolean)
-                } else {
-                    Err(Diagnostic::new(0, DiagnosticType::Error, PositionRange::new(Position::new(0, 0)), "placeholder".to_string()))
-                    //Err(TypeError::new_binary(&left, &right, $OperatorName))
-                }
-            }
 
-            $Compile
         }
 
         impl Serialize for $Name {
@@ -188,16 +123,7 @@ macro_rules! boolean_binary_operator {
         struct $Name;
 
         impl BinaryOperator for $Name {
-            fn interpret_type(&self, left: ResolvedType, right: ResolvedType) -> Result<ResolvedType, Diagnostic> {
-                if left == right && left == ResolvedType::Boolean {
-                    Ok(left)
-                } else {
-                    Err(Diagnostic::new(0, DiagnosticType::Error, PositionRange::new(Position::new(0, 0)), "placeholder".to_string()))
-                    //Err(TypeError::new_binary(&left, &right, $OperatorName))
-                }
-            }
 
-            $Compile
         }
 
         impl Serialize for $Name {

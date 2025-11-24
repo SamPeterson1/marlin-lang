@@ -3,12 +3,8 @@ use std::io::prelude::*;
 use std::path::Path;
 use std::env;
 
-use crate::compiler::{Compiler, CompilerResult};
-use crate::error::DiagnosticType;
 use crate::logger::{LogLevel, LogSource, Logger};
 use crate::parser::{ExprParser, ParseResult};
-use crate::resolver::SymbolTable;
-use crate::type_checker::TypeChecker;
 use crate::vm::VM;
 use crate::lexer;
 use crate::token::Token;
@@ -80,65 +76,6 @@ fn run(code: String) {
     let parser = ExprParser::new(&tokens);
 
     Logger::log_info(&runner, "Parsing code");
-    let ParseResult { items, diagnostics: parse_diagnostics } = parser.parse();
+    let ParseResult { program, diagnostics: parse_diagnostics } = parser.parse();
     Logger::log_info(&runner, "Done parsing");
-
-    let mut symbol_table = SymbolTable::new();
-
-    let mut all_errors = Vec::new();
-    all_errors.extend(parse_diagnostics);
-
-    if all_errors.len() == 0 {
-        Logger::log_info(&runner, "Resolving symbols");
-        let resolve_errors = symbol_table.resolve(&items);
-        all_errors.extend(resolve_errors);
-        Logger::log_info(&runner, "Done resolving symbols");
-    } else {
-        Logger::log_info(&runner, "Skipping symbol resolution due to previous errors");
-    }
-    
-    if all_errors.len() == 0 {
-        Logger::log_info(&runner, "Checking types");
-        let type_checker = TypeChecker::new(&symbol_table);
-        let type_errors = type_checker.check_types(&items);
-        all_errors.extend(type_errors);
-        Logger::log_info(&runner, "Done checking types");
-    } else {
-        Logger::log_info(&runner, "Skipping type checking due to previous errors");
-    }
-
-    if !all_errors.is_empty() {
-        for error in &all_errors {
-            let log_severity = match error.diagnostic_type {
-                DiagnosticType::Error => LogLevel::Error,
-                DiagnosticType::Warning => LogLevel::Warning
-            };
-
-            Logger::log(&runner, log_severity, &format!("{}", error));
-        }
-        Logger::log_info(&runner, "Errors found. Exiting");
-        
-        return;
-    } else {
-        Logger::log_info(&runner, "No errors found");
-    }
-
-    let compiler = Compiler::new(&symbol_table);
-    let CompilerResult {instructions, constant_pool} = compiler.compile(&items);
-
-    let mut vm = VM::new();
-
-    vm.load_memory(0, &instructions, instructions.len());
-    vm.load_memory(6000, &constant_pool, constant_pool.len());
-
-    println!("Instructions: {:?}", instructions);
-    println!("Number of instructions: {}", instructions.len());
-    
-    println!("Constant pool: {:?}", constant_pool);
-    println!("Number of constants: {}", constant_pool.len());
-
-    vm.run();
-
-    println!("VM finished");
-    println!("Result in R0: {}", vm.registers[0].as_u64());
 }

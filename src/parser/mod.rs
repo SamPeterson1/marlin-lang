@@ -1,4 +1,4 @@
-mod diagnostic;
+pub mod diagnostic;
 mod rules;
 
 use std::collections::VecDeque;
@@ -6,16 +6,18 @@ use std::rc::Rc;
 
 use serde::Serialize;
 
-use crate::ast::ASTNode;
+use crate::ast::{ASTNode, ASTWrapper};
 
+use crate::ast::program::Program;
 use crate::logger::{Log, LogLevel, LogSource};
+use crate::parser::diagnostic::{Diagnostic, DiagnosticSeverity, ErrMsg};
 use crate::parser::rules::item::ItemRule;
-use crate::types::parsed_type::{ParsedPointerType, ParsedType, ParsedTypeName};
-use crate::{error::{Diagnostic, DiagnosticType}, logger::{Logger}, token::{Token, TokenType, TokenValue}};
+use crate::parser::rules::program::ProgramRule;
+use crate::token::PositionRange;
+use crate::{logger::{Logger}, token::{Token, TokenType, TokenValue}};
 
 pub struct ExprParser<'a> {
     ptr: usize,
-    ptr_stack: VecDeque<usize>,
     tokens: &'a[Token],
     diagnostics: Vec<Diagnostic>,
     var_expr_id_counter: i32,
@@ -23,12 +25,103 @@ pub struct ExprParser<'a> {
     parser_stack: VecDeque<String>,
 }
 
+trait TokenCursor {
+    fn cur(&self) -> Token;
+    fn peek(&self) -> Token;
+    fn prev(&self) -> Token;
+    fn next(&mut self) -> Token;
+
+    fn try_consume(&mut self, token: TokenType) -> Option<Token> {
+        if self.cur().token_type == token {
+            Some(self.next())
+        } else {
+            None
+        }
+    }
+
+    fn is_at_end(&self) -> bool {
+        self.cur().token_type == TokenType::EOF
+    }
+
+    fn try_match(&mut self, matches: &[TokenType]) -> Option<Token> {
+        for token_match in matches {
+            if self.cur().token_type == *token_match {
+                return Some(self.next());
+            }
+        }
+
+        return None;
+    }
+}
+
+pub struct ParserCursor<'tok> {
+    ptr: usize,
+    tokens: &'tok[Token],
+}
+
+impl TokenCursor for ExprParser<'_> {
+    fn cur(&self) -> Token {
+        self.tokens[self.ptr].clone()
+    }
+
+    fn peek(&self) -> Token {
+        if self.ptr + 1 >= self.tokens.len() {
+            return self.tokens[self.ptr].clone();
+        }
+
+        self.tokens[self.ptr + 1].clone()
+    }
+
+    fn next(&mut self) -> Token {
+        let ret = &self.tokens[self.ptr];
+
+        if self.ptr + 1 < self.tokens.len() {
+            self.ptr += 1;
+        }
+
+        ret.clone()
+    }
+
+    fn prev(&self) -> Token {
+        self.tokens[self.ptr - 1].clone()
+    }
+}
+
+impl TokenCursor for ParserCursor<'_> {
+    fn cur(&self) -> Token {
+        self.tokens[self.ptr].clone()
+    }
+
+    fn peek(&self) -> Token {
+        if self.ptr + 1 >= self.tokens.len() {
+            return self.tokens[self.ptr].clone();
+        }
+
+        self.tokens[self.ptr + 1].clone()
+    }
+
+    fn next(&mut self) -> Token {
+        let ret = self.tokens[self.ptr].clone();
+
+        if self.ptr + 1 < self.tokens.len() {
+            self.ptr += 1;
+        }
+
+        ret
+    }
+
+    fn prev(&self) -> Token {
+        self.tokens[self.ptr - 1].clone()
+    }
+}
+
 pub struct ParseResult {
-    pub items: Vec<Box<dyn ASTNode>>,
+    pub program: ASTWrapper<Program>,
     pub diagnostics: Vec<Diagnostic>
 }
 
 trait ParseRule<T>: std::fmt::Display {
+    fn check_match(&self, cursor: ParserCursor) -> bool;
     fn parse(&self, parser: &mut ExprParser) -> Option<T>;
 }
 
@@ -46,127 +139,16 @@ impl LogSource for ExprParser<'_> {
 
 impl Log for ExprParser<'_> {}
 
-impl<'a> ExprParser<'a> {
+impl ExprParser<'_> {
     pub fn new(tokens: &[Token]) -> ExprParser {
         ExprParser {
             ptr: 1, 
-            ptr_stack: VecDeque::new(),
             tokens, 
             diagnostics: Vec::new(), 
             var_expr_id_counter: 0, 
             declaration_expr_id_counter: 0, 
             parser_stack: VecDeque::new()            ,
         }
-    }
-
-    //Pop stack without resetting self.ptr
-    pub fn commit_ptr(&mut self) {
-        self.ptr_stack.pop_front();
-    }
-
-    pub fn push_ptr(&mut self) {
-        self.ptr_stack.push_front(self.ptr);
-    }
-
-    pub fn pop_ptr(&mut self) {
-        self.ptr = self.ptr_stack.pop_front().unwrap();
-    }
-
-    fn apply_rule_boxed<T: ASTNode + 'static>(&mut self, rule: impl ParseRule<T>) -> Option<Box<dyn ASTNode>> {
-        Some(Box::new(self.apply_rule(rule)?))
-    }
-
-    fn apply_rule<T>(&mut self, rule: impl ParseRule<T>) -> Option<T> {
-        self.parser_stack.push_front(format!("{}", rule));
-        self.log_debug(&format!("Entering rule {}", rule));
-
-        let result = rule.parse(self);
-
-        self.log_debug(&format!("Exiting rule {}", rule));
-        self.parser_stack.pop_front();
-
-        result
-    }
-
-    fn log_parse_result(&self, expr: &Option<impl Serialize>, name: &str) {
-        if let Some(expr) = expr {
-            Logger::log_debug(self, &format!("Parsed {}: {}", name, serde_json::to_string(expr).unwrap()));
-        } else {
-            Logger::log_error(self, &format!("Failed to parse {}", name));
-        }
-    }
-
-    pub fn parse(mut self) -> ParseResult {
-        Logger::log_info(&self, "Beginning parser");
-
-        let mut items = Vec::new();
-        
-        while !self.is_at_end() {
-            if let Some(expr) = self.apply_rule(ItemRule {}) {
-                Logger::log_info(&self, &format!("Parsed item successfully"));
-                Logger::log_debug(&self, &format!("Parsed item: {}", serde_json::to_string(&expr).unwrap()));
-                items.push(expr);
-            } else {
-                Logger::log_error(&self, &format!("Failed to parse item. Current token: {:?}", self.cur()));
-            }
-        }
-
-        Logger::log_info(&self, &format!("Parsed {} items with {} diagnostics", items.len(), self.diagnostics.len()));
-
-        ParseResult {
-            items,
-            diagnostics: self.diagnostics
-        }
-    }
-
-    fn try_match(&mut self, matches: &[TokenType]) -> Option<Token> {
-        for token_match in matches {
-            if self.cur().token_type == *token_match {
-                return Some(self.advance());
-            }
-        }
-
-        return None;
-    }
-
-    fn advance(&mut self) -> Token {
-        let ret = &self.tokens[self.ptr];
-
-        if self.tokens[self.ptr].token_type != TokenType::EOF {
-            self.ptr += 1;
-        }
-
-        ret.clone()
-    }
-
-    fn is_at_end(&self) -> bool {
-        self.ptr == self.tokens.len() || self.tokens[self.ptr].token_type == TokenType::EOF
-    }
-
-    fn peek(&self) -> Token {
-        if self.ptr + 1 >= self.tokens.len() {
-            return self.cur();
-        }
-
-        self.tokens[self.ptr + 1].clone()
-    }
-
-    fn cur(&self) -> Token {
-        self.tokens[self.ptr].clone()
-    }
-
-    fn prev(&self) -> Token {
-        self.tokens[self.ptr - 1].clone()
-    }
-
-    fn push_diagnostic(&mut self, diagnostic: Diagnostic) {
-        let log_severity = match diagnostic.diagnostic_type {
-            DiagnosticType::Error => LogLevel::Error,
-            DiagnosticType::Warning => LogLevel::Warning,
-        };
-
-        Logger::log(self, log_severity, &format!("Pushing diagnostic: {}", diagnostic));
-        self.diagnostics.push(diagnostic);
     }
 
     fn some_or_diagnostic<T>(&mut self, opt: Option<T>, diagnostic: Diagnostic) -> Option<T> {
@@ -176,47 +158,91 @@ impl<'a> ExprParser<'a> {
 
         opt
     }
-
-    fn try_consume(&mut self, token: TokenType) -> Option<Token> {
-        if self.cur().token_type == token {
-            Some(self.advance())
-        } else {
-            None
-        }
-    }
-
-    fn consume_or_diagnostic(&mut self, token: TokenType, diagnostic: Diagnostic) -> Option<Token> {
-        if self.cur().token_type != token {
-            self.push_diagnostic(diagnostic);
+    
+    fn consume_or_diagnostic(&mut self, token: TokenType) -> Option<Token> {
+        let cur = &self.cur();
+        
+        if cur.token_type != token {
+            self.push_diagnostic(ErrMsg::ExpectedToken(token).make_diagnostic(cur.position));
             
             None
         } else {
-            Some(self.advance())
+            Some(self.next())
         }
     }
 
-    //any primitive type
-    //(type, type, ...) -> type    
-    fn try_type(&mut self) -> Option<ParsedType> {
-        let cur = self.cur();
+    fn unwrap_or_diagnostic<T>(&mut self, result: Result<T, Diagnostic>) -> Option<T> {
+        match result {
+            Ok(x) => Some(x),
+            Err(diagnostic) => {
+                self.push_diagnostic(diagnostic);
+                None
+            }
+        }
+    } 
 
-        match (cur.token_type, cur.value) {
-            (TokenType::Int, TokenValue::None) => {self.advance(); Some(ParsedType::Integer)},
-            (TokenType::Double, TokenValue::None) => {self.advance(); Some(ParsedType::Double)},
-            (TokenType::Bool, TokenValue::None) => {self.advance(); Some(ParsedType::Boolean)},
-            (TokenType::Identifier, TokenValue::String(type_name)) => {
-                self.advance(); 
-                Some(ParsedType::TypeName(ParsedTypeName {
-                    name: type_name.to_string().into(),
-                    position: cur.position
-                }))
-            },
-            (TokenType::Star, TokenValue::None) => {
-                self.advance();
-                let pointee = self.try_type()?;
-                Some(ParsedType::Pointer(ParsedPointerType {pointee: Rc::new(pointee)}))
-            },
-            _ => None
-        }    
-    }    
+    fn push_diagnostic(&mut self, diagnostic: Diagnostic) {
+        let log_severity = match diagnostic.severity {
+            DiagnosticSeverity::Error => LogLevel::Error,
+            DiagnosticSeverity::Warning => LogLevel::Warning,
+        };
+
+        Logger::log(self, log_severity, &format!("Pushing diagnostic: {}", diagnostic));
+        self.diagnostics.push(diagnostic);
+    }
+
+    fn get_cursor(&self) -> ParserCursor {
+        ParserCursor { 
+            ptr: self.ptr, 
+            tokens: self.tokens
+        }
+    }
+
+    fn apply_rule_boxed<T: ASTNode + Serialize + 'static>(&mut self, rule: impl ParseRule<T>, purpose: &str, err_msg: Option<ErrMsg>) -> Option<Box<dyn ASTNode>> {
+        Some(Box::new(self.apply_rule(rule, purpose, err_msg)?))
+    }
+
+    fn apply_rule<T: Serialize>(&mut self, rule: impl ParseRule<T>, purpose: &str, err_msg: Option<ErrMsg>) -> Option<T> {
+        self.log_debug(&format!("Entering rule {} for {}. Current token {:?}", rule, purpose, self.cur()));
+
+
+        if rule.check_match(self.get_cursor()) {
+            self.log_debug(&format!("Initial match satisfied for {}", purpose));
+            
+            self.parser_stack.push_front(format!("{}", rule));
+
+            let result = rule.parse(self);
+
+            self.parser_stack.pop_front();
+
+            match &result {
+                Some(result) => self.log_debug(&format!("Match succeeded for {}, result {}", purpose, serde_json::to_string(&result).unwrap())),
+                None => self.log_error(&format!("Match failed for {}", purpose))
+            }
+
+
+            result
+        } else {
+            self.log_debug(&format!("Initial match not satisfied for {}", purpose));
+
+            self.parser_stack.pop_front();
+
+            if let Some(err_msg) = err_msg {
+                self.push_diagnostic(err_msg.make_diagnostic(self.cur().position));
+            }
+
+            None
+        } 
+    }
+
+    pub fn parse(mut self) -> ParseResult {
+        Logger::log_info(&self, "Beginning parser");
+
+        let program = self.apply_rule(ProgramRule {}, "program", None).unwrap();
+
+        ParseResult {
+            program,
+            diagnostics: self.diagnostics
+        }
+    }
 }

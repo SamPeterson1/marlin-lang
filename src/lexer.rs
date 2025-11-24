@@ -1,7 +1,7 @@
 use std::{iter::Peekable, str::Chars};
 
-use crate::error::{self, Diagnostic, DiagnosticType};
 use crate::logger::{LogSource, Logger};
+use crate::parser::diagnostic::{Diagnostic, ErrMsg};
 use crate::token::{Position, PositionRange};
 use crate::token::{Token, TokenType, TokenValue};
 
@@ -79,6 +79,7 @@ impl Lexer<'_> {
         }
     }
 
+    /*
     fn err_unknown_symbol(&self) -> LexerDiagnostic {
         let msg = format!("unknown symbol {}", self.cur.unwrap());
         let pos = PositionRange::new(self.position);
@@ -102,6 +103,7 @@ impl Lexer<'_> {
 
         LexerDiagnostic::new(diagnostic)
     }
+    */
 
     fn begin_token(&mut self) {
         self.token_start = Some(PositionRange::new(self.position));
@@ -174,6 +176,8 @@ impl Lexer<'_> {
         }
         
         match cur {
+            '@' => self.end_token(TokenType::AtSign, TokenValue::None),
+            '$' => self.end_token(TokenType::DollarSign, TokenValue::None),
             ';' => self.end_token(TokenType::Semicolon, TokenValue::None),
             ',' => self.end_token(TokenType::Comma, TokenValue::None),
             '.' => self.end_token(TokenType::Dot, TokenValue::None),
@@ -206,7 +210,7 @@ impl Lexer<'_> {
         } else if Self::is_numeric(cur) {
             self.parse_numeric()
         } else {
-            Err(self.err_unknown_symbol())
+            Err(LexerDiagnostic::new_fatal(ErrMsg::ErrUnknownSymbol(cur).make_diagnostic(PositionRange::new(self.position))))
         }
     }
 
@@ -257,7 +261,7 @@ impl Lexer<'_> {
         }
 
         if !string_ended {
-            return Err(self.err_unclosed_quotes(start))
+            return Err(LexerDiagnostic::new(ErrMsg::ErrUnterminatedString.make_diagnostic(PositionRange::new(start).with_end(self.position))))
         }
     
         self.end_token(TokenType::StringLiteral, TokenValue::String(value))
@@ -315,7 +319,7 @@ impl Lexer<'_> {
                 if !is_decimal {
                     self.end_token(TokenType::IntLiteral, TokenValue::Int(value as i64))
                 } else {
-                    Result::Err(self.err_decimal_literal_as_int())
+                    return Err(LexerDiagnostic::new(ErrMsg::ErrDecimalLiteralAsInt.make_diagnostic(PositionRange::new(self.position))))
                 }
             },
             _ => {
@@ -348,6 +352,7 @@ impl Lexer<'_> {
         }
     
         match word.as_str() {
+            "main" => self.end_token(TokenType::Main, TokenValue::None),
             "if" => self.end_token(TokenType::If, TokenValue::None),
             "else" => self.end_token(TokenType::Else, TokenValue::None),
             "for" => self.end_token(TokenType::For, TokenValue::None),

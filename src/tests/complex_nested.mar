@@ -1,0 +1,50 @@
+main {
+    let int deep_result = add(
+        multiply(
+            subtract(10, 5) @ math,
+            divide(20, 4) @ math
+        ) @ math,
+        power(2, 3) @ math
+    ) @ math;
+    
+    let int[][][] cube = new int[3][4][5];
+    let int single_value = multiply(2) @ math;
+    
+    let ComplexStruct cs = $ComplexStruct(
+        $Point(
+            add(1, 2) @ math,
+            subtract(5, 3) @ math
+        ),
+        $Calculator(
+            multiply(10, 5) @ math
+        )
+    );
+    
+    let bool complex_condition = (
+        (x + y * z / w - v) >= (a * b - c) and
+        (func1() @ mod or func2() @ mod) and
+        !variable_check
+    ) or (
+        getc == 65 and 
+        other_condition != false
+    );
+    
+    if complex_condition {
+        while x < limit() @ config {
+            for (let int i = start() @ init; i < end() @ init; i = next(i) @ iter) {
+                if should_process(i) @ check {
+                    loop {
+                        let result = process(
+                            transform(i) @ utils,
+                            config() @ settings
+                        ) @ worker;
+                        if is_complete(result) @ validator {
+                            break finalize(result) @ output;
+                        }
+                    }
+                }
+            }
+            x = increment(x) @ counter;
+        }
+    }
+}

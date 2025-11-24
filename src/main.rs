@@ -4,22 +4,17 @@ use dotenv::dotenv;
 use logger::Logger;
 
 mod run;
-mod error;
 mod logger;
 mod lexer;
 mod token;
 mod parser;
 mod ast;
 mod instruction;
-mod compiler;
 mod opcodes;
 mod vm;
-
 mod types;
 
 mod operator;
-mod resolver;
-mod type_checker;
 
 fn main() {
     dotenv().unwrap();

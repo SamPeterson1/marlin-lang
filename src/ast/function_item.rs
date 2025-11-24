@@ -2,25 +2,27 @@ use std::rc::Rc;
 
 use serde::Serialize;
 
-use crate::{ast::{ASTNode, ASTWrapper}, impl_ast_node, token::PositionRange, types::parsed_type::ParsedType};
+use crate::{ast::{ASTNode, ASTWrapper, block_expr::BlockExpr, function_prototype::FunctionPrototype, parsed_type::ParsedType}, impl_ast_node, token::{PositionRange, Positioned}};
 
 #[derive(Serialize)]
 pub struct FunctionItem {
-    pub name: Rc<String>,
-    pub args: Vec<(String, ParsedType)>,
-    pub expr: Box<dyn ASTNode>,
-    pub ret_type: ParsedType,
+    pub prototype: ASTWrapper<FunctionPrototype>,
+    pub body: ASTWrapper<BlockExpr>,
+    pub src_type: ASTWrapper<ParsedType>,
+    pub src_identifier: String,
 }
 
 
 impl ASTWrapper<FunctionItem> {
-    pub fn new_function(name: String, args: Vec<(String, ParsedType)>, expr: Box<dyn ASTNode>, ret_type: ParsedType, position: PositionRange) -> Self {
+    pub fn new_function_item(prototype: ASTWrapper<FunctionPrototype>, body: ASTWrapper<BlockExpr>, src_type: ASTWrapper<ParsedType>, src_identifier: String) -> Self {
+        let position = PositionRange::concat(prototype.get_position(), body.get_position());
+        
         ASTWrapper {
             data: FunctionItem {
-                name: Rc::new(name),
-                args,
-                expr,
-                ret_type,
+                prototype,
+                body,
+                src_type,
+                src_identifier,
             },
             position
         }
