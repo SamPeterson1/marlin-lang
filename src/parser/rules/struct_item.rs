@@ -1,6 +1,6 @@
 use chrono::format::Parsed;
 
-use crate::{ast::{ASTWrapper, struct_item::StructItem}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic, rules::{constructor_item::ConstructorRule, parsed_type::ParsedTypeRule}}, token::{Position, PositionRange, TokenType}};
+use crate::{ast::{ASTWrapper, struct_item::StructItem}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic, rules::{constructor_item::ConstructorRule, parsed_type::ParsedTypeRule}}, token::{Position, PositionRange, Token, TokenType}};
 use std::fmt;
 use std::collections::HashMap;
 
@@ -25,9 +25,10 @@ impl ParseRule<ASTWrapper<StructItem>> for StructRule {
         parser.consume_or_diagnostic(TokenType::LeftCurly);
 
         let mut members = Vec::new();
-        while !(ConstructorRule {}).check_match(parser.get_cursor()) {
-            let member_type = parser.apply_rule(ParsedTypeRule {}, "struct member type", None)?;
+        while let Some(member_type) = parser.apply_rule(ParsedTypeRule {}, "struct member type", None) {
             let member_identifier = parser.consume_or_diagnostic(TokenType::Identifier)?.get_string().to_string();
+            parser.consume_or_diagnostic(TokenType::Semicolon);
+
             members.push((member_type, member_identifier));
         }
         

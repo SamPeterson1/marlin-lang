@@ -6,7 +6,7 @@ main: "main" block-expression
 struct: "struct" identifier "{" struct-body "}"
 struct-body: struct-member* struct-constructor*
 struct-member: type identifier ";"
-struct-constructor: "$" identifier parameters block-expression
+struct-constructor: "$" parameters block-expression
 
 func: function-prototype "@" identifier identifier block-expression
 function-prototype: "fn" identifier parameters "->" type
@@ -17,7 +17,6 @@ expression: condition
 block: "{" statement* "}"
 declaration: "let" type identifier "=" expression ";"
 assignment: identifier "=" expression
-constructor: ["new"] "$" identifier arguments
 for: "for" "(" declaration expression ";" assignment ")" block
 while: "while" expression block
 break: "break" [expression] ";"
@@ -25,7 +24,8 @@ loop: "loop" block
 if: "if" expression block elif* [else]
 elif: "else" "if" expression block
 else: "else" block
-alloc: "new" type ("[" expression "]")+
+constructor: ["new"] "$" identifier arguments
+new-array: "new" type ("[" expression "]")+
 condition: boolean-factor ("or" boolean-factor)*
 boolean-factor: comparison ("and" comparison)*
 comparison: arithmetic-term (comparator arithmetic-term)*
@@ -34,7 +34,8 @@ arithmetic-term: arithmetic-factor (("-" | "+") arithmetic-factor)*
 arithmetic-factor: unary (("*" | "/") unary)*
 unary: ("!" | "-")* unary | primary
 arguments: "(" [expression (expression ",")*] ")"
-primary: call | getc | alloc | loop | if | block | for | while | "(" expression ")" | identifier | literal
+primary: call | getc | new-array | constructor | loop | if | block | for | while | "(" expression ")" | identifier | literal
 call: identifier [arguments] "@" expression
-type: ["&"] (primitive-type | identifier) | (primitive-type | identifier) ("[]")*
+type: unit-type ("[]")* ["&"]
+unit-type: (primitive-type | identifier) ["&"]
 primitive-type: "int" | "double" | "bool";

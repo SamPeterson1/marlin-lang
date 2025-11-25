@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::{ast::{ASTWrapper, parsed_type::ParsedType}, token::PositionRange};
+use crate::{ast::{ASTWrapper, parsed_type::{ParsedType, ParsedUnitType}}, token::PositionRange};
 
 #[derive(Serialize)]
 pub enum Literal {    
@@ -13,20 +13,35 @@ pub enum Literal {
 #[derive(Serialize)]
 pub struct LiteralExpr {
     pub value: Literal,
-    pub parsed_type: ParsedType,
 }
 
 impl ASTWrapper<LiteralExpr> {
-    pub fn new_literal(value: Literal, parsed_type: ParsedType, position: PositionRange) -> Self {
+    pub fn new_int_literal(value: i64, position: PositionRange) -> Self {
         ASTWrapper {
             data: LiteralExpr {
-                value,
-                parsed_type,
+                value: Literal::Int(value),
             },
             position
         }
-        
     }
+
+    pub fn new_double_literal(value: f64, position: PositionRange) -> Self {
+        ASTWrapper {
+            data: LiteralExpr {
+                value: Literal::Double(value),
+            },
+            position
+        }
+    }
+
+    pub fn new_bool_literal(value: bool, position: PositionRange) -> Self {
+        ASTWrapper {
+            data: LiteralExpr {
+                value: Literal::Bool(value),
+            },
+            position
+        }
+    }    
 }
 
 crate::impl_ast_node!(LiteralExpr, visit_literal);

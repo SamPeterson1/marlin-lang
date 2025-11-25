@@ -18,11 +18,13 @@ impl ParseRule<ASTWrapper<BreakExpr>> for BreakRule {
     fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<BreakExpr>> {
         let break_token = parser.try_consume(TokenType::Break)?;
 
-        let expr = parser.apply_rule(ExprRule {}, "break expression", Some(ErrMsg::ExpectedExpression));
-        parser.consume_or_diagnostic(TokenType::Semicolon);
+        let break_expr = if parser.try_consume(TokenType::Semicolon).is_none() {
+            let expr = parser.apply_rule(ExprRule {}, "break expression", Some(ErrMsg::ExpectedExpression))?;
+            parser.consume_or_diagnostic(TokenType::Semicolon);
+            Some(expr)
+        } else { None };
 
         let position = PositionRange::concat(&break_token.position, &parser.prev().position);
-
-        Some(ASTWrapper::new_break(expr?, position))
+        Some(ASTWrapper::new_break(break_expr, position))
     }
 }

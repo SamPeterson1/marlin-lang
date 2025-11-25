@@ -160,7 +160,7 @@ pub enum TokenType {
     And, Or, Not,
 
     Putc, Getc,
-    Alloc,
+    New,
     Arrow,
     Let,
 
@@ -170,7 +170,7 @@ pub enum TokenType {
     Int, Double, Bool, String,
     Struct,
 
-    IntLiteral, FloatLiteral, DoubleLiteral, BoolLiteral, StringLiteral,
+    IntLiteral, DoubleLiteral, BoolLiteral, StringLiteral,
     Identifier,
     EOF,
     SOF,
@@ -211,7 +211,7 @@ impl fmt::Display for TokenType {
 
             TokenType::Putc => write!(f, "'putc'"),
             TokenType::Getc => write!(f, "'getc'"),
-            TokenType::Alloc => write!(f, "'alloc'"),
+            TokenType::New => write!(f, "'new'"),
             TokenType::Arrow => write!(f, "'->'"),
             TokenType::Let => write!(f, "'let'"),
 
@@ -236,7 +236,6 @@ impl fmt::Display for TokenType {
             TokenType::Struct => write!(f, "'struct'"),
 
             TokenType::IntLiteral => write!(f, "int literal"),
-            TokenType::FloatLiteral => write!(f, "float literal"),
             TokenType::DoubleLiteral => write!(f, "double literal"),
             TokenType::BoolLiteral => write!(f, "boolean literal"),
             TokenType::StringLiteral => write!(f, "string literal"),

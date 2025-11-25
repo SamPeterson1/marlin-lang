@@ -4,11 +4,11 @@ use crate::{ast::{ASTNode, ASTWrapper}, token::PositionRange};
 
 #[derive(Serialize)]
 pub struct BreakExpr {
-    pub expr: Box<dyn ASTNode>,
+    pub expr: Option<Box<dyn ASTNode>>,
 }
 
 impl ASTWrapper<BreakExpr> {
-    pub fn new_break(expr: Box<dyn ASTNode>, position: PositionRange) -> Self {
+    pub fn new_break(expr: Option<Box<dyn ASTNode>>, position: PositionRange) -> Self {
         ASTWrapper {
             data: BreakExpr {
                 expr,

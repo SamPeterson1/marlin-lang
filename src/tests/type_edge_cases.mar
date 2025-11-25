@@ -3,9 +3,9 @@ main {
     let double simple_double = 3.14159;
     let bool simple_bool = false;
     
-    let &int ref_int = simple_int;
-    let &double ref_double = simple_double;
-    let &bool ref_bool = simple_bool;
+    let int& ref_int = simple_int;
+    let double& ref_double = simple_double;
+    let bool& ref_bool = simple_bool;
     
     let int[] int_array = new int[10];
     let double[] double_array = new double[5];
@@ -14,14 +14,14 @@ main {
     let int[][] matrix = new int[3][4];
     let double[][][] cube = new double[2][3][4];
     
-    let &int[] ref_to_array = int_array;
-    let &int[][] ref_to_matrix = matrix;
+    let int[]& ref_to_array = int_array;
+    let int[][]& ref_to_matrix = matrix;
     
-    let (&int)[] array_of_refs = new (&int)[5];
+    let int&[] array_of_refs = new int&[5];
     
     let Point p = $Point();
     let Point[] point_array = new Point[10];
-    let &Point ref_point = p;
+    let Point& ref_point = p;
     
-    let (&Point)[][] complex_type = new (&Point)[2][3];
+    let Point&[][]& complex_type = new Point&[2][3];
 }

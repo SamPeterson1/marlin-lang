@@ -14,12 +14,12 @@ struct Point {
     int x;
     double y;
     
-    $new_point(int px, double py) {
+    $(int px, double py) {
         x = px;
         y = py;
     }
     
-    $another_constructor() {
+    $() {
         x = 0;
         y = 0.0;
     }

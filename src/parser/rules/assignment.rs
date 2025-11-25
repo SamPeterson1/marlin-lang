@@ -22,8 +22,6 @@ impl ParseRule<ASTWrapper<AssignmentExpr>> for AssignmentRule {
 
         let expr = parser.apply_rule(ExprRule {}, "assignment expression", Some(ErrMsg::ExpectedExpression))?;
 
-        parser.consume_or_diagnostic(TokenType::Semicolon);
-
         Some(ASTWrapper::new_assignment(&assignee, expr))
     }
 }

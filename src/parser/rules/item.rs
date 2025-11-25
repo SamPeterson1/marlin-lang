@@ -12,7 +12,7 @@ impl fmt::Display for ItemRule {
 }
 
 impl ParseRule<Box<dyn ASTNode>> for ItemRule {
-    fn check_match(&self, cursor: ParserCursor) -> bool {
+    fn check_match(&self, _cursor: ParserCursor) -> bool {
         true
     }
 

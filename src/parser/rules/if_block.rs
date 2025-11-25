@@ -22,10 +22,14 @@ impl ParseRule<ASTWrapper<IfExpr>> for IfBlockRule {
     
         let success = parser.apply_rule(ExprRule {}, "if success", Some(ErrMsg::ExpectedBlock))?;
         
-        let mut fail = parser.apply_rule_boxed(IfBlockRule {}, "else if block", None);
+        let mut fail = None;
 
-        if fail.is_none() {
-            fail = parser.apply_rule_boxed(BlockRule {}, "else block", None);
+        if let Some(_) = parser.try_consume(TokenType::Else) {
+            fail = parser.apply_rule_boxed(IfBlockRule {}, "else if block", None);
+
+            if fail.is_none() {
+                fail = parser.apply_rule_boxed(BlockRule {}, "else block", None);
+            }
         }
     
         let position = PositionRange::concat(&if_token.position, &parser.prev().position);

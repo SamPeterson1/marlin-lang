@@ -16,19 +16,19 @@ struct MultipleConstructors {
     double ratio;
     bool flag;
     
-    $default() {
+    $() {
         value = 0;
         ratio = 0.0;
         flag = false;
     }
     
-    $with_value(int v) {
+    $(int v) {
         value = v;
         ratio = 1.0;
         flag = true;
     }
     
-    $full_init(int v, double r, bool f) {
+    $(int v, double r, bool f) {
         value = v;
         ratio = r;
         flag = f;
@@ -37,11 +37,11 @@ struct MultipleConstructors {
 
 struct ComplexTypes {
     int[] numbers;
-    &double reference;
+    double& reference;
     Point[] points;
-    &int[][] matrix_ref;
+    int[][]& matrix_ref;
     
-    $init(int size) {
+    $(int size) {
         numbers = new int[size];
         points = new Point[size];
     }
@@ -52,9 +52,9 @@ struct NestedStructs {
     Calculator calc;
     MultipleConstructors config;
     
-    $create_all() {
+    $() {
         center = $Point(0, 0);
-        calc = $Calculator(100);
+        calc = new $Calculator(100);
         config = $MultipleConstructors();
     }
 }

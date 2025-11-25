@@ -48,7 +48,10 @@ impl ParseRule<Box<dyn ASTNode>> for StatementRule {
         }
 
         if (AssignmentRule {}).check_match(parser.get_cursor()) {
-            return parser.apply_rule_boxed(AssignmentRule {}, "statement assignment", None);
+            let result = parser.apply_rule_boxed(AssignmentRule {}, "statement assignment", None)?;
+            parser.consume_or_diagnostic(TokenType::Semicolon);
+
+            return Some(result);
         }
 
         None

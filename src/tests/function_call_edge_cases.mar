@@ -2,7 +2,7 @@ fn simple_func() -> int @ module name {
     break 42;
 }
 
-fn complex_func(int a, &double b, bool[] c) -> &Point @ math utils {
+fn complex_func(int a, double& b, bool[] c) -> Point& @ math utils {
     let Point p = $Point(a, b);
     break p;
 }
@@ -17,11 +17,11 @@ fn recursive_func(int n) -> int @ recursive module {
 struct Calculator {
     int value;
     
-    $init(int initial) {
+    $(int initial) {
         value = initial;
     }
     
-    $add(int x) {
+    $(int x) {
         value = value + x;
     }
 }
@@ -31,7 +31,7 @@ main {
     
     let double d = 3.14;
     let bool[] arr = new bool[5];
-    let &Point p = complex_func(42, d, arr) @ math;
+    let Point& p = complex_func(42, d, arr) @ math;
     
     let int nested_result = recursive_func(recursive_func(3) @ recursive) @ recursive;
     

@@ -1,4 +1,4 @@
-use crate::{ast::{ASTNode, ASTWrapper, literal_expr::Literal, parsed_type::{ParsedType, ParsedUnitType}}, logger::Log, parser::{ExprParser, ParseRule, TokenCursor, diagnostic::{self, ErrMsg}, rules::{block::BlockRule, call::CallRule, expr::ExprRule, for_loop::ForLoopRule, getc::GetcRule, if_block::IfBlockRule, loop_expr::LoopRule, new_array::NewArrayRule, var::VarRule, while_loop::WhileLoopRule}}, token::{Position, PositionRange, TokenType, TokenValue}};
+use crate::{ast::{ASTNode, ASTWrapper, literal_expr::Literal, parsed_type::{ParsedType, ParsedUnitType}}, logger::Log, parser::{ExprParser, ParseRule, TokenCursor, diagnostic::{self, ErrMsg}, rules::{block::BlockRule, call::CallRule, constructor_call::ConstructorCallRule, expr::ExprRule, for_loop::ForLoopRule, getc::GetcRule, if_block::IfBlockRule, loop_expr::LoopRule, new_array::NewArrayRule, var::VarRule, while_loop::WhileLoopRule}}, token::{Position, PositionRange, TokenType, TokenValue}};
 use std::{arch::x86_64, fmt, rc::Rc};
 
 pub struct PrimaryRule {}
@@ -17,6 +17,10 @@ impl ParseRule<Box<dyn ASTNode>> for PrimaryRule {
     fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
         if (CallRule {}).check_match(parser.get_cursor()) {
             return parser.apply_rule_boxed(CallRule {}, "primary call", None);
+        }
+
+        if (ConstructorCallRule {}).check_match(parser.get_cursor()) {
+            return parser.apply_rule_boxed(ConstructorCallRule {}, "primary constructor call", None);
         }
 
         if (GetcRule {}).check_match(parser.get_cursor()) {
@@ -61,9 +65,9 @@ impl ParseRule<Box<dyn ASTNode>> for PrimaryRule {
         let cur = parser.cur();
 
         let literal = match (cur.token_type, cur.value) {
-            (TokenType::IntLiteral, TokenValue::Int(x)) => ASTWrapper::new_literal(Literal::Int(x), ParsedType::Unit(ParsedUnitType::Integer), cur.position),
-            (TokenType::DoubleLiteral, TokenValue::Double(x)) => ASTWrapper::new_literal(Literal::Double(x), ParsedType::Unit(ParsedUnitType::Double), cur.position),
-            (TokenType::BoolLiteral, TokenValue::Bool(x)) => ASTWrapper::new_literal(Literal::Bool(x), ParsedType::Unit(ParsedUnitType::Boolean), cur.position),
+            (TokenType::IntLiteral, TokenValue::Int(x)) => ASTWrapper::new_int_literal(x, cur.position),
+            (TokenType::DoubleLiteral, TokenValue::Double(x)) => ASTWrapper::new_double_literal(x, cur.position),
+            (TokenType::BoolLiteral, TokenValue::Bool(x)) => ASTWrapper::new_bool_literal(x, cur.position),
             _ => {
                 parser.push_diagnostic(ErrMsg::ExpectedExpression.make_diagnostic(cur.position));
                 return None;

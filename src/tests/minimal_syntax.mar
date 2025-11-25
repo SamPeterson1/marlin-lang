@@ -13,7 +13,7 @@ struct SingleMember {
 }
 
 struct SingleConstructor {
-    $init() {
+    $() {
     }
 }
 

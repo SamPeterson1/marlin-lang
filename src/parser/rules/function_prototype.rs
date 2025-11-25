@@ -18,12 +18,16 @@ impl ParseRule<ASTWrapper<FunctionPrototype>> for FunctionPrototypeRule {
     fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<FunctionPrototype>> {
         let fn_token = parser.try_consume(TokenType::Fn)?;
 
+        let name = parser.consume_or_diagnostic(TokenType::Identifier)?.get_string().to_string();
+
         let parameters = parser.apply_rule(ParametersRule {}, "function parameters", Some(ErrMsg::ExpectedParameters))?;
 
         parser.consume_or_diagnostic(TokenType::Arrow);
 
         let ret_type = parser.apply_rule(ParsedTypeRule {}, "return type", None)?;
 
-        Some(ASTWrapper::new_function_prototype(fn_token, parameters, ret_type))
+        let position = PositionRange::concat(&fn_token.position, &ret_type.position);
+
+        Some(ASTWrapper::new_function_prototype(name, parameters, ret_type, position))
     }
 }

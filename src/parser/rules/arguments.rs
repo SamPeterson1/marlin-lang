@@ -21,17 +21,20 @@ impl ParseRule<ASTWrapper<Arguments>> for ArgumentsRule {
 
         let mut arguments = Vec::new();
         
-        if let Some(argument) = parser.apply_rule(ExprRule {}, "first argument", None) {
-            arguments.push(argument);
-
-            while let Some(_) = parser.try_consume(TokenType::Comma) {
-                let argument = parser.apply_rule(ExprRule {}, "argument", Some(ErrMsg::ExpectedExpression))?;
+        //Check if the next token is a right paren to allow for empty argument lists
+        if parser.try_consume(TokenType::RightParen).is_none() {
+            if let Some(argument) = parser.apply_rule(ExprRule {}, "first argument", None) {
                 arguments.push(argument);
+    
+                while let Some(_) = parser.try_consume(TokenType::Comma) {
+                    let argument = parser.apply_rule(ExprRule {}, "argument", Some(ErrMsg::ExpectedExpression))?;
+                    arguments.push(argument);
+                }
             }
+
+            parser.consume_or_diagnostic(TokenType::RightParen);
         }
-
-        let right_paren = parser.consume_or_diagnostic(TokenType::RightParen);
-
+        
         let position = PositionRange::concat(&left_paren.position, &parser.prev().position);
 
         Some(ASTWrapper::new_arguments(arguments, position))

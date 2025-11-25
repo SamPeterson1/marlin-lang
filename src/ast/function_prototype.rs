@@ -10,12 +10,10 @@ pub struct FunctionPrototype {
 }
 
 impl ASTWrapper<FunctionPrototype> {
-    pub fn new_function_prototype(name: Token, parameters: ASTWrapper<Parameters>, return_type: ASTWrapper<ParsedType>) -> Self {
-        let position = PositionRange::concat(&name.position, &return_type.position);
-        
+    pub fn new_function_prototype(name: String, parameters: ASTWrapper<Parameters>, return_type: ASTWrapper<ParsedType>, position: PositionRange) -> Self {        
         ASTWrapper {
             data: FunctionPrototype { 
-                name: name.get_string().to_string(), 
+                name, 
                 parameters,
                 return_type
             },

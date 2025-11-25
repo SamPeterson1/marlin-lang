@@ -34,7 +34,7 @@ main {
             for (let int i = start() @ init; i < end() @ init; i = next(i) @ iter) {
                 if should_process(i) @ check {
                     loop {
-                        let result = process(
+                        let Foobar result = process(
                             transform(i) @ utils,
                             config() @ settings
                         ) @ worker;

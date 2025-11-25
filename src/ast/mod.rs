@@ -21,6 +21,7 @@ pub mod parsed_type;
 pub mod function_prototype;
 pub mod parameters;
 pub mod program;
+pub mod constructor_call;
 
 use assignment_expr::AssignmentExpr;
 use binary_expr::BinaryExpr;
@@ -39,7 +40,7 @@ use serde_json;
 use unary_expr::UnaryExpr;
 use var_expr::VarExpr;
 
-use crate::{ast::{constructor_item::ConstructorItem, function_item::FunctionItem, main_item::MainItem, new_array_expr::NewArrayExpr, struct_item::StructItem}, token::{PositionRange, Positioned}};
+use crate::{ast::{constructor_call::{ConstructorCallExpr}, constructor_item::ConstructorItem, function_item::FunctionItem, main_item::MainItem, new_array_expr::NewArrayExpr, struct_item::StructItem}, token::{PositionRange, Positioned}};
 
 pub trait ASTVisitable: AcceptsASTVisitor<()> {}
 
@@ -77,8 +78,7 @@ impl<E: Serialize> Serialize for ASTWrapper<E> {
         
         // Add ! field FIRST (alphabetically before all other fields)
         let full_type_name = std::any::type_name::<E>();
-        let simple_type_name = full_type_name.split("::").last().unwrap_or(full_type_name);
-        map.serialize_entry("!", &simple_type_name)?;
+        map.serialize_entry("!", &full_type_name)?;
         
         // Serialize the data and flatten its fields into our map (middle entries)
         let data_value = serde_json::to_value(&self.data).map_err(serde::ser::Error::custom)?;
@@ -113,6 +113,7 @@ pub trait ASTVisitor<T> {
     fn visit_loop(&mut self, _node: &ASTWrapper<LoopExpr>) -> T { unimplemented!() }
     fn visit_break(&mut self, _node: &ASTWrapper<BreakExpr>) -> T { unimplemented!() }
     fn visit_call(&mut self, _node: &ASTWrapper<CallExpr>) -> T { unimplemented!() }
+    fn visit_constructor_call(&mut self, _node: &ASTWrapper<ConstructorCallExpr>) -> T { unimplemented!() }
     fn visit_new_array(&mut self, _node: &ASTWrapper<NewArrayExpr>) -> T { unimplemented!() }
     fn visit_put_char(&mut self, _node: &ASTWrapper<PutCharExpr>) -> T { unimplemented!() }
     fn visit_get_char(&mut self, _node: &ASTWrapper<GetCharExpr>) -> T { unimplemented!() }

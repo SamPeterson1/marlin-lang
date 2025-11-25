@@ -326,7 +326,7 @@ impl Lexer<'_> {
                 if !is_decimal {
                     self.end_token(TokenType::IntLiteral, TokenValue::Int(value as i64))
                 } else {
-                    self.end_token(TokenType::FloatLiteral, TokenValue::Double(value))
+                    self.end_token(TokenType::DoubleLiteral, TokenValue::Double(value))
                 }
             },
         }
@@ -375,7 +375,7 @@ impl Lexer<'_> {
             "rand" => self.end_token(TokenType::Rand, TokenValue::None),
             "input" => self.end_token(TokenType::Input, TokenValue::None),
             "struct" => self.end_token(TokenType::Struct, TokenValue::None),
-            "alloc" => self.end_token(TokenType::Alloc, TokenValue::None),
+            "new" => self.end_token(TokenType::New, TokenValue::None),
             "putc" => self.end_token(TokenType::Putc, TokenValue::None),
             "getc" => self.end_token(TokenType::Getc, TokenValue::None),
             _ => self.end_token(TokenType::Identifier, TokenValue::String(word)),
