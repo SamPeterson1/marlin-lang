@@ -6,12 +6,12 @@ use crate::{ast::{ASTNode, ASTWrapper, lvar_expr::LVarExpr}, token::{PositionRan
 
 #[derive(Serialize)]
 pub struct AssignmentExpr {
-    pub assignee: ASTWrapper<LVarExpr>,
+    pub assignee: Box<dyn ASTNode>,
     pub expr: Box<dyn ASTNode>,
 }
 
 impl ASTWrapper<AssignmentExpr> {
-    pub fn new_assignment(assignee: ASTWrapper<LVarExpr>, expr: Box<dyn ASTNode>) -> Self {
+    pub fn new_assignment(assignee: Box<dyn ASTNode>, expr: Box<dyn ASTNode>) -> Self {
         let position = PositionRange::concat(&assignee.get_position(), expr.get_position());
 
         ASTWrapper {

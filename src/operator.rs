@@ -39,6 +39,28 @@ pub trait UnaryOperator : fmt::Debug + erased_serde::Serialize {
 serialize_trait_object!(UnaryOperator);
 
 #[derive(Debug)]
+struct Deref;
+
+impl Serialize for Deref {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.collect_str("*")
+    }
+}
+
+impl UnaryOperator for Deref {
+
+}
+
+#[derive(Debug)]
+struct AddressOf;
+
+impl Serialize for AddressOf {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.collect_str("&")
+    }
+}
+
+#[derive(Debug)]
 struct Not;
 
 impl Serialize for Not {

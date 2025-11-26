@@ -36,7 +36,7 @@ arithmetic-factor: unary (("*" | "/") unary)*
 unary: ("!" | "-" | "*" | "&")* unary | access
 access: primary (("->" | ".") identifier)*
 arguments: "(" [expression (expression ",")*] ")"
-primary: call | getc | new-array | constructor | loop | if | block | for | while | "(" expression ")" | literal | r-var
+primary: call | getc | new-array | constructor | loop | if | block | for | while | "(" expression ")" | literal | identifier
 
 
 call: identifier [arguments]
