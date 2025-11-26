@@ -1,8 +1,6 @@
-use std::rc::Rc;
-
 use serde::Serialize;
 
-use crate::{ast::{ASTNode, ASTWrapper, block_expr::BlockExpr, constructor_item::ConstructorItem}, impl_ast_node, token::PositionRange};
+use crate::{ast::{ASTWrapper, block_expr::BlockExpr}, impl_ast_node, token::PositionRange};
 
 #[derive(Serialize)]
 pub struct MainItem {

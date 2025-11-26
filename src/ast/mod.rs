@@ -11,17 +11,18 @@ pub mod loop_expr;
 pub mod put_char_expr;
 pub mod new_array_expr;
 pub mod unary_expr;
-pub mod var_expr;
+pub mod lvar_expr;
+pub mod rvar_expr;
 pub mod function_item;
 pub mod struct_item;
 pub mod constructor_item;
 pub mod main_item;
 pub mod arguments;
 pub mod parsed_type;
-pub mod function_prototype;
 pub mod parameters;
 pub mod program;
 pub mod constructor_call;
+pub mod member_access;
 
 use assignment_expr::AssignmentExpr;
 use binary_expr::BinaryExpr;
@@ -38,9 +39,8 @@ use put_char_expr::PutCharExpr;
 use serde::Serialize;
 use serde_json;
 use unary_expr::UnaryExpr;
-use var_expr::VarExpr;
 
-use crate::{ast::{constructor_call::{ConstructorCallExpr}, constructor_item::ConstructorItem, function_item::FunctionItem, main_item::MainItem, new_array_expr::NewArrayExpr, struct_item::StructItem}, token::{PositionRange, Positioned}};
+use crate::{ast::{constructor_call::ConstructorCallExpr, constructor_item::ConstructorItem, function_item::FunctionItem, lvar_expr::LVarExpr, main_item::MainItem, new_array_expr::NewArrayExpr, rvar_expr::RVarExpr, struct_item::StructItem}, token::{PositionRange, Positioned}};
 
 pub trait ASTVisitable: AcceptsASTVisitor<()> {}
 
@@ -73,14 +73,11 @@ impl<E: Serialize> Serialize for ASTWrapper<E> {
     {
         use serde::ser::SerializeMap;
         
-        // Create a map to hold all our fields
         let mut map = serializer.serialize_map(None)?;
         
-        // Add ! field FIRST (alphabetically before all other fields)
         let full_type_name = std::any::type_name::<E>();
         map.serialize_entry("!", &full_type_name)?;
         
-        // Serialize the data and flatten its fields into our map (middle entries)
         let data_value = serde_json::to_value(&self.data).map_err(serde::ser::Error::custom)?;
         if let serde_json::Value::Object(data_map) = data_value {
             for (key, value) in data_map {
@@ -88,7 +85,6 @@ impl<E: Serialize> Serialize for ASTWrapper<E> {
             }
         }
         
-        // Add z_position field LAST (alphabetically after all other fields)
         map.serialize_entry("z_position", &self.position)?;
         
         map.end()
@@ -105,7 +101,8 @@ pub trait ASTVisitor<T> {
     fn visit_binary(&mut self, _node: &ASTWrapper<BinaryExpr>) -> T { unimplemented!() }
     fn visit_unary(&mut self, _node: &ASTWrapper<UnaryExpr>) -> T { unimplemented!() }
     fn visit_literal(&mut self, _node: &ASTWrapper<LiteralExpr>) -> T { unimplemented!() }
-    fn visit_var(&mut self, _node: &ASTWrapper<VarExpr>) -> T { unimplemented!() }
+    fn visit_lvar(&mut self, _node: &ASTWrapper<LVarExpr>) -> T { unimplemented!() }
+    fn visit_rvar(&mut self, _node: &ASTWrapper<RVarExpr>) -> T { unimplemented!() }
     fn visit_if(&mut self, _node: &ASTWrapper<IfExpr>) -> T { unimplemented!() }
     fn visit_assignment(&mut self, _node: &ASTWrapper<AssignmentExpr>) -> T { unimplemented!() }
     fn visit_declaration(&mut self, _node: &ASTWrapper<DeclarationExpr>) -> T { unimplemented!() }

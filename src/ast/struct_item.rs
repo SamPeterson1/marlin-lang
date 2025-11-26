@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use serde::Serialize;
 
-use crate::{ast::{ASTNode, ASTWrapper, constructor_item::ConstructorItem, parsed_type::ParsedType}, impl_ast_node, token::PositionRange};
+use crate::{ast::{ASTWrapper, constructor_item::ConstructorItem, parsed_type::ParsedType}, impl_ast_node, token::PositionRange};
 
 #[derive(Serialize)]
 pub struct StructItem {

@@ -1,5 +1,5 @@
 program: item*
-item: main | struct | func
+item: main | struct | impl
 
 main: "main" block-expression
 
@@ -8,15 +8,16 @@ struct-body: struct-member* struct-constructor*
 struct-member: type identifier ";"
 struct-constructor: "$" parameters block-expression
 
-func: function-prototype "@" identifier identifier block-expression
-function-prototype: "fn" identifier parameters "->" type
+impl: "impl" type { function* }
+function: "fn" identifier parameters "->" type block-expression
 parameters: "(" [type identifier ("," type identifier)*] ")"
 
 statement: loop | if | block | for | while | break | declaration | putc | assignment
 expression: condition
 block: "{" statement* "}"
 declaration: "let" type identifier "=" expression ";"
-assignment: identifier "=" expression
+ptr-assignment: "*" expression "=" expression ";"
+value-assignment: expression "=" expression
 for: "for" "(" declaration expression ";" assignment ")" block
 while: "while" expression block
 break: "break" [expression] ";"
@@ -32,10 +33,13 @@ comparison: arithmetic-term (comparator arithmetic-term)*
 comparator: "<" | "<=" | "==" | "!=" | ">" | ">="
 arithmetic-term: arithmetic-factor (("-" | "+") arithmetic-factor)*
 arithmetic-factor: unary (("*" | "/") unary)*
-unary: ("!" | "-")* unary | primary
+unary: ("!" | "-" | "*" | "&")* unary | primary
+access: primary (("->" | ".") identifier)*
 arguments: "(" [expression (expression ",")*] ")"
-primary: call | getc | new-array | constructor | loop | if | block | for | while | "(" expression ")" | identifier | literal
-call: identifier [arguments] "@" expression
+primary: call | getc | new-array | constructor | loop | if | block | for | while | "(" expression ")" | literal | r-var
+
+
+call: identifier [arguments]
 type: unit-type ("[]")* ["&"]
-unit-type: (primitive-type | identifier) ["&"]
+unit-type: (primitive-type | identifier) ["&" | "*"*]
 primitive-type: "int" | "double" | "bool";

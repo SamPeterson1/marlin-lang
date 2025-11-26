@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::{ast::{ASTNode, ASTWrapper, parsed_type::{ParsedType, ParsedUnitType}}, token::PositionRange};
+use crate::{ast::{ASTNode, ASTWrapper, parsed_type::ParsedUnitType}, token::PositionRange};
 
 #[derive(Serialize)]
 pub struct NewArrayExpr {

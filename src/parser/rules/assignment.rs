@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{ast::{ASTNode, ASTWrapper, assignment_expr::AssignmentExpr, var_expr::VarExpr}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::{self, ErrMsg}, rules::{expr::ExprRule, var::VarRule}}, token::{Position, PositionRange, TokenType}};
+use crate::{ast::{ASTNode, ASTWrapper, assignment_expr::AssignmentExpr, lvar_expr::VarExpr}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::{self, ErrMsg}, rules::{expr::ExprRule, var::VarRule}}, token::{Position, PositionRange, TokenType}};
 
 pub struct AssignmentRule {}
 
