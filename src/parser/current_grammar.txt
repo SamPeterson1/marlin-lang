@@ -33,7 +33,7 @@ comparison: arithmetic-term (comparator arithmetic-term)*
 comparator: "<" | "<=" | "==" | "!=" | ">" | ">="
 arithmetic-term: arithmetic-factor (("-" | "+") arithmetic-factor)*
 arithmetic-factor: unary (("*" | "/") unary)*
-unary: ("!" | "-" | "*" | "&")* unary | primary
+unary: ("!" | "-" | "*" | "&")* unary | access
 access: primary (("->" | ".") identifier)*
 arguments: "(" [expression (expression ",")*] ")"
 primary: call | getc | new-array | constructor | loop | if | block | for | while | "(" expression ")" | literal | r-var
