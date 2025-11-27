@@ -1,0 +1,23 @@
+main {
+    let int result1 = 1 + 2 * 3 - 4 / 5;
+    let int result2 = (1 + 2) * (3 - 4) / 5;
+    let bool result3 = !true and false or true;
+    
+    let int negative = ---5;
+    let bool complex_bool = !!!false;
+    
+    let bool comp1 = 1 + 2 * 3 >= 4 - 5 and 6 <= 7 * 8;
+    let bool comp2 = x == y != z < w > v;
+    
+    let double mixed = 1 + 2.5 * 3;
+    let int nested = ((((1 + 2) * 3) - 4) / 5);
+    
+    let int& ref_x = &x;
+    let int ptr_val = *ref_x;
+    *ref_x = 100;
+    
+    let Point p = $Point(1, 2);
+    let int x_coord = p.x;
+    let Point& p_ref = &p;
+    let int x_via_ref = p_ref->x;
+}

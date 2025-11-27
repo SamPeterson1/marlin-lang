@@ -147,7 +147,7 @@ pub enum TokenValue {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum TokenType {
-    Semicolon, Dot, Comma, Colon, Assignment, DollarSign, AtSign,
+    Semicolon, Dot, Comma, Assignment, DollarSign,
 
     LeftCurly, RightCurly, 
     LeftSquare, RightSquare, 
@@ -164,8 +164,8 @@ pub enum TokenType {
     Arrow,
     Let,
 
-    If, Else, For, Return, Fn, Rand, Main,
-    This, While, Loop, Break, Print, Input,
+    If, Else, For, Return, Fn, Main,
+    While, Loop, Break, Result, Impl,
 
     Int, Double, Bool, String,
     Struct,
@@ -182,10 +182,8 @@ impl fmt::Display for TokenType {
             TokenType::Semicolon => write!(f, "';'"),
             TokenType::Dot => write!(f, "'.'"),
             TokenType::Comma => write!(f, "','"),
-            TokenType::Colon => write!(f, "':'"),
             TokenType::Assignment => write!(f, "'='"),
             TokenType::DollarSign => write!(f, "$"),
-            TokenType::AtSign => write!(f, "@"),
 
             TokenType::LeftCurly => write!(f, "'{{'"),
             TokenType::RightCurly => write!(f, "'}}'"),
@@ -220,14 +218,12 @@ impl fmt::Display for TokenType {
             TokenType::For => write!(f, "'for'"),
             TokenType::Return => write!(f, "'return'"),
             TokenType::Fn => write!(f, "'fn'"),
-            TokenType::Rand => write!(f, "'rand'"),
             TokenType::Main => write!(f, "'main'"),
-            TokenType::This => write!(f, "'this'"),
             TokenType::While => write!(f, "'while'"),
             TokenType::Loop => write!(f, "'loop'"),
             TokenType::Break => write!(f, "'break'"),
-            TokenType::Print => write!(f, "'print'"),
-            TokenType::Input => write!(f, "'input'"),
+            TokenType::Result => write!(f, "'result'"),
+            TokenType::Impl => write!(f, "'impl'"),
 
             TokenType::Int => write!(f, "'int'"),
             TokenType::Double => write!(f, "'double'"),

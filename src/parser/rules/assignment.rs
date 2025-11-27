@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{ast::{ASTNode, ASTWrapper, assignment_expr::AssignmentExpr, lvar_expr::VarExpr}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::{self, ErrMsg}, rules::{expr::ExprRule, var::VarRule}}, token::{Position, PositionRange, TokenType}};
+use crate::{ast::{ASTWrapper, assignment_expr::AssignmentExpr}, parser::{ExprParser, ParseRule, ParserCursor, diagnostic::ErrMsg, rules::expr::ExprRule}, token::TokenType};
 
 pub struct AssignmentRule {}
 
@@ -11,17 +11,17 @@ impl fmt::Display for AssignmentRule {
 }
 
 impl ParseRule<ASTWrapper<AssignmentExpr>> for AssignmentRule {
-    fn check_match(&self, mut cursor: ParserCursor) -> bool {
-        cursor.try_consume(TokenType::Identifier).is_some() && cursor.try_consume(TokenType::Assignment).is_some()
+    fn check_match(&self, _cursor: ParserCursor) -> bool {
+        true
     }
     
     fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<AssignmentExpr>> {
-        let assignee = parser.try_consume(TokenType::Identifier)?;
+        let assignee = parser.apply_rule(ExprRule {}, "assignee expression", Some(ErrMsg::ExpectedExpression))?;
         
-        parser.try_consume(TokenType::Assignment)?;
+        parser.consume_or_diagnostic(TokenType::Assignment);
 
         let expr = parser.apply_rule(ExprRule {}, "assignment expression", Some(ErrMsg::ExpectedExpression))?;
 
-        Some(ASTWrapper::new_assignment(&assignee, expr))
+        Some(ASTWrapper::new_assignment(assignee, expr))
     }
 }

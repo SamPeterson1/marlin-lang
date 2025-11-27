@@ -1,5 +1,5 @@
-use crate::{ast::{ASTNode, ASTWrapper, literal_expr::Literal, parsed_type::{ParsedType, ParsedUnitType}}, logger::Log, parser::{ExprParser, ParseRule, TokenCursor, diagnostic::{self, ErrMsg}, rules::{block::BlockRule, call::CallRule, constructor_call::ConstructorCallRule, expr::ExprRule, for_loop::ForLoopRule, getc::GetcRule, if_block::IfBlockRule, loop_expr::LoopRule, new_array::NewArrayRule, var::VarRule, while_loop::WhileLoopRule}}, token::{Position, PositionRange, TokenType, TokenValue}};
-use std::{arch::x86_64, fmt, rc::Rc};
+use crate::{ast::{ASTNode, ASTWrapper}, parser::{ExprParser, ParseRule, TokenCursor, diagnostic::ErrMsg, rules::{block::BlockRule, constructor_call::ConstructorCallRule, expr::ExprRule, for_loop::ForLoopRule, if_block::IfBlockRule, loop_expr::LoopRule, new_array::NewArrayRule, var::VarRule, while_loop::WhileLoopRule}}, token::{TokenType, TokenValue}};
+use std::fmt;
 
 pub struct PrimaryRule {}
 
@@ -10,21 +10,13 @@ impl fmt::Display for PrimaryRule {
 }
 
 impl ParseRule<Box<dyn ASTNode>> for PrimaryRule {
-    fn check_match(&self, cursor: crate::parser::ParserCursor) -> bool {
+    fn check_match(&self, _cursor: crate::parser::ParserCursor) -> bool {
         true
     }
 
     fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
-        if (CallRule {}).check_match(parser.get_cursor()) {
-            return parser.apply_rule_boxed(CallRule {}, "primary call", None);
-        }
-
         if (ConstructorCallRule {}).check_match(parser.get_cursor()) {
             return parser.apply_rule_boxed(ConstructorCallRule {}, "primary constructor call", None);
-        }
-
-        if (GetcRule {}).check_match(parser.get_cursor()) {
-            return parser.apply_rule_boxed(GetcRule {}, "primary getc", None);
         }
         
         if (NewArrayRule {}).check_match(parser.get_cursor()) {

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{ast::{ASTNode, ASTWrapper, block_expr::BlockExpr}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::{self, ErrMsg}, rules::statement::StatementRule}, token::{Position, PositionRange, TokenType}};
+use crate::{ast::{ASTNode, ASTWrapper, block_expr::BlockExpr}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::statement::StatementRule}, token::{PositionRange, TokenType}};
 
 pub struct BlockRule {}
 
@@ -21,7 +21,7 @@ impl ParseRule<ASTWrapper<BlockExpr>> for BlockRule {
         parser.consume_or_diagnostic(TokenType::LeftCurly);
         let mut exprs: Vec<Box<dyn ASTNode>> = Vec::new();
 
-        while parser.try_match(&[TokenType::EOF, TokenType::RightCurly]).is_none() {
+        while parser.try_consume_match(&[TokenType::EOF, TokenType::RightCurly]).is_none() {
             let statement = parser.apply_rule(StatementRule {}, "block statement", Some(ErrMsg::ExpectedStatement));
 
             if let Some(statement) = statement {

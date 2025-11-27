@@ -1,32 +1,62 @@
+struct MathUtils {
+    $() {
+    }
+}
+
+impl MathUtils {
+    fn add(int a, int b) -> int {
+        return a + b;
+    }
+    
+    fn multiply(int a, int b) -> int {
+        return a * b;
+    }
+    
+    fn power(int base, int exp) -> int {
+        if exp == 0 {
+            return 1;
+        }
+        return base * power(base, exp - 1);
+    }
+}
+
+struct ComplexStruct {
+    Point center;
+    Calculator calc;
+    
+    $(Point p, Calculator c) {
+        center = p;
+        calc = c;
+    }
+}
+
 main {
-    let int deep_result = add(
-        multiply(
-            subtract(10, 5)@math,
-            divide(20, 4)@math
-        )@math,
-        power(2, 3)@math
-    )@math;
+    let MathUtils math = $MathUtils();
+    
+    let int deep_result = math.add(
+        math.multiply(
+            math.add(10, 5),
+            math.add(20, 4)
+        ),
+        math.power(2, 3)
+    );
     
     let int[][][] cube = new int[3][4][5];
-    
-    let int single_value = multiply(2)@math;
-
-    either have immutable references (&)
-    or you can alias (&&)
+    let int single_value = math.multiply(2, 3);
     
     let ComplexStruct cs = $ComplexStruct(
         $Point(
-            add(1, 2)@math,
-            subtract(5, 3)@math
+            math.add(1, 2),
+            math.add(5, 3)
         ),
         $Calculator(
-            multiply(10, 5)@math
+            math.multiply(10, 5)
         )
     );
     
     let bool complex_condition = (
         (x + y * z / w - v) >= (a * b - c) and
-        (func1()@mod or func2()@mod) and
+        (math.add(1, 2) > 0 or math.multiply(2, 3) < 10) and
         !variable_check
     ) or (
         getc == 65 and 
@@ -34,21 +64,29 @@ main {
     );
     
     if complex_condition {
-        while x < limit()@config {
-            for (let int i = start()@init; i < end()@init; i = next(i)@iter) {
-                if should_process(i)@check {
+        while x < math.add(10, 5) {
+            for (let int i = 0; i < math.multiply(3, 2); i = math.add(i, 1)) {
+                if i == math.add(2, 1) {
                     loop {
-                        let Foobar result = process(
-                            transform(i)@utils,
-                            config()@settings
-                        )@worker;
-                        if is_complete(result)@validator {
-                            break finalize(result)@output;
+                        let int value = math.multiply(
+                            math.add(i, 1),
+                            math.power(2, 2)
+                        );
+                        if value > math.multiply(10, 2) {
+                            return math.add(value, 1);
                         }
                     }
                 }
             }
-            x = increment(x)@counter;
+            x = math.add(x, 1);
         }
     }
+    
+    let Point& p_ref = &cs.center;
+    let int nested_access = p_ref->x;
+    
+    let Calculator* calc_ptr = &cs.calc;
+    let int ptr_result = calc_ptr->add(math.multiply(5, 2));
+    
+    **&calc_ptr = $Calculator(100);
 }

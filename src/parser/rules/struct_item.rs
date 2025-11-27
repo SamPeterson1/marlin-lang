@@ -1,8 +1,5 @@
-use chrono::format::Parsed;
-
-use crate::{ast::{ASTWrapper, struct_item::StructItem}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic, rules::{constructor_item::ConstructorRule, parsed_type::ParsedTypeRule}}, token::{Position, PositionRange, Token, TokenType}};
+use crate::{ast::{ASTWrapper, struct_item::StructItem}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, rules::{constructor_item::ConstructorRule, parsed_type::ParsedTypeRule}}, token::{PositionRange, TokenType}};
 use std::fmt;
-use std::collections::HashMap;
 
 pub struct StructRule {}
 

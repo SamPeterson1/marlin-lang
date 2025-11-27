@@ -1,4 +1,4 @@
-use crate::{ast::ASTNode, parser::{ExprParser, ParseRule, ParserCursor, diagnostic, rules::main_item::MainItemRule}, token::{Position, PositionRange, TokenType}};
+use crate::{ast::ASTNode, parser::{ExprParser, ParseRule, ParserCursor, rules::{impl_block::ImplBlockRule, main_item::MainItemRule}}};
 use std::fmt;
 
 use super::{function_item::FunctionRule, struct_item::StructRule};
@@ -22,11 +22,15 @@ impl ParseRule<Box<dyn ASTNode>> for ItemRule {
         }
 
         if (FunctionRule {}).check_match(parser.get_cursor()) {
-            return parser.apply_rule_boxed(FunctionRule {}, "function item", None);
+            return parser.apply_rule_boxed( FunctionRule {}, "function item", None);
         }
 
         if ((StructRule {})).check_match(parser.get_cursor()) {
             return parser.apply_rule_boxed(StructRule {}, "struct item", None);
+        }
+
+        if (ImplBlockRule {}).check_match(parser.get_cursor()) {
+            return parser.apply_rule_boxed(ImplBlockRule {}, "impl item", None);
         }
 
         None

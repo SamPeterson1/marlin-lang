@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{ast::{ASTWrapper, function_item::FunctionItem, main_item::MainItem}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::{self, ErrMsg}, rules::{block::BlockRule, function_prototype::FunctionPrototypeRule, parsed_type::ParsedTypeRule}}, token::{Position, PositionRange, Positioned, TokenType}};
+use crate::{ast::{ASTWrapper, main_item::MainItem}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::block::BlockRule}, token::{PositionRange, Positioned, TokenType}};
 
 pub struct MainItemRule {}
 

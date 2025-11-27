@@ -1,8 +1,6 @@
-use std::rc::Rc;
-
 use serde::Serialize;
 
-use crate::{ast::{ASTNode, ASTWrapper, lvar_expr::LVarExpr}, token::{PositionRange, Positioned, Token}};
+use crate::{ast::{ASTNode, ASTWrapper}, token::{PositionRange}};
 
 #[derive(Serialize)]
 pub struct AssignmentExpr {

@@ -1,19 +1,18 @@
 main {
 }
 
-fn empty_function() -> int @ module name {
-}
-
-fn single_statement() -> bool @ test module {
-    break true;
-}
-
 struct SingleMember {
     int x;
 }
 
 struct SingleConstructor {
     $() {
+    }
+}
+
+impl int {
+    fn identity() -> int {
+        return *this;
     }
 }
 
@@ -28,5 +27,5 @@ main {
     x = 1;
     y = x;
     
-    break;
+    return;
 }

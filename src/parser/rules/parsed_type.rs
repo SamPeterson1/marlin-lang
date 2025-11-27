@@ -1,6 +1,6 @@
-use std::{array, fmt, rc::Rc};
+use std::fmt;
 
-use crate::{ast::{ASTWrapper, new_array_expr::NewArrayExpr, parsed_type::{ParsedType, ParsedUnitType}}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::{self, ErrMsg}, rules::parsed_unit_type::ParsedUnitTypeRule}, token::{Position, PositionRange, TokenType, TokenValue}};
+use crate::{ast::{ASTWrapper, parsed_type::ParsedType}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::parsed_unit_type::ParsedUnitTypeRule}, token::{PositionRange, TokenType}};
 
 pub struct ParsedTypeRule {}
 

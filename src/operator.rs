@@ -28,6 +28,8 @@ pub fn as_unary_operator(token_type: TokenType) -> Box<dyn UnaryOperator> {
         TokenType::Semicolon => Box::new(Semicolon),
         TokenType::Not => Box::new(Not),
         TokenType::Minus => Box::new(Negative),
+        TokenType::Star => Box::new(Deref),
+        TokenType::Ampersand => Box::new(AddressOf),
         _ => panic!("Invalid unary operator {:?}", token_type)
     }
 }
@@ -58,6 +60,10 @@ impl Serialize for AddressOf {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.collect_str("&")
     }
+}
+
+impl UnaryOperator for AddressOf {
+
 }
 
 #[derive(Debug)]

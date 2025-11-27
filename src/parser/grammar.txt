@@ -1,5 +1,5 @@
 program: item*
-item: main | struct | impl
+item: main | struct | impl | function
 
 main: "main" block-expression
 
@@ -8,11 +8,11 @@ struct-body: struct-member* struct-constructor*
 struct-member: type identifier ";"
 struct-constructor: "$" parameters block-expression
 
-impl: "impl" type { function* }
+impl: "impl" type "{" function* "}"
 function: "fn" identifier parameters "->" type block-expression
 parameters: "(" [type identifier ("," type identifier)*] ")"
 
-statement: loop | if | block | for | while | break | declaration | putc | assignment
+statement: loop | if | block | for | while | exit | declaration | assignment
 expression: condition
 block: "{" statement* "}"
 declaration: "let" type identifier "=" expression ";"
@@ -20,10 +20,11 @@ ptr-assignment: "*" expression "=" expression ";"
 value-assignment: expression "=" expression
 for: "for" "(" declaration expression ";" assignment ")" block
 while: "while" expression block
-break: "break" [expression] ";"
+exit: ("return" | "break" | "result") [expression] ";"
 loop: "loop" block
 if: "if" expression block elif* [else]
 elif: "else" "if" expression block
+
 else: "else" block
 constructor: ["new"] "$" identifier arguments
 new-array: "new" type ("[" expression "]")+
@@ -33,13 +34,12 @@ comparison: arithmetic-term (comparator arithmetic-term)*
 comparator: "<" | "<=" | "==" | "!=" | ">" | ">="
 arithmetic-term: arithmetic-factor (("-" | "+") arithmetic-factor)*
 arithmetic-factor: unary (("*" | "/") unary)*
-unary: ("!" | "-" | "*" | "&")* unary | access
-access: primary (("->" | ".") identifier)*
+unary: ("!" | "-" | "*" | "&") unary | member-access
+member-access: primary (("->" | ".") identifier | "[" expression "]" | arguments)*
 arguments: "(" [expression (expression ",")*] ")"
-primary: call | getc | new-array | constructor | loop | if | block | for | while | "(" expression ")" | literal | identifier
+primary: new-array | constructor | loop | if | block | for | while | "(" expression ")" | literal | identifier
 
 
-call: identifier [arguments]
 type: unit-type ("[]")* ["&"]
 unit-type: (primitive-type | identifier) ["&" | "*"*]
 primitive-type: "int" | "double" | "bool";

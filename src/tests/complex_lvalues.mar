@@ -1,0 +1,198 @@
+struct Matrix {
+    int[][] data;
+    int* row_ptrs;
+    
+    $(int rows, int cols) {
+        data = new int[rows][cols];
+        row_ptrs = new int[rows];
+    }
+}
+
+struct Container {
+    Matrix matrices;
+    Point[] points;
+    int*** deep_data;
+    
+    $(int size) {
+        matrices = $Matrix(size, size);
+        points = new Point[size];
+        deep_data = new int**[size];
+    }
+}
+
+impl Container {
+    fn get_matrix() -> Matrix {
+        return matrices;
+    }
+    
+    fn get_point_array() -> Point[] {
+        return points;
+    }
+    
+    fn get_conditional_matrix(bool condition) -> Matrix {
+        if condition {
+            return matrices;
+        } else {
+            return $Matrix(1, 1);
+        }
+    }
+}
+
+main {
+    let Container container = $Container(5);
+    let Container[] containers = new Container[3];
+    let Container*** triple_containers = new Container**[2];
+    
+    containers[0] = $Container(10);
+    containers[1 + 2 * 3] = $Container(20);
+    containers[container.get_matrix().data.length] = $Container(30);
+    
+    container.matrices.data[0][1] = 100;
+    container.matrices.data[1 + 2][3 * 4 + 1] = 200;
+    
+    container.get_matrix().data[0][0] = 300;
+    container.get_point_array()[1] = $Point(10, 20);
+    
+    containers[0].matrices.data[1][2] = 400;
+    containers[1].get_matrix().data[0][0] = 500;
+    
+    *container.matrices.row_ptrs[0] = 600;
+    **container.deep_data[1] = new int[5];
+    ***container.deep_data[2] = 700;
+    
+    (if true { result container; } else { result containers[0]; }).matrices.data[0][0] = 800;
+    
+    (if false { 
+        result $Container(1);
+    } else { 
+        result container;
+    }).matrices.data[1][1] = 900;
+    
+    (loop {
+        if true {
+            break container;
+        }
+    }).matrices.data[2][2] = 1000;
+    
+    ({
+        let Container temp = $Container(3);
+        result temp;
+    }).matrices.data[0][1] = 1100;
+    
+    container.get_conditional_matrix(true).data[0][0] = 1200;
+    container.get_conditional_matrix(false).data[1][1] = 1300;
+    
+    containers[
+        (if true { result 1; } else { result 0; })
+    ].get_conditional_matrix(
+        true
+    ).data[
+        ({
+            let int index = 0;
+            result index + 1;
+        })
+    ][
+        (loop {
+            break 2;
+        })
+    ] = 1400;
+    
+    *&container.matrices.data[0][1] = 1500;
+    **&container.deep_data[1] = new int[10];
+    
+    ***triple_containers[0] = new Container*[5];
+    ****triple_containers[1] = new Container[3];
+    
+    (containers[0]).matrices.data[0][0] = 1600;
+    (&container).matrices.data[1][1] = 1700;
+    (*&container).matrices.data[2][2] = 1800;
+    
+    container.get_point_array()[
+        (if container.matrices.data[0][0] > 100 { 
+            result 1; 
+        } else { 
+            result 0; 
+        })
+    ].x = 1900;
+    
+    container.get_conditional_matrix(
+        container.matrices.data[0][0] > 500
+    ).data[
+        ({
+            let Container temp = containers[1];
+            result temp.matrices.data[0][0] / 100;
+        })
+    ][
+        (loop {
+            let int i = 0;
+            while i < 5 {
+                if i == 3 {
+                    break i;
+                }
+                i = i + 1;
+            }
+            break 0;
+        })
+    ] = 2000;
+    
+    (&containers[0])->matrices.data[0][0] = 2100;
+    (&containers[1 + 1])->get_matrix().data[1][1] = 2200;
+    
+    (if containers[0].matrices.data[0][0] > 100 {
+        result containers[1].get_conditional_matrix(true);
+    } else {
+        result ({
+            let Matrix m = $Matrix(2, 2);
+            result m;
+        });
+    }).data[
+        (loop {
+            let int sum = 0;
+            for (let int i = 0; i < 3; i = i + 1) {
+                sum = sum + containers[i].matrices.data[0][0];
+            }
+            if sum > 1000 {
+                break 1;
+            } else {
+                break 0;
+            }
+        })
+    ][
+        ({
+            let Container& ref_container = &containers[2];
+            result ref_container->matrices.data[0][0] / 3;
+        })
+    ] = 3000;
+    
+    *(&containers[0].matrices.data[0][0]) = 4000;
+    **(&container.deep_data[1]) = new int[20];
+    ***(&container.deep_data[2]) = 5000;
+    
+    (new $Container(5)).matrices.data[0][0] = 6000;
+    
+    ****(&triple_containers[
+        (if true { result 0; } else { result 1; })
+    ])[
+        ({
+            let int complex_index = container.matrices.data[0][0] / 1000;
+            result complex_index;
+        })
+    ][
+        (loop {
+            break containers[0].get_matrix().data[0][0] / 5;
+        })
+    ].get_conditional_matrix(
+        containers[1].matrices.data[1][1] < 2000
+    ).data[
+        (for (let int i = 0; i < 2; i = i + 1) {
+            if i == 1 {
+                break i;
+            }
+        })
+    ][
+        ({
+            let Container temp = containers[2];
+            result temp.matrices.data[2][2] / 500;
+        })
+    ] = 7000;
+}

@@ -1,0 +1,41 @@
+main {
+    let int x = 42;
+    let double y = 3.14;
+    let bool z = true;
+    putc x;
+}
+
+struct Point {
+    int x;
+    double y;
+    
+    $(int px, double py) {
+        x = px;
+        y = py;
+    }
+    
+    $() {
+        x = 0;
+        y = 0;
+    }
+}
+
+impl Point {
+    fn distance(Point other) -> double {
+        let double dx = x - other.x;
+        let double dy = y - other.y;
+        return dx * dx + dy * dy;
+    }
+    
+    fn move_to(int new_x, int new_y) -> Point {
+        x = new_x;
+        y = new_y;
+        return *this;
+    }
+}
+
+impl int {
+    fn add(int other) -> int {
+        return *this + other;
+    }
+}

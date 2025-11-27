@@ -39,7 +39,7 @@ struct ComplexTypes {
     int[] numbers;
     double& reference;
     Point[] points;
-    int[][]& matrix_ref;
+    int**& matrix_ref;
     
     $(int size) {
         numbers = new int[size];
@@ -54,7 +54,19 @@ struct NestedStructs {
     
     $() {
         center = $Point(0, 0);
-        calc = new $Calculator(100);
+        calc = $Calculator();
         config = $MultipleConstructors();
+    }
+}
+
+struct GenericContainer {
+    int* data_ptr;
+    int& data_ref;
+    int** double_ptr;
+    
+    $(int* ptr) {
+        data_ptr = ptr;
+        data_ref = *ptr;
+        double_ptr = &ptr;
     }
 }

@@ -1,6 +1,6 @@
-use std::{array, fmt, rc::Rc};
+use std::{fmt, rc::Rc};
 
-use crate::{ast::{ASTWrapper, new_array_expr::NewArrayExpr, parsed_type::{ParsedBaseType, ParsedType, ParsedUnitType}}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::{self, ErrMsg}}, token::{Position, PositionRange, TokenType, TokenValue}};
+use crate::{ast::{ASTWrapper, parsed_type::{ParsedBaseType, ParsedUnitModifier, ParsedUnitType}}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor}, token::{TokenType, TokenValue}};
 
 pub struct ParsedUnitTypeRule {}
 
@@ -39,7 +39,22 @@ impl ParseRule<ASTWrapper<ParsedUnitType>> for ParsedUnitTypeRule {
         };
 
         let is_reference = parser.try_consume(TokenType::Ampersand).is_some();
+        let mut n_pointers = 0;
 
-        Some(ASTWrapper::new_parsed_unit_type(base_type, is_reference, cur.position))
+        if !is_reference {
+            while parser.try_consume(TokenType::Star).is_some() {
+                n_pointers += 1;
+            }
+        }
+
+        let modifier = if is_reference {
+            ParsedUnitModifier::Reference
+        } else if n_pointers > 0 {
+            ParsedUnitModifier::Pointer(n_pointers)
+        } else {
+            ParsedUnitModifier::None
+        };
+
+        Some(ASTWrapper::new_parsed_unit_type(base_type, modifier, cur.position))
     }
 }

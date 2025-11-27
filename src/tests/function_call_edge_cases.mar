@@ -1,50 +1,62 @@
-fn simple_func() -> int @ module name {
-    break 42;
-}
-
-fn complex_func(int a, double& b, bool[] c) -> Point& @ math utils {
-    let Point p = $Point(a, b);
-    break p;
-}
-
-fn recursive_func(int n) -> int @ recursive module {
-    if n <= 1 {
-        break 1;
-    }
-    break n * recursive_func(n - 1) @ recursive_module;
-}
-
 struct Calculator {
     int value;
+    
+    $() {
+        value = 0;
+    }
     
     $(int initial) {
         value = initial;
     }
-    
-    $(int x) {
+}
+
+impl Calculator {
+    fn add(int x) -> int {
         value = value + x;
+        return value;
+    }
+    
+    fn multiply(int x) -> int {
+        value = value * x;
+        return value;
+    }
+    
+    fn get_value() -> int {
+        return value;
+    }
+}
+
+impl int {
+    fn square() -> int {
+        return *this * *this;
+    }
+    
+    fn add_ten() -> int {
+        return *this + 10;
     }
 }
 
 main {
-    let int result1 = simple_func() @ module;
+    let Calculator calc = $Calculator();
+    let int result1 = calc.add(5);
+    let int result2 = calc.multiply(3);
     
-    let double d = 3.14;
-    let bool[] arr = new bool[5];
-    let Point& p = complex_func(42, d, arr) @ math;
-    
-    let int nested_result = recursive_func(recursive_func(3) @ recursive) @ recursive;
-    
-    let int expr_result = simple_func() @ module + recursive_func(2) @ recursive * 3;
-    
-    let Calculator calc1 = $Calculator();
     let Calculator calc2 = $Calculator(100);
-    let Calculator calc3 = new $Calculator(simple_func() @ module);
+    let int chain_result = calc2.add(10).multiply(2);
     
-    let Point complex_point = $Point(
-        simple_func() @ module + 1,
-        recursive_func(3) @ recursive * 2.5
-    );
+    let int x = 5;
+    let int squared = x.square();
+    let int with_ten = x.add_ten();
     
-    let int empty_args = simple_func() @ module;
+    let Calculator& calc_ref = &calc;
+    let int ref_result = calc_ref->add(1);
+    
+    let Point p = $Point(3, 4);
+    let int x_coord = p.x;
+    let Point& p_ref = &p;
+    let int y_coord = p_ref->y;
+    
+    let Calculator new_calc = new $Calculator(50);
+    
+    let int complex_call = calc.add(x.square()).multiply(2);
 }

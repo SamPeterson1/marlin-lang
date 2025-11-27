@@ -1,4 +1,0 @@
-main {
-    let int x = 50;
-    putc x;
-}

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{ast::{ASTNode, ASTWrapper}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::term::TermRule}, token::TokenType};
+use crate::{ast::{ASTNode, ASTWrapper}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, rules::term::TermRule}, token::TokenType};
 
 pub struct ComparisonRule {}
 
@@ -19,7 +19,7 @@ impl ParseRule<Box<dyn ASTNode>> for ComparisonRule {
         let mut expr = parser.apply_rule(TermRule {}, "term expression", None)?;
         let matches = [TokenType::Greater, TokenType::GreaterEqual, TokenType::Less, TokenType::LessEqual];
         
-        while let Some(operator) = parser.try_match(&matches) {
+        while let Some(operator) = parser.try_consume_match(&matches) {
             let term = parser.apply_rule(TermRule {}, "term expression", None)?;            
             expr = Box::new(ASTWrapper::new_binary(expr, term, operator.token_type));
         }

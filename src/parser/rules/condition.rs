@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{ast::{ASTNode, ASTWrapper}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, rules::boolean_factor::BooleanFactorRule}, token::TokenType};
+use crate::{ast::{ASTNode, ASTWrapper}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, rules::boolean_factor::BooleanFactorRule}, token::TokenType};
 
 pub struct ConditionRule {}
 

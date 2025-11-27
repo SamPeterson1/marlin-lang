@@ -4,9 +4,6 @@ pub type Arguments = Vec<Box<dyn ASTNode>>;
 
 impl ASTWrapper<Arguments> {
     pub fn new_arguments(arguments: Arguments, position: PositionRange) -> Self {
-        ASTWrapper {
-            data: arguments,
-            position
-        }
+        ASTWrapper::new(arguments, position)
     }    
 }

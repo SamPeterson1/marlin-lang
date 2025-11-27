@@ -1,18 +1,13 @@
 pub mod assignment_expr;
 pub mod binary_expr;
 pub mod block_expr;
-pub mod break_expr;
-pub mod call_expr;
 pub mod declaration_expr;
-pub mod get_char_expr;
 pub mod if_expr;
 pub mod literal_expr;
 pub mod loop_expr;
-pub mod put_char_expr;
 pub mod new_array_expr;
 pub mod unary_expr;
-pub mod lvar_expr;
-pub mod rvar_expr;
+pub mod var_expr;
 pub mod function_item;
 pub mod struct_item;
 pub mod constructor_item;
@@ -23,24 +18,22 @@ pub mod parameters;
 pub mod program;
 pub mod constructor_call;
 pub mod member_access;
+pub mod impl_item;
+pub mod exit_expr;
 
 use assignment_expr::AssignmentExpr;
 use binary_expr::BinaryExpr;
 use block_expr::BlockExpr;
-use break_expr::BreakExpr;
-use call_expr::CallExpr;
 use declaration_expr::DeclarationExpr;
 use erased_serde::serialize_trait_object;
-use get_char_expr::GetCharExpr;
 use if_expr::IfExpr;
 use literal_expr::LiteralExpr;
 use loop_expr::LoopExpr;
-use put_char_expr::PutCharExpr;
 use serde::Serialize;
 use serde_json;
 use unary_expr::UnaryExpr;
 
-use crate::{ast::{constructor_call::ConstructorCallExpr, constructor_item::ConstructorItem, function_item::FunctionItem, lvar_expr::LVarExpr, main_item::MainItem, new_array_expr::NewArrayExpr, rvar_expr::RVarExpr, struct_item::StructItem}, token::{PositionRange, Positioned}};
+use crate::{ast::{constructor_call::ConstructorCallExpr, constructor_item::ConstructorItem, exit_expr::ExitExpr, function_item::FunctionItem, impl_item::ImplItem, main_item::MainItem, member_access::MemberAccess, new_array_expr::NewArrayExpr, struct_item::StructItem, var_expr::VarExpr}, token::{PositionRange, Positioned}};
 
 pub trait ASTVisitable: AcceptsASTVisitor<()> {}
 
@@ -51,7 +44,7 @@ pub trait AcceptsASTVisitor<T> {
 pub trait ASTNode: ASTVisitable + Positioned + erased_serde::Serialize {}
 serialize_trait_object!(ASTNode);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ASTWrapper<E> {
     pub data: E,
     pub position: PositionRange,
@@ -101,19 +94,17 @@ pub trait ASTVisitor<T> {
     fn visit_binary(&mut self, _node: &ASTWrapper<BinaryExpr>) -> T { unimplemented!() }
     fn visit_unary(&mut self, _node: &ASTWrapper<UnaryExpr>) -> T { unimplemented!() }
     fn visit_literal(&mut self, _node: &ASTWrapper<LiteralExpr>) -> T { unimplemented!() }
-    fn visit_lvar(&mut self, _node: &ASTWrapper<LVarExpr>) -> T { unimplemented!() }
-    fn visit_rvar(&mut self, _node: &ASTWrapper<RVarExpr>) -> T { unimplemented!() }
+    fn visit_member_access(&mut self, _node: &ASTWrapper<MemberAccess>) -> T { unimplemented!() }
+    fn visit_var(&mut self, _node: &ASTWrapper<VarExpr>) -> T { unimplemented!() }
     fn visit_if(&mut self, _node: &ASTWrapper<IfExpr>) -> T { unimplemented!() }
     fn visit_assignment(&mut self, _node: &ASTWrapper<AssignmentExpr>) -> T { unimplemented!() }
     fn visit_declaration(&mut self, _node: &ASTWrapper<DeclarationExpr>) -> T { unimplemented!() }
     fn visit_block(&mut self, _node: &ASTWrapper<BlockExpr>) -> T { unimplemented!() }
     fn visit_loop(&mut self, _node: &ASTWrapper<LoopExpr>) -> T { unimplemented!() }
-    fn visit_break(&mut self, _node: &ASTWrapper<BreakExpr>) -> T { unimplemented!() }
-    fn visit_call(&mut self, _node: &ASTWrapper<CallExpr>) -> T { unimplemented!() }
+    fn visit_exit(&mut self, _node: &ASTWrapper<ExitExpr>) -> T { unimplemented!() }
     fn visit_constructor_call(&mut self, _node: &ASTWrapper<ConstructorCallExpr>) -> T { unimplemented!() }
     fn visit_new_array(&mut self, _node: &ASTWrapper<NewArrayExpr>) -> T { unimplemented!() }
-    fn visit_put_char(&mut self, _node: &ASTWrapper<PutCharExpr>) -> T { unimplemented!() }
-    fn visit_get_char(&mut self, _node: &ASTWrapper<GetCharExpr>) -> T { unimplemented!() }
+    fn visit_impl(&mut self, _node: &ASTWrapper<ImplItem>) -> T { unimplemented!() }
     fn visit_function(&mut self, _node: &ASTWrapper<FunctionItem>) -> T { unimplemented!() }
     fn visit_struct(&mut self, _node: &ASTWrapper<StructItem>) -> T { unimplemented!() }
     fn visit_constructor(&mut self, _node: &ASTWrapper<ConstructorItem>) -> T { unimplemented!() }

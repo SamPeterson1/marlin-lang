@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{ast::{ASTWrapper, arguments, constructor_call::ConstructorCallExpr}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::{arguments::ArgumentsRule, parameters::ParametersRule}}, token::{PositionRange, TokenType}};
+use crate::{ast::{ASTWrapper, constructor_call::ConstructorCallExpr}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::arguments::ArgumentsRule}, token::{PositionRange, TokenType}};
 
 pub struct ConstructorCallRule {}
 

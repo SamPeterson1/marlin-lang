@@ -1,4 +1,4 @@
-use crate::{ast::{ASTNode, ASTWrapper}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, rules::{assignment::AssignmentRule, block::BlockRule, break_expr::BreakRule, declaration::DeclarationRule, expr::ExprRule, for_loop::ForLoopRule, if_block::IfBlockRule, loop_expr::LoopRule, putc::PutcRule, while_loop::WhileLoopRule}}, token::TokenType};
+use crate::{ast::ASTNode, parser::{ExprParser, ParseRule, ParserCursor, rules::{assignment::AssignmentRule, block::BlockRule, declaration::DeclarationRule, exit_expr::ExitRule, for_loop::ForLoopRule, if_block::IfBlockRule, loop_expr::LoopRule, while_loop::WhileLoopRule}}, token::TokenType};
 use std::fmt;
 
 pub struct StatementRule {}
@@ -35,16 +35,12 @@ impl ParseRule<Box<dyn ASTNode>> for StatementRule {
             return parser.apply_rule_boxed(WhileLoopRule {}, "statement while", None);
         }
 
-        if (BreakRule {}).check_match(parser.get_cursor()) {
-            return parser.apply_rule_boxed(BreakRule {}, "statement break", None);
+        if (ExitRule {}).check_match(parser.get_cursor()) {
+            return parser.apply_rule_boxed(ExitRule {}, "statement exit", None);
         }
 
         if (DeclarationRule {}).check_match(parser.get_cursor()) {
             return parser.apply_rule_boxed(DeclarationRule {}, "statement declaration", None);
-        }
-
-        if (PutcRule {}).check_match(parser.get_cursor()) {
-            return parser.apply_rule_boxed(PutcRule {}, "statement putc", None);
         }
 
         if (AssignmentRule {}).check_match(parser.get_cursor()) {

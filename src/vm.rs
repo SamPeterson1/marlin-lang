@@ -1,4 +1,4 @@
-use std::{io::Read, thread::sleep, time::Duration};
+use std::io::Read;
 
 use crate::{instruction::Instruction, opcodes};
 

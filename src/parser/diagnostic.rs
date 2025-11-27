@@ -42,16 +42,8 @@ pub enum ErrMsg {
     ExpectedType,
     ExpectedArguments,
     ExpectedParameters,
-    ExpectedStructName,
-    ExpectedMemberName,
-    ExpectedFnName,
     ExpectedToken(TokenType),
-    UnexpectedToken,
-    ExpectedItem,
-    ExpectedArgName,
-    ExpectedVar,
     ExpectedTypeNameOrIdentifier,
-    CannotReferenceArrayType
 }
 
 impl ErrMsg {
@@ -74,20 +66,12 @@ impl fmt::Display for ErrMsg {
             Self::ExpectedParameters => "expected parameters",
             Self::ExpectedArguments => "expected arguments",
             Self::ExpectedAssignment => "expected assignment",
-            Self::ExpectedArgName => "expected arg name",
             Self::ExpectedBlock => "expected block",
             Self::ExpectedStatement => "expected statement",
             Self::ExpectedExpression => "expected expression",
             Self::ExpectedType => "expected type",
-            Self::ExpectedStructName => "expected struct name",
-            Self::ExpectedMemberName => "expected member name",
-            Self::ExpectedFnName => "expected function name",
             Self::ExpectedToken(token) => &format!("expected '{}' token", token),
-            Self::UnexpectedToken => "unexpected token",
-            Self::ExpectedItem => "expected item",
-            Self::ExpectedVar => "expected variable",
             Self::ExpectedTypeNameOrIdentifier => "expected type name or identifier",
-            Self::CannotReferenceArrayType => "cannot reference array type",
         };
 
         write!(f, "{}", msg)

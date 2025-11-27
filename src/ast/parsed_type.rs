@@ -4,19 +4,26 @@ use serde::Serialize;
 
 use crate::{ast::ASTWrapper, token::PositionRange};
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub enum ParsedBaseType {
     Integer, Double, Boolean,
     TypeName(Rc<String>),
 }
 
-#[derive(Serialize)]
-pub struct ParsedUnitType {
-    pub base_type: ASTWrapper<ParsedBaseType>,
-    pub is_reference: bool,
+#[derive(Serialize, Clone)]
+pub enum ParsedUnitModifier {
+    None,
+    Reference,
+    Pointer(u32),
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
+pub struct ParsedUnitType {
+    pub base_type: ASTWrapper<ParsedBaseType>,
+    pub modifier: ParsedUnitModifier,
+}
+
+#[derive(Serialize, Clone)]
 pub struct ParsedType {
     pub is_reference: bool,
     pub unit_type: ASTWrapper<ParsedUnitType>,
@@ -46,11 +53,11 @@ impl ASTWrapper<ParsedType> {
 }
 
 impl ASTWrapper<ParsedUnitType> {
-    pub fn new_parsed_unit_type(base_type: ASTWrapper<ParsedBaseType>, is_reference: bool, position: PositionRange) -> Self {
+    pub fn new_parsed_unit_type(base_type: ASTWrapper<ParsedBaseType>, modifier: ParsedUnitModifier, position: PositionRange) -> Self {
         ASTWrapper {
             data: ParsedUnitType {
                 base_type,
-                is_reference
+                modifier
             },
             position
         }

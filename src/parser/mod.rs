@@ -2,7 +2,6 @@ pub mod diagnostic;
 mod rules;
 
 use std::collections::VecDeque;
-use std::rc::Rc;
 
 use serde::Serialize;
 
@@ -11,10 +10,8 @@ use crate::ast::{ASTNode, ASTWrapper};
 use crate::ast::program::Program;
 use crate::logger::{Log, LogLevel, LogSource};
 use crate::parser::diagnostic::{Diagnostic, DiagnosticSeverity, ErrMsg};
-use crate::parser::rules::item::ItemRule;
 use crate::parser::rules::program::ProgramRule;
-use crate::token::PositionRange;
-use crate::{logger::{Logger}, token::{Token, TokenType, TokenValue}};
+use crate::{logger::{Logger}, token::{Token, TokenType}};
 
 pub struct ExprParser<'a> {
     ptr: usize,
@@ -44,6 +41,16 @@ trait TokenCursor {
     }
 
     fn try_match(&mut self, matches: &[TokenType]) -> Option<Token> {
+        for token_match in matches {
+            if self.cur().token_type == *token_match {
+                return Some(self.cur());
+            }
+        }
+
+        return None;
+    }
+
+    fn try_consume_match(&mut self, matches: &[TokenType]) -> Option<Token> {
         for token_match in matches {
             if self.cur().token_type == *token_match {
                 return Some(self.next());

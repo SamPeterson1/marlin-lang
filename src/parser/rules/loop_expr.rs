@@ -1,4 +1,4 @@
-use crate::{ast::{ASTWrapper, loop_expr::LoopExpr}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::block::BlockRule}, token::{PositionRange, Positioned, TokenType}};
+use crate::{ast::{ASTWrapper, loop_expr::LoopExpr}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::block::BlockRule}, token::{PositionRange, Positioned, TokenType}};
 use std::fmt;
 
 pub struct LoopRule {}

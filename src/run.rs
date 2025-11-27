@@ -3,9 +3,8 @@ use std::io::prelude::*;
 use std::path::Path;
 use std::env;
 
-use crate::logger::{LogLevel, LogSource, Logger};
+use crate::logger::{LogSource, Logger};
 use crate::parser::{ExprParser, ParseResult};
-use crate::vm::VM;
 use crate::lexer;
 use crate::token::Token;
 

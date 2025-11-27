@@ -3,7 +3,7 @@ main {
         let int i = 0;
         while i < 10 {
             if i == 5 {
-                break i * 2;
+                return i * 2;
             }
             for (let int j = 0; j < 3; j = j + 1) {
                 if j == 2 {
@@ -25,7 +25,7 @@ main {
         }
     } else if false or true {
         while true {
-            break false;
+            return false;
         }
     } else {
         loop {
@@ -36,7 +36,7 @@ main {
     }
     
     loop {
-        break 1 + 2 * 3 >= 4 and true;
+        return 1 + 2 * 3 >= 4 and true;
     }
     
     if true {

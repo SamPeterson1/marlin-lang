@@ -1,8 +1,8 @@
 use std::fmt;
 
-use crate::{ast::{ASTWrapper, function_item::FunctionItem}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::{self, ErrMsg}, rules::{block::BlockRule, function_prototype::FunctionPrototypeRule, parsed_type::ParsedTypeRule}}, token::{Position, PositionRange, TokenType}};
+use crate::{ast::{ASTWrapper, function_item::FunctionItem}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::{block::BlockRule, parameters::ParametersRule, parsed_type::ParsedTypeRule}}, token::{PositionRange, TokenType}};
 
-pub struct FunctionRule {}
+pub struct FunctionRule;
 
 impl fmt::Display for FunctionRule {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -11,20 +11,24 @@ impl fmt::Display for FunctionRule {
 }
 
 impl ParseRule<ASTWrapper<FunctionItem>> for FunctionRule {
-    fn check_match(&self, cursor: ParserCursor) -> bool {
-        (FunctionPrototypeRule {}).check_match(cursor)
+    fn check_match(&self, mut cursor: ParserCursor) -> bool {
+        cursor.try_consume(TokenType::Fn).is_some()
     }
 
     fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<FunctionItem>> {
-        let function_prototype = parser.apply_rule(FunctionPrototypeRule {}, "function prototype", None)?;
+        let fn_token = parser.try_consume(TokenType::Fn)?;
 
-        parser.consume_or_diagnostic(TokenType::AtSign);
-        
-        let src_type = parser.apply_rule(ParsedTypeRule {}, "function src type", None)?;
-        let src_identifier = parser.try_consume(TokenType::Identifier)?.get_string().to_string();
+        let name = parser.consume_or_diagnostic(TokenType::Identifier)?.get_string().to_string();
+
+        let parameters = parser.apply_rule(ParametersRule {}, "function parameters", Some(ErrMsg::ExpectedParameters))?;
+
+        parser.consume_or_diagnostic(TokenType::Arrow);
+
+        let ret_type = parser.apply_rule(ParsedTypeRule {}, "return type", None)?;
 
         let block = parser.apply_rule(BlockRule {}, "function body", Some(ErrMsg::ExpectedBlock))?;
+        let position = PositionRange::concat(&fn_token.position, &block.position);
 
-        Some(ASTWrapper::new_function_item(function_prototype, block, src_type, src_identifier))
+        Some(ASTWrapper::new_function_item(name, parameters, ret_type, block, position))
     }
 }

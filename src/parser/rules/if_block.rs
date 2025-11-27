@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{ast::{ASTWrapper, if_expr::IfExpr}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::{block::BlockRule, expr::ExprRule}}, token::{PositionRange, TokenType}};
+use crate::{ast::{ASTWrapper, if_expr::IfExpr}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::{block::BlockRule, expr::ExprRule}}, token::{PositionRange, TokenType}};
 
 pub struct IfBlockRule {}
 

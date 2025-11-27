@@ -176,12 +176,10 @@ impl Lexer<'_> {
         }
         
         match cur {
-            '@' => self.end_token(TokenType::AtSign, TokenValue::None),
             '$' => self.end_token(TokenType::DollarSign, TokenValue::None),
             ';' => self.end_token(TokenType::Semicolon, TokenValue::None),
             ',' => self.end_token(TokenType::Comma, TokenValue::None),
             '.' => self.end_token(TokenType::Dot, TokenValue::None),
-            ':' => self.end_token(TokenType::Colon, TokenValue::None),
             '{' => self.end_token(TokenType::LeftCurly, TokenValue::None),
             '}' => self.end_token(TokenType::RightCurly, TokenValue::None),
             '(' => self.end_token(TokenType::LeftParen, TokenValue::None),
@@ -353,12 +351,13 @@ impl Lexer<'_> {
     
         match word.as_str() {
             "main" => self.end_token(TokenType::Main, TokenValue::None),
+            "result" => self.end_token(TokenType::Result, TokenValue::None),
+            "impl" => self.end_token(TokenType::Impl, TokenValue::None),
             "if" => self.end_token(TokenType::If, TokenValue::None),
             "else" => self.end_token(TokenType::Else, TokenValue::None),
             "for" => self.end_token(TokenType::For, TokenValue::None),
             "return" => self.end_token(TokenType::Return, TokenValue::None),
             "fn" => self.end_token(TokenType::Fn, TokenValue::None),
-            "this" => self.end_token(TokenType::This, TokenValue::None),
             "true" => self.end_token(TokenType::BoolLiteral, TokenValue::Bool(true)),
             "false" => self.end_token(TokenType::BoolLiteral,TokenValue::Bool(false)),
             "and" => self.end_token(TokenType::And, TokenValue::None),
@@ -371,9 +370,6 @@ impl Lexer<'_> {
             "bool" => self.end_token(TokenType::Bool, TokenValue::None),
             "str" => self.end_token(TokenType::String, TokenValue::None),
             "let" => self.end_token(TokenType::Let, TokenValue::None),
-            "print" => self.end_token(TokenType::Print, TokenValue::None),
-            "rand" => self.end_token(TokenType::Rand, TokenValue::None),
-            "input" => self.end_token(TokenType::Input, TokenValue::None),
             "struct" => self.end_token(TokenType::Struct, TokenValue::None),
             "new" => self.end_token(TokenType::New, TokenValue::None),
             "putc" => self.end_token(TokenType::Putc, TokenValue::None),
