@@ -2,6 +2,7 @@ main {
     let int simple_int = 42;
     let double simple_double = 3.14159;
     let bool simple_bool = false;
+    let char c = '\n';
     
     let int& ref_int = &simple_int;
     let double& ref_double = &simple_double;

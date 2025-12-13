@@ -1,5 +1,8 @@
-use crate::{ast::ASTNode, parser::{ExprParser, ParseRule, ParserCursor, rules::condition::ConditionRule}};
 use std::fmt;
+
+use crate::ast::ASTNode;
+use crate::parser::{ExprParser, ParseRule, ParserCursor};
+use crate::parser::rules::condition::ConditionRule;
 
 pub struct ExprRule {}
 

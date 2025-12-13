@@ -1,6 +1,10 @@
 use std::fmt;
 
-use crate::{ast::{ASTWrapper, declaration_expr::DeclarationExpr}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::{expr::ExprRule, parsed_type::ParsedTypeRule}}, token::{PositionRange, TokenType}};
+use crate::ast::declaration_expr::DeclarationExpr;
+use crate::diagnostic::ErrMsg;
+use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
+use crate::parser::rules::{expr::ExprRule, parsed_type::ParsedTypeRule};
+use crate::lexer::token::TokenType;
 
 pub struct DeclarationRule {}
 
@@ -10,15 +14,17 @@ impl fmt::Display for DeclarationRule {
     }
 }
 
-impl ParseRule<ASTWrapper<DeclarationExpr>> for DeclarationRule {
+impl ParseRule<DeclarationExpr> for DeclarationRule {
     fn check_match(&self, mut cursor: ParserCursor) -> bool {
         cursor.try_consume(TokenType::Let).is_some()
     }
 
-    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<DeclarationExpr>> {
-        let let_token = parser.try_consume(TokenType::Let)?;
+    fn parse(&self, parser: &mut ExprParser) -> Option<DeclarationExpr> {
+        parser.begin_range();
+        parser.try_consume(TokenType::Let)?;
+
         let declaration_type = parser.apply_rule(ParsedTypeRule {}, "declaration type", Some(ErrMsg::ExpectedType))?;
-        let declaration_name = parser.consume_or_diagnostic(TokenType::Identifier)?.get_string().to_string();
+        let declaration_name = parser.consume_or_diagnostic(TokenType::AnyIdentifier)?.unwrap_identifier();
 
         parser.consume_or_diagnostic(TokenType::Assignment)?;
 
@@ -26,9 +32,6 @@ impl ParseRule<ASTWrapper<DeclarationExpr>> for DeclarationRule {
 
         parser.consume_or_diagnostic(TokenType::Semicolon);
 
-        let position = PositionRange::concat(&let_token.position, &parser.prev().position);
-
-        parser.declaration_expr_id_counter += 1;
-        Some(ASTWrapper::new_declaration(parser.declaration_expr_id_counter, declaration_name, declaration_type, expr, position))
+        Some(DeclarationExpr::new(declaration_name, declaration_type, expr, parser.end_range()))
     }    
 }

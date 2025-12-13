@@ -7,6 +7,7 @@ pub mod exit_expr;
 pub mod comparison;
 pub mod condition;
 pub mod declaration;
+pub mod delete_expr;
 pub mod equality;
 pub mod expr;
 pub mod factor;

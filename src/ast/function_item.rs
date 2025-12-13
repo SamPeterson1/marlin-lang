@@ -1,28 +1,29 @@
 use serde::Serialize;
 
-use crate::{ast::{ASTWrapper, block_expr::BlockExpr, parameters::Parameters, parsed_type::ParsedType}, impl_ast_node, token::PositionRange};
+use crate::ast::{block_expr::BlockExpr, parameters::Parameters, parsed_type::ParsedType};
+use crate::{impl_ast_node, impl_positioned};
+use crate::lexer::token::{Located, PositionRange};
 
 #[derive(Serialize)]
 pub struct FunctionItem {
-    pub name: String,
-    pub parameters: ASTWrapper<Parameters>,
-    pub return_type: ASTWrapper<ParsedType>,
-    pub body: ASTWrapper<BlockExpr>,
+    pub name: Located<String>,
+    pub parameters: Parameters,
+    pub return_type: ParsedType,
+    pub body: BlockExpr,
+    position: PositionRange,
 }
 
-impl ASTWrapper<FunctionItem> {
-    pub fn new_function_item(name: String, parameters: ASTWrapper<Parameters>, return_type: ASTWrapper<ParsedType>, body: ASTWrapper<BlockExpr>, position: PositionRange) -> Self {
-        
-        ASTWrapper {
-            data: FunctionItem {
-                name,
-                parameters,
-                return_type,
-                body,
-            },
-            position
+impl FunctionItem {
+    pub fn new(name: Located<String>, parameters: Parameters, return_type: ParsedType, body: BlockExpr, position: PositionRange) -> Self {
+        Self {
+            name,
+            parameters,
+            return_type,
+            body,
+            position,
         }
     }
 }
 
+impl_positioned!(FunctionItem);
 impl_ast_node!(FunctionItem, visit_function);

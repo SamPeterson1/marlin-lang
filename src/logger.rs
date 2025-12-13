@@ -1,9 +1,10 @@
 use core::fmt;
-use std::{env, sync::Mutex, io::Write};
+use std::{env, fs::{File, OpenOptions}, io::Write, sync::{Mutex, MutexGuard}};
 
+use chrono::Local;
 use once_cell::sync::Lazy;
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum LogLevel {
     Error = 0,
     Warning = 1,
@@ -34,17 +35,19 @@ impl fmt::Display for LogLevel {
     }
 }
 
-pub trait LogSource {
-    fn get_source(&self) -> String;
-}
-
 impl LogLevel {
     pub fn at_or_under(&self, level: &LogLevel) -> bool {
         *self <= *level
     }
 }
 
-pub trait Log: LogSource + Sized {
+pub trait Log {
+    fn get_source(&self) -> String;
+
+    fn log(&self, level: LogLevel, message: &str) {
+        Logger::log(self, level, message);
+    }
+    
     fn log_error(&self, message: &str) {
         Logger::log(self, LogLevel::Error, message);
     }
@@ -67,34 +70,58 @@ static MASTER_LOGGER: Lazy<Mutex<Logger>> = Lazy::new(|| Mutex::new(Logger::new(
 pub struct Logger {
     console_log_level: LogLevel,
     file_log_level: LogLevel,
-    log_file_handle: Option<std::fs::File>,
+    log_file_handle: Option<File>,
 }
 
 impl Logger {
     pub fn open() {
         let log_file_directory = env::var("LOG_PATH").unwrap_or("./".to_string());
-        let log_file_path = format!("{}/log-{}.log", log_file_directory, chrono::Local::now().format("%Y%m%d-%H:%M:%S"));
+        let log_file_path = format!("{}/log-{}.log", log_file_directory, Local::now().format("%Y%m%d-%H:%M:%S"));
 
         println!("Logging to file: {}", log_file_path);
 
-        let log_file_handle = std::fs::OpenOptions::new()
+        let log_file_handle = match OpenOptions::new()
             .create(true)
             .write(true)
             .append(true)
             .open(log_file_path)
-            .expect("Error opening log file");
+        {
+            Ok(file) => file,
+            Err(err) => {
+                println!("ERROR - Could not open log file: {}", err);
+                return;
+            }
+        };
 
-        MASTER_LOGGER.lock().unwrap().log_file_handle = Some(log_file_handle);
+        if let Some(mut logger) = Self::safe_aquire_logger_lock() {
+            logger.log_file_handle = Some(log_file_handle);
+        }
     }
 
     pub fn close() {
-        MASTER_LOGGER.lock().unwrap().log_file_handle = None;
+        if let Some(mut logger) = Self::safe_aquire_logger_lock() {
+            logger.log_file_handle = None;
+        }
+    }
+
+    fn safe_aquire_logger_lock() -> Option<MutexGuard<'static, Logger>> {
+        if let Ok(logger) = MASTER_LOGGER.lock() {
+            Some(logger)
+        } else {
+            println!("WARNING - Error acquiring logger lock");
+            None
+        }
     }
 
     fn get_log_level(variable_name: &str) -> LogLevel {
-        env::var(variable_name).map_or_else(|_| LogLevel::Debug, |log_level| {
-            log_level.parse::<i32>().map(|log_level| log_level.into()).unwrap_or(LogLevel::Debug)
-        })
+        if let Ok(log_level) = env::var(variable_name) {
+            if let Ok(log_level) = log_level.parse::<i32>() {
+                return log_level.into();
+            }
+        }
+
+        println!("WARNING - {} not set, defaulting to DEBUG", variable_name);
+        LogLevel::Debug
     }
 
     fn new() -> Logger {
@@ -105,42 +132,28 @@ impl Logger {
         }
     }
 
-    fn log_to_console(reporter: &impl LogSource, level: &LogLevel, message: &str) {
-        let logger = MASTER_LOGGER.lock().unwrap();
-
-        if level.at_or_under(&logger.console_log_level) {
-            println!("[{} - {}] {}", reporter.get_source(), level, message);
+    fn log_to_console<T: Log + ?Sized>(reporter: &T, level: &LogLevel, message: &str) {
+        if let Some(logger) = Self::safe_aquire_logger_lock(){
+            if level.at_or_under(&logger.console_log_level) {
+                println!("[{} - {}] {}", reporter.get_source(), level, message);
+            }
         }
     }
 
-    fn log_to_file(reporter: &impl LogSource, level: &LogLevel, message: &str) {
-        let mut logger = MASTER_LOGGER.lock().unwrap();
-
-        if level.at_or_under(&logger.file_log_level) {
-            let log_file_handle = logger.log_file_handle.as_mut().expect("Log file handle not initialized");
-
-            writeln!(log_file_handle, "[{} - {}] {}", reporter.get_source(), level, message).expect("Error writing to log file");
+    fn log_to_file<T: Log + ?Sized>(reporter: &T, level: &LogLevel, message: &str) {
+        if let Some(mut logger) = Self::safe_aquire_logger_lock() {
+            if level.at_or_under(&logger.file_log_level) {
+                if let Some(log_file_handle) = &mut logger.log_file_handle {
+                    writeln!(log_file_handle, "[{} - {}] {}", reporter.get_source(), level, message).expect("Error writing to log file");
+                } else {
+                    println!("WARNING - Log file handle not initialized, cannot log to file");
+                }
+            }
         }
     }
 
-    pub fn log(reporter: &impl LogSource, level: LogLevel, message: &str) {
+    fn log<T: Log + ?Sized>(reporter: &T, level: LogLevel, message: &str) {
         Logger::log_to_console(reporter, &level, &message);
         Logger::log_to_file(reporter, &level, &message);
-    }
-
-    pub fn log_error(reporter: &impl LogSource, message: &str) {
-        Logger::log(reporter, LogLevel::Error, message);
-    }
-
-    pub fn log_warning(reporter: &impl LogSource, message: &str) {
-        Logger::log(reporter, LogLevel::Warning, message);
-    }
-
-    pub fn log_info(reporter: &impl LogSource, message: &str) {
-        Logger::log(reporter, LogLevel::Info, message);
-    }
-
-    pub fn log_debug(reporter: &impl LogSource, message: &str) {
-        Logger::log(reporter, LogLevel::Debug, message);
     }
 }

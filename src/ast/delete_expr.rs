@@ -5,21 +5,19 @@ use crate::{impl_ast_node, impl_positioned};
 use crate::lexer::token::PositionRange;
 
 #[derive(Serialize)]
-pub struct AssignmentExpr {
-    pub assignee: Box<dyn ASTNode>,
+pub struct DeleteExpr {
     pub expr: Box<dyn ASTNode>,
     position: PositionRange,
 }
 
-impl AssignmentExpr {
-    pub fn new(assignee: Box<dyn ASTNode>, expr: Box<dyn ASTNode>, position: PositionRange) -> Self {
+impl DeleteExpr {
+    pub fn new(expr: Box<dyn ASTNode>, position: PositionRange) -> Self {
         Self {
-            assignee,
             expr,
             position,
         } 
     }    
 }
 
-impl_positioned!(AssignmentExpr);
-impl_ast_node!(AssignmentExpr, visit_assignment);
+impl_positioned!(DeleteExpr);
+impl_ast_node!(DeleteExpr, visit_delete);

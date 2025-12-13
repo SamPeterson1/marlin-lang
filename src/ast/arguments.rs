@@ -1,9 +1,22 @@
-use crate::{ast::{ASTNode, ASTWrapper}, token::PositionRange};
+use serde::Serialize;
 
-pub type Arguments = Vec<Box<dyn ASTNode>>;
+use crate::ast::ASTNode;
+use crate::{impl_positioned};
+use crate::lexer::token::PositionRange;
 
-impl ASTWrapper<Arguments> {
-    pub fn new_arguments(arguments: Arguments, position: PositionRange) -> Self {
-        ASTWrapper::new(arguments, position)
-    }    
+#[derive(Serialize)]
+pub struct Arguments {
+    pub args: Vec<Box<dyn ASTNode>>,
+    position: PositionRange,
 }
+
+impl Arguments {
+    pub fn new(arguments: Vec<Box<dyn ASTNode>>, position: PositionRange) -> Self {
+        Self {
+            args: arguments,
+            position,
+        }
+    }
+}
+
+impl_positioned!(Arguments);

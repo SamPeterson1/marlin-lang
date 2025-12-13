@@ -1,5 +1,9 @@
-use crate::{ast::{ASTWrapper, struct_item::StructItem}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, rules::{constructor_item::ConstructorRule, parsed_type::ParsedTypeRule}}, token::{PositionRange, TokenType}};
 use std::fmt;
+
+use crate::ast::struct_item::StructItem;
+use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
+use crate::parser::rules::{constructor_item::ConstructorRule, parsed_type::ParsedTypeRule};
+use crate::lexer::token::TokenType;
 
 pub struct StructRule {}
 
@@ -9,21 +13,22 @@ impl fmt::Display for StructRule {
     }
 }
 
-impl ParseRule<ASTWrapper<StructItem>> for StructRule {
+impl ParseRule<StructItem> for StructRule {
     fn check_match(&self, mut cursor: ParserCursor) -> bool {
         cursor.try_consume(TokenType::Struct).is_some()
     }
 
-    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<StructItem>> {
-        let struct_token = parser.try_consume(TokenType::Struct)?;
+    fn parse(&self, parser: &mut ExprParser) -> Option<StructItem> {
+        parser.begin_range();
+        parser.try_consume(TokenType::Struct)?;
 
-        let struct_identifier = parser.consume_or_diagnostic(TokenType::Identifier)?.get_string().to_string();
+        let struct_identifier = parser.consume_or_diagnostic(TokenType::AnyIdentifier)?.unwrap_identifier();
 
         parser.consume_or_diagnostic(TokenType::LeftCurly);
 
         let mut members = Vec::new();
         while let Some(member_type) = parser.apply_rule(ParsedTypeRule {}, "struct member type", None) {
-            let member_identifier = parser.consume_or_diagnostic(TokenType::Identifier)?.get_string().to_string();
+            let member_identifier = parser.consume_or_diagnostic(TokenType::AnyIdentifier)?.unwrap_identifier();
             parser.consume_or_diagnostic(TokenType::Semicolon);
 
             members.push((member_type, member_identifier));
@@ -37,8 +42,6 @@ impl ParseRule<ASTWrapper<StructItem>> for StructRule {
 
         parser.consume_or_diagnostic(TokenType::RightCurly);
 
-        let position = PositionRange::concat(&struct_token.position, &parser.cur().position);
-
-        Some(ASTWrapper::new_struct_item(struct_identifier, members, constructors, position))
+        Some(StructItem::new(struct_identifier, members, constructors, parser.end_range()))
     }
 }

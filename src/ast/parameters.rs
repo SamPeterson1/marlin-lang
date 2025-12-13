@@ -1,12 +1,22 @@
-use crate::{ast::{ASTWrapper, parsed_type::ParsedType}, token::PositionRange};
+use serde::Serialize;
 
-pub type Parameters = Vec<(ASTWrapper<ParsedType>, String)>;
+use crate::ast::parsed_type::ParsedType;
+use crate::{impl_positioned};
+use crate::lexer::token::{Located, PositionRange};
 
-impl ASTWrapper<Parameters> {
-    pub fn new_parameters(parameters: Parameters, position: PositionRange) -> Self {
-        ASTWrapper {
-            data: parameters,
-            position
-        }
-    }    
+#[derive(Serialize)]
+pub struct Parameters {
+    pub parameters: Vec<(ParsedType, Located<String>)>,
+    position: PositionRange,
 }
+
+impl Parameters {
+    pub fn new(parameters: Vec<(ParsedType, Located<String>)>, position: PositionRange) -> Self {
+        Self {
+            parameters,
+            position,
+        }
+    }
+}
+
+impl_positioned!(Parameters);

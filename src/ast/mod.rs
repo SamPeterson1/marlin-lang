@@ -1,25 +1,26 @@
+pub mod arguments;
 pub mod assignment_expr;
 pub mod binary_expr;
 pub mod block_expr;
+pub mod constructor_call;
+pub mod constructor_item;
 pub mod declaration_expr;
+pub mod delete_expr;
+pub mod exit_expr;
+pub mod function_item;
 pub mod if_expr;
+pub mod impl_item;
 pub mod literal_expr;
 pub mod loop_expr;
+pub mod main_item;
+pub mod member_access;
 pub mod new_array_expr;
+pub mod parameters;
+pub mod parsed_type;
+pub mod program;
+pub mod struct_item;
 pub mod unary_expr;
 pub mod var_expr;
-pub mod function_item;
-pub mod struct_item;
-pub mod constructor_item;
-pub mod main_item;
-pub mod arguments;
-pub mod parsed_type;
-pub mod parameters;
-pub mod program;
-pub mod constructor_call;
-pub mod member_access;
-pub mod impl_item;
-pub mod exit_expr;
 
 use assignment_expr::AssignmentExpr;
 use binary_expr::BinaryExpr;
@@ -29,11 +30,11 @@ use erased_serde::serialize_trait_object;
 use if_expr::IfExpr;
 use literal_expr::LiteralExpr;
 use loop_expr::LoopExpr;
-use serde::Serialize;
-use serde_json;
 use unary_expr::UnaryExpr;
 
-use crate::{ast::{constructor_call::ConstructorCallExpr, constructor_item::ConstructorItem, exit_expr::ExitExpr, function_item::FunctionItem, impl_item::ImplItem, main_item::MainItem, member_access::MemberAccess, new_array_expr::NewArrayExpr, struct_item::StructItem, var_expr::VarExpr}, token::{PositionRange, Positioned}};
+use crate::ast::delete_expr::DeleteExpr;
+use crate::ast::{constructor_call::ConstructorCallExpr, constructor_item::ConstructorItem, exit_expr::ExitExpr, function_item::FunctionItem, impl_item::ImplItem, main_item::MainItem, member_access::MemberAccess, new_array_expr::NewArrayExpr, struct_item::StructItem, var_expr::VarExpr};
+use crate::lexer::token::Positioned;
 
 pub trait ASTVisitable: AcceptsASTVisitor<()> {}
 
@@ -44,80 +45,35 @@ pub trait AcceptsASTVisitor<T> {
 pub trait ASTNode: ASTVisitable + Positioned + erased_serde::Serialize {}
 serialize_trait_object!(ASTNode);
 
-#[derive(Debug, Clone)]
-pub struct ASTWrapper<E> {
-    pub data: E,
-    pub position: PositionRange,
-}
-
-impl<E> ASTWrapper<E> {
-    pub fn new(data: E, position: PositionRange) -> Self {
-        Self {
-            data,
-            position,
-        }
-    }
-}
-
-impl<E: Serialize> Serialize for ASTWrapper<E> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        use serde::ser::SerializeMap;
-        
-        let mut map = serializer.serialize_map(None)?;
-        
-        let full_type_name = std::any::type_name::<E>();
-        map.serialize_entry("!", &full_type_name)?;
-        
-        let data_value = serde_json::to_value(&self.data).map_err(serde::ser::Error::custom)?;
-        if let serde_json::Value::Object(data_map) = data_value {
-            for (key, value) in data_map {
-                map.serialize_entry(&key, &value)?;
-            }
-        }
-        
-        map.serialize_entry("z_position", &self.position)?;
-        
-        map.end()
-    }
-}
-
-impl<E> Positioned for ASTWrapper<E> {
-    fn get_position(&self) -> &PositionRange {
-        &self.position
-    }
-}
-
 pub trait ASTVisitor<T> {
-    fn visit_binary(&mut self, _node: &ASTWrapper<BinaryExpr>) -> T { unimplemented!() }
-    fn visit_unary(&mut self, _node: &ASTWrapper<UnaryExpr>) -> T { unimplemented!() }
-    fn visit_literal(&mut self, _node: &ASTWrapper<LiteralExpr>) -> T { unimplemented!() }
-    fn visit_member_access(&mut self, _node: &ASTWrapper<MemberAccess>) -> T { unimplemented!() }
-    fn visit_var(&mut self, _node: &ASTWrapper<VarExpr>) -> T { unimplemented!() }
-    fn visit_if(&mut self, _node: &ASTWrapper<IfExpr>) -> T { unimplemented!() }
-    fn visit_assignment(&mut self, _node: &ASTWrapper<AssignmentExpr>) -> T { unimplemented!() }
-    fn visit_declaration(&mut self, _node: &ASTWrapper<DeclarationExpr>) -> T { unimplemented!() }
-    fn visit_block(&mut self, _node: &ASTWrapper<BlockExpr>) -> T { unimplemented!() }
-    fn visit_loop(&mut self, _node: &ASTWrapper<LoopExpr>) -> T { unimplemented!() }
-    fn visit_exit(&mut self, _node: &ASTWrapper<ExitExpr>) -> T { unimplemented!() }
-    fn visit_constructor_call(&mut self, _node: &ASTWrapper<ConstructorCallExpr>) -> T { unimplemented!() }
-    fn visit_new_array(&mut self, _node: &ASTWrapper<NewArrayExpr>) -> T { unimplemented!() }
-    fn visit_impl(&mut self, _node: &ASTWrapper<ImplItem>) -> T { unimplemented!() }
-    fn visit_function(&mut self, _node: &ASTWrapper<FunctionItem>) -> T { unimplemented!() }
-    fn visit_struct(&mut self, _node: &ASTWrapper<StructItem>) -> T { unimplemented!() }
-    fn visit_constructor(&mut self, _node: &ASTWrapper<ConstructorItem>) -> T { unimplemented!() }
-    fn visit_main(&mut self, _node: &ASTWrapper<MainItem>) -> T { unimplemented!() }
+    fn visit_binary(&mut self, _node: &BinaryExpr) -> T { unimplemented!() }
+    fn visit_unary(&mut self, _node: &UnaryExpr) -> T { unimplemented!() }
+    fn visit_literal(&mut self, _node: &LiteralExpr) -> T { unimplemented!() }
+    fn visit_member_access(&mut self, _node: &MemberAccess) -> T { unimplemented!() }
+    fn visit_var(&mut self, _node: &VarExpr) -> T { unimplemented!() }
+    fn visit_if(&mut self, _node: &IfExpr) -> T { unimplemented!() }
+    fn visit_assignment(&mut self, _node: &AssignmentExpr) -> T { unimplemented!() }
+    fn visit_delete(&mut self, _node: &DeleteExpr) -> T { unimplemented!() }
+    fn visit_declaration(&mut self, _node: &DeclarationExpr) -> T { unimplemented!() }
+    fn visit_block(&mut self, _node: &BlockExpr) -> T { unimplemented!() }
+    fn visit_loop(&mut self, _node: &LoopExpr) -> T { unimplemented!() }
+    fn visit_exit(&mut self, _node: &ExitExpr) -> T { unimplemented!() }
+    fn visit_constructor_call(&mut self, _node: &ConstructorCallExpr) -> T { unimplemented!() }
+    fn visit_new_array(&mut self, _node: &NewArrayExpr) -> T { unimplemented!() }
+    fn visit_impl(&mut self, _node: &ImplItem) -> T { unimplemented!() }
+    fn visit_function(&mut self, _node: &FunctionItem) -> T { unimplemented!() }
+    fn visit_struct(&mut self, _node: &StructItem) -> T { unimplemented!() }
+    fn visit_constructor(&mut self, _node: &ConstructorItem) -> T { unimplemented!() }
+    fn visit_main(&mut self, _node: &MainItem) -> T { unimplemented!() }
 }
 
 #[macro_export]
 macro_rules! impl_ast_node {
     ($Name: ident, $VisitFunction: ident) => {
-        impl crate::ast::ASTNode for crate::ast::ASTWrapper<$Name> {}
-        impl crate::ast::ASTVisitable for crate::ast::ASTWrapper<$Name> {}
-
-        impl<T> crate::ast::AcceptsASTVisitor<T> for crate::ast::ASTWrapper<$Name> {
+        impl crate::ast::ASTNode for $Name {}
+        impl crate::ast::ASTVisitable for $Name {}
+        
+        impl<T> crate::ast::AcceptsASTVisitor<T> for $Name {
             fn accept_visitor(&self, visitor: &mut dyn crate::ast::ASTVisitor<T>) -> T {
                 visitor.$VisitFunction(self)
             }

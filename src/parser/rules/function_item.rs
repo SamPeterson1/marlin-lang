@@ -1,6 +1,10 @@
 use std::fmt;
 
-use crate::{ast::{ASTWrapper, function_item::FunctionItem}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::{block::BlockRule, parameters::ParametersRule, parsed_type::ParsedTypeRule}}, token::{PositionRange, TokenType}};
+use crate::ast::function_item::FunctionItem;
+use crate::diagnostic::ErrMsg;
+use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
+use crate::parser::rules::{block::BlockRule, parameters::ParametersRule, parsed_type::ParsedTypeRule};
+use crate::lexer::token::TokenType;
 
 pub struct FunctionRule;
 
@@ -10,15 +14,16 @@ impl fmt::Display for FunctionRule {
     }
 }
 
-impl ParseRule<ASTWrapper<FunctionItem>> for FunctionRule {
+impl ParseRule<FunctionItem> for FunctionRule {
     fn check_match(&self, mut cursor: ParserCursor) -> bool {
         cursor.try_consume(TokenType::Fn).is_some()
     }
 
-    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<FunctionItem>> {
-        let fn_token = parser.try_consume(TokenType::Fn)?;
+    fn parse(&self, parser: &mut ExprParser) -> Option<FunctionItem> {
+        parser.begin_range();
+        parser.try_consume(TokenType::Fn)?;
 
-        let name = parser.consume_or_diagnostic(TokenType::Identifier)?.get_string().to_string();
+        let name = parser.consume_or_diagnostic(TokenType::AnyIdentifier)?.unwrap_identifier();
 
         let parameters = parser.apply_rule(ParametersRule {}, "function parameters", Some(ErrMsg::ExpectedParameters))?;
 
@@ -27,8 +32,7 @@ impl ParseRule<ASTWrapper<FunctionItem>> for FunctionRule {
         let ret_type = parser.apply_rule(ParsedTypeRule {}, "return type", None)?;
 
         let block = parser.apply_rule(BlockRule {}, "function body", Some(ErrMsg::ExpectedBlock))?;
-        let position = PositionRange::concat(&fn_token.position, &block.position);
 
-        Some(ASTWrapper::new_function_item(name, parameters, ret_type, block, position))
+        Some(FunctionItem::new(name, parameters, ret_type, block, parser.end_range()))
     }
 }

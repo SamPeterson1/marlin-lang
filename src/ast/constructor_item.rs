@@ -1,24 +1,26 @@
 use serde::Serialize;
 
-use crate::{ast::{ASTWrapper, block_expr::BlockExpr, parameters::Parameters}, impl_ast_node, token::PositionRange};
+use crate::ast::{block_expr::BlockExpr, parameters::Parameters};
+use crate::{impl_ast_node, impl_positioned};
+use crate::lexer::token::PositionRange;
 
 #[derive(Serialize)]
 pub struct ConstructorItem {
-    pub parameters: ASTWrapper<Parameters>,
-    pub body: ASTWrapper<BlockExpr>
+    pub parameters: Parameters,
+    pub body: BlockExpr,
+    position: PositionRange,
 }
 
 
-impl ASTWrapper<ConstructorItem> {
-    pub fn new_constructor_item(parameters: ASTWrapper<Parameters>, body: ASTWrapper<BlockExpr>, position: PositionRange) -> Self {
-        ASTWrapper {
-            data: ConstructorItem {
-                parameters,
-                body,
-            },
-            position
+impl ConstructorItem {
+    pub fn new(parameters: Parameters, body: BlockExpr, position: PositionRange) -> Self {
+        Self {
+            parameters,
+            body,
+            position,
         }
     }
 }
 
+impl_positioned!(ConstructorItem);
 impl_ast_node!(ConstructorItem, visit_constructor);

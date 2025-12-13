@@ -1,6 +1,10 @@
 use std::fmt;
 
-use crate::{ast::{ASTWrapper, main_item::MainItem}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::block::BlockRule}, token::{PositionRange, Positioned, TokenType}};
+use crate::ast::main_item::MainItem;
+use crate::diagnostic::ErrMsg;
+use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
+use crate::parser::rules::block::BlockRule;
+use crate::lexer::token::TokenType;
 
 pub struct MainItemRule {}
 
@@ -10,17 +14,17 @@ impl fmt::Display for MainItemRule {
     }
 }
 
-impl ParseRule<ASTWrapper<MainItem>> for MainItemRule {
+impl ParseRule<MainItem> for MainItemRule {
     fn check_match(&self, mut cursor: ParserCursor) -> bool {
         cursor.try_consume(TokenType::Main).is_some()
     }
 
-    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<MainItem>> {
-        let main_token = parser.try_consume(TokenType::Main)?;
+    fn parse(&self, parser: &mut ExprParser) -> Option<MainItem> {
+        parser.begin_range();
+        parser.try_consume(TokenType::Main)?;
 
         let block = parser.apply_rule(BlockRule {}, "main block", Some(ErrMsg::ExpectedBlock))?;
-        let position = PositionRange::concat(&main_token.position, block.get_position());
 
-        Some(ASTWrapper::new_main(block, position))
+        Some(MainItem::new(block, parser.end_range()))
     }
 }

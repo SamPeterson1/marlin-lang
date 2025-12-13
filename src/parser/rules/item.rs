@@ -1,5 +1,8 @@
-use crate::{ast::ASTNode, parser::{ExprParser, ParseRule, ParserCursor, rules::{impl_block::ImplBlockRule, main_item::MainItemRule}}};
 use std::fmt;
+
+use crate::ast::ASTNode;
+use crate::parser::{ExprParser, ParseRule, ParserCursor};
+use crate::parser::rules::{impl_block::ImplBlockRule, main_item::MainItemRule};
 
 use super::{function_item::FunctionRule, struct_item::StructRule};
 

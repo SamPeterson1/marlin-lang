@@ -1,5 +1,8 @@
-use crate::{ast::{ASTWrapper, program::Program}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, rules::item::ItemRule}};
 use std::fmt;
+
+use crate::ast::program::Program;
+use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
+use crate::parser::rules::item::ItemRule;
 
 pub struct ProgramRule {}
 
@@ -9,12 +12,13 @@ impl fmt::Display for ProgramRule {
     }
 }
 
-impl ParseRule<ASTWrapper<Program>> for ProgramRule {
+impl ParseRule<Program> for ProgramRule {
     fn check_match(&self, _cursor: ParserCursor) -> bool {
         true
     }
 
-    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<Program>> {
+    fn parse(&self, parser: &mut ExprParser) -> Option<Program> {
+        parser.begin_range();
         let mut items = Vec::new();
 
         while !parser.is_at_end() {
@@ -23,6 +27,6 @@ impl ParseRule<ASTWrapper<Program>> for ProgramRule {
             }
         }
 
-        Some(ASTWrapper::new_program(items))
+        Some(Program::new(items, parser.end_range()))
     }
 }

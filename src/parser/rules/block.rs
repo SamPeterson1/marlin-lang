@@ -1,6 +1,10 @@
 use std::fmt;
 
-use crate::{ast::{ASTNode, ASTWrapper, block_expr::BlockExpr}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::statement::StatementRule}, token::{PositionRange, TokenType}};
+use crate::ast::{ASTNode, block_expr::BlockExpr};
+use crate::diagnostic::ErrMsg;
+use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
+use crate::parser::rules::statement::StatementRule;
+use crate::lexer::token::TokenType;
 
 pub struct BlockRule {}
 
@@ -10,14 +14,14 @@ impl fmt::Display for BlockRule {
     }
 }
 
-impl ParseRule<ASTWrapper<BlockExpr>> for BlockRule {
+impl ParseRule<BlockExpr> for BlockRule {
     fn check_match(&self, mut cursor: ParserCursor) -> bool {
         cursor.try_consume(TokenType::LeftCurly).is_some()
     }
 
-    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<BlockExpr>> {
-        let start_token = &parser.cur();
-
+    fn parse(&self, parser: &mut ExprParser) -> Option<BlockExpr> {
+        parser.begin_range();
+        
         parser.consume_or_diagnostic(TokenType::LeftCurly);
         let mut exprs: Vec<Box<dyn ASTNode>> = Vec::new();
 
@@ -29,8 +33,6 @@ impl ParseRule<ASTWrapper<BlockExpr>> for BlockRule {
             }
         }
 
-        let position = PositionRange::concat(&start_token.position, &parser.prev().position);
-
-        Some(ASTWrapper::new_block(exprs, position))
+        Some(BlockExpr::new(exprs, parser.end_range()))
     }
 }

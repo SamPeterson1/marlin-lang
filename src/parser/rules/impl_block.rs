@@ -1,6 +1,10 @@
 use std::fmt;
 
-use crate::{ast::{ASTWrapper, impl_item::ImplItem}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::{function_item::FunctionRule, parsed_type::ParsedTypeRule}}, token::{PositionRange, TokenType}};
+use crate::ast::impl_item::ImplItem;
+use crate::diagnostic::ErrMsg;
+use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
+use crate::parser::rules::{function_item::FunctionRule, parsed_type::ParsedTypeRule};
+use crate::lexer::token::TokenType;
 
 pub struct ImplBlockRule {}
 
@@ -10,13 +14,14 @@ impl fmt::Display for ImplBlockRule {
     }
 }
 
-impl ParseRule<ASTWrapper<ImplItem>> for ImplBlockRule {
+impl ParseRule<ImplItem> for ImplBlockRule {
     fn check_match(&self, mut cursor: ParserCursor) -> bool {
         cursor.try_consume(TokenType::Impl).is_some()
     }
 
-    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<ImplItem>> {
-        let impl_token = parser.try_consume(TokenType::Impl)?;
+    fn parse(&self, parser: &mut ExprParser) -> Option<ImplItem> {
+        parser.begin_range();
+        parser.try_consume(TokenType::Impl)?;
 
         let impl_type = parser.apply_rule(ParsedTypeRule {}, "impl type", Some(ErrMsg::ExpectedType))?;
 
@@ -30,8 +35,6 @@ impl ParseRule<ASTWrapper<ImplItem>> for ImplBlockRule {
 
         parser.consume_or_diagnostic(TokenType::RightCurly);
 
-        let position = PositionRange::concat(&impl_token.position, &parser.prev().position);
-
-        Some(ASTWrapper::new_impl_item(impl_type, functions, position))
+        Some(ImplItem::new(impl_type, functions, parser.end_range()))
     }
 }

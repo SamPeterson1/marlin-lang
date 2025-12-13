@@ -1,6 +1,10 @@
 use std::fmt;
 
-use crate::{ast::{ASTWrapper, if_expr::IfExpr}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::{block::BlockRule, expr::ExprRule}}, token::{PositionRange, TokenType}};
+use crate::ast::if_expr::IfExpr;
+use crate::diagnostic::ErrMsg;
+use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
+use crate::parser::rules::{block::BlockRule, expr::ExprRule};
+use crate::lexer::token::TokenType;
 
 pub struct IfBlockRule {}
 
@@ -10,13 +14,14 @@ impl fmt::Display for IfBlockRule {
     }
 }
 
-impl ParseRule<ASTWrapper<IfExpr>> for IfBlockRule {
+impl ParseRule<IfExpr> for IfBlockRule {
     fn check_match(&self, mut cursor: ParserCursor) -> bool {
         cursor.try_consume(TokenType::If).is_some()
     }
 
-    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<IfExpr>> {
-        let if_token = parser.try_consume(TokenType::If)?;
+    fn parse(&self, parser: &mut ExprParser) -> Option<IfExpr> {
+        parser.begin_range();
+        parser.try_consume(TokenType::If)?;
         
         let condition = parser.apply_rule(ExprRule {}, "if condition", Some(ErrMsg::ExpectedExpression))?;
     
@@ -31,9 +36,7 @@ impl ParseRule<ASTWrapper<IfExpr>> for IfBlockRule {
                 fail = parser.apply_rule_boxed(BlockRule {}, "else block", None);
             }
         }
-    
-        let position = PositionRange::concat(&if_token.position, &parser.prev().position);
-    
-        Some(ASTWrapper::new_if(condition, success, fail, position))
+        
+        Some(IfExpr::new(condition, success, fail, parser.end_range()))
     }
 }

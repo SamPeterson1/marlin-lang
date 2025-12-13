@@ -1,21 +1,23 @@
 use serde::Serialize;
 
-use crate::{ast::{ASTNode, ASTWrapper}, impl_ast_node, token::PositionRange};
+use crate::ast::ASTNode;
+use crate::{impl_ast_node, impl_positioned};
+use crate::lexer::token::PositionRange;
 
 #[derive(Serialize)]
 pub struct BlockExpr {
     pub exprs: Vec<Box<dyn ASTNode>>,
+    position: PositionRange,
 }
 
-impl ASTWrapper<BlockExpr> {
-    pub fn new_block(exprs: Vec<Box<dyn ASTNode>>, position: PositionRange) -> Self {
-        ASTWrapper {
-            data: BlockExpr {
-                exprs
-            },
-            position
+impl BlockExpr {
+    pub fn new(exprs: Vec<Box<dyn ASTNode>>, position: PositionRange) -> Self {
+        Self {
+            exprs,
+            position,
         }
     }    
 }
 
+impl_positioned!(BlockExpr);
 impl_ast_node!(BlockExpr, visit_block);

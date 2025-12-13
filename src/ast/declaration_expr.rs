@@ -1,44 +1,28 @@
-use std::hash::Hasher;
-
 use serde::Serialize;
 
-use crate::{ast::{ASTNode, ASTWrapper, parsed_type::ParsedType}, token::PositionRange};
+use crate::ast::{ASTNode, parsed_type::ParsedType};
+use crate::{impl_ast_node, impl_positioned};
+use crate::lexer::token::{Located, PositionRange};
 
 #[derive(Serialize)]
 pub struct DeclarationExpr {
-    pub id: i32,
-    pub identifier: String,
-    pub declaration_type: ASTWrapper<ParsedType>,
+    pub identifier: Located<String>,
+    pub declaration_type: ParsedType,
     pub expr: Box<dyn ASTNode>,
+    position: PositionRange,
 }
 
-impl Eq for DeclarationExpr {}
 
-impl PartialEq for DeclarationExpr {
-    fn eq(&self, other: &Self) -> bool {
-        self.id == other.id
-    }
-}
-
-impl std::hash::Hash for DeclarationExpr {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.id.hash(state);
-    }
-}
-
-impl ASTWrapper<DeclarationExpr> {
-    pub fn new_declaration(id: i32, identifier: String, declaration_type: ASTWrapper<ParsedType>, expr: Box<dyn ASTNode>, position: PositionRange) -> Self {
-        ASTWrapper {
-            data: DeclarationExpr {
-                id,
-                identifier,
-                declaration_type,
-                expr,
-            },
+impl DeclarationExpr {
+    pub fn new(identifier: Located<String>, declaration_type: ParsedType, expr: Box<dyn ASTNode>, position: PositionRange) -> Self {
+        Self {
+            identifier,
+            declaration_type,
+            expr,
             position
         }
-        
     }
 }
 
-crate::impl_ast_node!(DeclarationExpr, visit_declaration);
+impl_positioned!(DeclarationExpr);
+impl_ast_node!(DeclarationExpr, visit_declaration);

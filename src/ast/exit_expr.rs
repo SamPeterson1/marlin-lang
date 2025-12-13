@@ -1,6 +1,8 @@
 use serde::Serialize;
 
-use crate::{ast::{ASTNode, ASTWrapper}, token::PositionRange};
+use crate::ast::ASTNode;
+use crate::{impl_ast_node, impl_positioned};
+use crate::lexer::token::PositionRange;
 
 #[derive(Serialize, Clone)]
 pub enum ExitType {
@@ -13,18 +15,18 @@ pub enum ExitType {
 pub struct ExitExpr {
     pub exit_type: ExitType,
     pub expr: Option<Box<dyn ASTNode>>,
+    position: PositionRange,
 }
 
-impl ASTWrapper<ExitExpr> {
-    pub fn new_exit(exit_type: ExitType, expr: Option<Box<dyn ASTNode>>, position: PositionRange) -> Self {
-        ASTWrapper {
-            data: ExitExpr {
-                exit_type,
-                expr,
-            },
-            position
+impl ExitExpr {
+    pub fn new(exit_type: ExitType, expr: Option<Box<dyn ASTNode>>, position: PositionRange) -> Self {
+        Self {
+            exit_type,
+            expr,
+            position,
         }
     }
 }
 
-crate::impl_ast_node!(ExitExpr, visit_exit);
+impl_positioned!(ExitExpr);
+impl_ast_node!(ExitExpr, visit_exit);

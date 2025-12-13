@@ -1,6 +1,10 @@
 use std::fmt;
 
-use crate::{ast::{ASTWrapper, exit_expr::{ExitExpr, ExitType}}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::expr::ExprRule}, token::{PositionRange, TokenType}};
+use crate::ast::exit_expr::{ExitExpr, ExitType};
+use crate::diagnostic::ErrMsg;
+use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
+use crate::parser::rules::expr::ExprRule;
+use crate::lexer::token::TokenType;
 
 pub struct ExitRule {}
 
@@ -10,15 +14,15 @@ impl fmt::Display for ExitRule {
     }
 }
 
-impl ParseRule<ASTWrapper<ExitExpr>> for ExitRule {
-    fn check_match(&self, mut cursor: ParserCursor) -> bool {
+impl ParseRule<ExitExpr> for ExitRule {
+    fn check_match(&self, cursor: ParserCursor) -> bool {
         cursor.try_match(&[TokenType::Break, TokenType::Return, TokenType::Result]).is_some()
     }
 
-    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<ExitExpr>> {
-        let start_position = parser.cur().position;
+    fn parse(&self, parser: &mut ExprParser) -> Option<ExitExpr> {
+        parser.begin_range();
 
-        let exit_type = match parser.try_consume_match(&[TokenType::Break, TokenType::Return, TokenType::Result])?.token_type {
+        let exit_type = match parser.try_consume_match(&[TokenType::Break, TokenType::Return, TokenType::Result])?.value {
             TokenType::Break => ExitType::Break,
             TokenType::Return => ExitType::Return,
             TokenType::Result => ExitType::Result,
@@ -34,7 +38,6 @@ impl ParseRule<ASTWrapper<ExitExpr>> for ExitRule {
             None
         };
 
-        let position = PositionRange::concat(&start_position, &parser.prev().position);
-        Some(ASTWrapper::new_exit(exit_type, expr, position))
+        Some(ExitExpr::new(exit_type, expr, parser.end_range()))
     }
 }

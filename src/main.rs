@@ -1,20 +1,15 @@
+use dotenv::dotenv;
 use std::env;
 use std::process;
-use dotenv::dotenv;
-use logger::Logger;
 
-mod run;
-mod logger;
-mod lexer;
-mod token;
-mod parser;
+use crate::logger::Logger;
+
 mod ast;
-mod instruction;
-mod opcodes;
-mod vm;
-mod types;
-
-mod operator;
+mod diagnostic;
+mod lexer;
+mod logger;
+mod parser;
+mod run;
 
 fn main() {
     dotenv().unwrap();
@@ -31,8 +26,6 @@ fn main() {
         process::exit(1);
     } else if len == 1 {
         run::run_file(&args[0]);
-    } else {
-        run::run_prompt();
     }
 
     Logger::close();

@@ -59,6 +59,8 @@ main {
     *container.matrices.row_ptrs[0] = 600;
     **container.deep_data[1] = new int[5];
     ***container.deep_data[2] = 700;
+
+    delete triple_containers;
     
     (if true { result container; } else { result containers[0]; }).matrices.data[0][0] = 800;
     

@@ -12,7 +12,7 @@ impl: "impl" type "{" function* "}"
 function: "fn" identifier parameters "->" type block-expression
 parameters: "(" [type identifier ("," type identifier)*] ")"
 
-statement: loop | if | block | for | while | exit | declaration | assignment
+statement: loop | if | block | for | while | exit | delete | declaration | assignment
 expression: condition
 block: "{" statement* "}"
 declaration: "let" type identifier "=" expression ";"
@@ -21,6 +21,7 @@ value-assignment: expression "=" expression
 for: "for" "(" declaration expression ";" assignment ")" block
 while: "while" expression block
 exit: ("return" | "break" | "result") [expression] ";"
+delete: "delete" expression ";"
 loop: "loop" block
 if: "if" expression block elif* [else]
 elif: "else" "if" expression block
@@ -42,4 +43,4 @@ primary: new-array | constructor | loop | if | block | for | while | "(" express
 
 type: unit-type ("[]")* ["&"]
 unit-type: (primitive-type | identifier) ["&" | "*"*]
-primitive-type: "int" | "double" | "bool";
+primitive-type: "int" | "double" | "bool" | "char";

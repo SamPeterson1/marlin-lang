@@ -1,5 +1,10 @@
-use crate::{ast::ASTNode, parser::{ExprParser, ParseRule, ParserCursor, rules::{assignment::AssignmentRule, block::BlockRule, declaration::DeclarationRule, exit_expr::ExitRule, for_loop::ForLoopRule, if_block::IfBlockRule, loop_expr::LoopRule, while_loop::WhileLoopRule}}, token::TokenType};
 use std::fmt;
+
+use crate::ast::ASTNode;
+use crate::parser::rules::delete_expr::DeleteRule;
+use crate::parser::{ExprParser, ParseRule, ParserCursor};
+use crate::parser::rules::{assignment::AssignmentRule, block::BlockRule, declaration::DeclarationRule, exit_expr::ExitRule, for_loop::ForLoopRule, if_block::IfBlockRule, loop_expr::LoopRule, while_loop::WhileLoopRule};
+use crate::lexer::token::TokenType;
 
 pub struct StatementRule {}
 
@@ -37,6 +42,10 @@ impl ParseRule<Box<dyn ASTNode>> for StatementRule {
 
         if (ExitRule {}).check_match(parser.get_cursor()) {
             return parser.apply_rule_boxed(ExitRule {}, "statement exit", None);
+        }
+
+        if (DeleteRule {}).check_match(parser.get_cursor()) {
+            return parser.apply_rule_boxed(DeleteRule {}, "statement delete", None);
         }
 
         if (DeclarationRule {}).check_match(parser.get_cursor()) {

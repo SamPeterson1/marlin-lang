@@ -1,9 +1,12 @@
 use core::fmt;
 
-use crate::{token::{PositionRange, TokenType}};
+use crate::logger::LogLevel;
+use crate::lexer::token::{PositionRange, TokenType};
 
+#[derive(Clone, Copy)]
 pub enum DiagnosticSeverity {
     Error,
+    #[allow(dead_code)]
     Warning
 }
 
@@ -18,6 +21,15 @@ impl fmt::Display for DiagnosticSeverity {
     }
 }
 
+impl Into<LogLevel> for DiagnosticSeverity {
+    fn into(self) -> LogLevel {
+        match self {
+            DiagnosticSeverity::Error => LogLevel::Error,
+            DiagnosticSeverity::Warning => LogLevel::Warning
+        }
+    }
+}
+
 pub struct Diagnostic {
     pub severity: DiagnosticSeverity,
     pub message: String,
@@ -26,14 +38,15 @@ pub struct Diagnostic {
 
 impl fmt::Display for Diagnostic {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}, [{}:{} - {}:{}]: {}", self.severity, self.position.start.line, self.position.start.char, self.position.end.line, self.position.end.char, self.message)
+        write!(f, "{}, [{}]: {}", self.severity, self.position, self.message)
     }
 }
 
 pub enum ErrMsg {
-    ErrUnknownSymbol(char),
-    ErrUnterminatedString,
-    ErrDecimalLiteralAsInt,
+    UnknownSymbol(char),
+    UnterminatedString,
+    DecimalLiteralAsInt,
+    UnterminatedChar,
     ExpectedStatement,
     ExpectedExpression,
     ExpectedDeclaration,
@@ -44,6 +57,7 @@ pub enum ErrMsg {
     ExpectedParameters,
     ExpectedToken(TokenType),
     ExpectedTypeNameOrIdentifier,
+    UnknownEscapeSequence(char),
 }
 
 impl ErrMsg {
@@ -59,9 +73,10 @@ impl ErrMsg {
 impl fmt::Display for ErrMsg {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let msg = match self {
-            Self::ErrUnknownSymbol(x) => &format!("unknown symbol {}", x),
-            Self::ErrUnterminatedString => "unterminated string",
-            Self::ErrDecimalLiteralAsInt => "decimal literal cannot be used as int",
+            Self::UnknownSymbol(x) => &format!("unknown symbol {}", x),
+            Self::UnterminatedString => "unterminated string",
+            Self::DecimalLiteralAsInt => "decimal literal cannot be used as int",
+            Self::UnterminatedChar => "unterminated char literal",
             Self::ExpectedDeclaration => "expected declaration",
             Self::ExpectedParameters => "expected parameters",
             Self::ExpectedArguments => "expected arguments",
@@ -72,6 +87,7 @@ impl fmt::Display for ErrMsg {
             Self::ExpectedType => "expected type",
             Self::ExpectedToken(token) => &format!("expected '{}' token", token),
             Self::ExpectedTypeNameOrIdentifier => "expected type name or identifier",
+            Self::UnknownEscapeSequence(x) => &format!("unknown escape sequence: \\{}", x),
         };
 
         write!(f, "{}", msg)

@@ -1,26 +1,27 @@
 use serde::Serialize;
 
-use crate::{ast::{ASTWrapper, arguments::Arguments}, impl_ast_node, token::PositionRange};
-
+use crate::ast::arguments::Arguments;
+use crate::{impl_ast_node, impl_positioned};
+use crate::lexer::token::{Located, PositionRange};
 
 #[derive(Serialize)]
 pub struct ConstructorCallExpr {
-    pub type_name: String,
-    pub arguments: ASTWrapper<Arguments>,
+    pub type_name: Located<String>,
+    pub arguments: Arguments,
     pub is_heap: bool,
+    position: PositionRange,
 }
 
-impl ASTWrapper<ConstructorCallExpr> {
-    pub fn new_constructor_call(type_name: String, arguments: ASTWrapper<Arguments>, is_heap: bool, position: PositionRange) -> Self {        
-        ASTWrapper {
-            data: ConstructorCallExpr { 
-                type_name, 
-                arguments,
-                is_heap
-            },
-            position
+impl ConstructorCallExpr {
+    pub fn new(type_name: Located<String>, arguments: Arguments, is_heap: bool, position: PositionRange) -> Self {        
+        Self {
+            type_name,
+            arguments,
+            is_heap,
+            position,
         }
     }    
 }
 
+impl_positioned!(ConstructorCallExpr);
 impl_ast_node!(ConstructorCallExpr, visit_constructor_call);

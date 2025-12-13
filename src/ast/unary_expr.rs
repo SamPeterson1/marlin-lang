@@ -1,28 +1,49 @@
 use serde::Serialize;
 
-use crate::{ast::{ASTNode, ASTWrapper}, operator::{self, UnaryOperator}, token::{PositionRange, Token}};
+use crate::ast::ASTNode;
+use crate::{impl_ast_node, impl_positioned};
+use crate::lexer::token::{PositionRange, TokenType};
+
+#[derive(Serialize)]
+pub enum UnaryOperator {
+    Deref,
+    AddressOf,
+    Not,
+    Negative,
+    Semicolon,
+}
+
+impl TryFrom<TokenType> for UnaryOperator {
+    type Error = String;
+
+    fn try_from(token_type: TokenType) -> Result<Self, String> {
+        match token_type {
+            TokenType::Star => Ok(UnaryOperator::Deref),
+            TokenType::Ampersand => Ok(UnaryOperator::AddressOf),
+            TokenType::Not => Ok(UnaryOperator::Not),
+            TokenType::Minus => Ok(UnaryOperator::Negative),
+            TokenType::Semicolon => Ok(UnaryOperator::Semicolon),
+            _ => Err(format!("Invalid token for binary operator: {:?}", token_type)),
+        }
+    }
+}
 
 #[derive(Serialize)]
 pub struct UnaryExpr {
     pub expr: Box<dyn ASTNode>,
-    pub operator: Box<dyn UnaryOperator>,
+    pub operator: UnaryOperator,
+    position: PositionRange,
 }
 
-impl ASTWrapper<UnaryExpr> {
-    pub fn new_unary(expr: Box<dyn ASTNode>, operator_token: Token) -> Self {
-        let operator = operator::as_unary_operator(operator_token.token_type);
-
-        let position = PositionRange::concat(expr.get_position(), &operator_token.position);
-
-        ASTWrapper {
-            data: UnaryExpr {
-                expr,
-                operator,
-            },
-            position
+impl UnaryExpr {
+    pub fn new(expr: Box<dyn ASTNode>, operator: UnaryOperator, position: PositionRange) -> Self {
+        Self {
+            expr,
+            operator,
+            position,
         }
-        
     }
-}
+}    
 
-crate::impl_ast_node!(UnaryExpr, visit_unary);
+impl_positioned!(UnaryExpr);
+impl_ast_node!(UnaryExpr, visit_unary);

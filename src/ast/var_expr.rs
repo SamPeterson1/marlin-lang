@@ -1,22 +1,24 @@
 use serde::Serialize;
 
-use crate::{ast::ASTWrapper, impl_ast_node, token::Token};
+use crate::{impl_ast_node};
+use crate::lexer::token::{Located, PositionRange, Positioned};
 
 #[derive(Serialize)]
 pub struct VarExpr {
-    pub id: u32,
-    pub identifier: String,
+    pub identifier: Located<String>,
 }
 
-impl ASTWrapper<VarExpr> {
-    pub fn new_var(id: u32, identifier: Token) -> Self {
-        ASTWrapper {
-            data: VarExpr {
-                id,
-                identifier: identifier.get_string().to_string(),
-            },
-            position: identifier.position
+impl VarExpr {
+    pub fn new(identifier: Located<String>) -> Self {
+        Self {
+            identifier,
         }
+    }
+}
+
+impl Positioned for VarExpr {
+    fn get_position(&self) -> &PositionRange {
+        self.identifier.get_position()
     }
 }
 

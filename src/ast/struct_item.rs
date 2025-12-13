@@ -1,28 +1,32 @@
-use std::rc::Rc;
-
 use serde::Serialize;
 
-use crate::{ast::{ASTWrapper, constructor_item::ConstructorItem, parsed_type::ParsedType}, impl_ast_node, token::PositionRange};
+use crate::ast::{constructor_item::ConstructorItem, parsed_type::ParsedType};
+use crate::{impl_ast_node, impl_positioned};
+use crate::lexer::token::{Located, PositionRange};
 
 #[derive(Serialize)]
 pub struct StructItem {
-    pub name: Rc<String>,
-    pub members: Vec<(ASTWrapper<ParsedType>, String)>,
-    pub constructors: Vec<ASTWrapper<ConstructorItem>>,
+    pub name: Located<String>,
+    pub members: Vec<(ParsedType, Located<String>)>,
+    pub constructors: Vec<ConstructorItem>,
+    position: PositionRange,
 }
 
-
-impl ASTWrapper<StructItem> {
-    pub fn new_struct_item(name: String, members: Vec<(ASTWrapper<ParsedType>, String)>, constructors: Vec<ASTWrapper<ConstructorItem>>, position: PositionRange) -> Self {
-        ASTWrapper {
-            data: StructItem {
-                name: Rc::new(name),
-                members,
-                constructors,
-            },
-            position
+impl StructItem {
+    pub fn new(
+        name: Located<String>,
+        members: Vec<(ParsedType, Located<String>)>,
+        constructors: Vec<ConstructorItem>,
+        position: PositionRange,
+    ) -> Self {
+        Self {
+            name,
+            members,
+            constructors,
+            position,
         }
     }
 }
 
+impl_positioned!(StructItem);
 impl_ast_node!(StructItem, visit_struct);

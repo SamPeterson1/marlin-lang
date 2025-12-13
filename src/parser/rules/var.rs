@@ -1,6 +1,8 @@
 use std::fmt;
 
-use crate::{ast::{ASTWrapper, var_expr::VarExpr}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor}, token::TokenType};
+use crate::ast::var_expr::VarExpr;
+use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
+use crate::lexer::token::TokenType;
 
 pub struct VarRule {}
 
@@ -10,14 +12,14 @@ impl fmt::Display for VarRule {
     }
 }
 
-impl ParseRule<ASTWrapper<VarExpr>> for VarRule {
+impl ParseRule<VarExpr> for VarRule {
     fn check_match(&self, mut cursor: ParserCursor) -> bool {
-        cursor.try_consume(TokenType::Identifier).is_some()
+        cursor.try_consume(TokenType::AnyIdentifier).is_some()
     }
     
-    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<VarExpr>> {
-        let identifier = parser.try_consume(TokenType::Identifier)?;
+    fn parse(&self, parser: &mut ExprParser) -> Option<VarExpr> {
+        let identifier = parser.try_consume(TokenType::AnyIdentifier)?;
 
-        Some(ASTWrapper::new_var(0, identifier))
+        Some(VarExpr::new(identifier.unwrap_identifier()))
     }
 }

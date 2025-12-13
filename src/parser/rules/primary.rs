@@ -1,5 +1,10 @@
-use crate::{ast::{ASTNode, ASTWrapper}, parser::{ExprParser, ParseRule, TokenCursor, diagnostic::ErrMsg, rules::{block::BlockRule, constructor_call::ConstructorCallRule, expr::ExprRule, for_loop::ForLoopRule, if_block::IfBlockRule, loop_expr::LoopRule, new_array::NewArrayRule, var::VarRule, while_loop::WhileLoopRule}}, token::{TokenType, TokenValue}};
 use std::fmt;
+
+use crate::ast::{ASTNode, literal_expr::{Literal, LiteralExpr}};
+use crate::diagnostic::ErrMsg;
+use crate::parser::{ExprParser, ParseRule, TokenCursor};
+use crate::parser::rules::{block::BlockRule, constructor_call::ConstructorCallRule, expr::ExprRule, for_loop::ForLoopRule, if_block::IfBlockRule, loop_expr::LoopRule, new_array::NewArrayRule, var::VarRule, while_loop::WhileLoopRule};
+use crate::lexer::token::{Positioned, TokenType};
 
 pub struct PrimaryRule {}
 
@@ -56,12 +61,14 @@ impl ParseRule<Box<dyn ASTNode>> for PrimaryRule {
         
         let cur = parser.cur();
 
-        let literal = match (cur.token_type, cur.value) {
-            (TokenType::IntLiteral, TokenValue::Int(x)) => ASTWrapper::new_int_literal(x, cur.position),
-            (TokenType::DoubleLiteral, TokenValue::Double(x)) => ASTWrapper::new_double_literal(x, cur.position),
-            (TokenType::BoolLiteral, TokenValue::Bool(x)) => ASTWrapper::new_bool_literal(x, cur.position),
+        let literal = match cur.value {
+            TokenType::IntLiteral(x) => LiteralExpr::new(Literal::Int(x), *cur.get_position()),
+            TokenType::DoubleLiteral(x) => LiteralExpr::new(Literal::Double(x), *cur.get_position()),
+            TokenType::BoolLiteral(x) => LiteralExpr::new(Literal::Bool(x), *cur.get_position()),
+            TokenType::CharLiteral(x) => LiteralExpr::new(Literal::Char(x), *cur.get_position()),
+            TokenType::StringLiteral(ref x) => LiteralExpr::new(Literal::String(x.clone()), *cur.get_position()),
             _ => {
-                parser.push_diagnostic(ErrMsg::ExpectedExpression.make_diagnostic(cur.position));
+                parser.push_diagnostic(ErrMsg::ExpectedExpression.make_diagnostic(*cur.get_position()));
                 return None;
             }
         };

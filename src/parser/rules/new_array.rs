@@ -1,6 +1,10 @@
 use std::fmt;
 
-use crate::{ast::{ASTWrapper, new_array_expr::NewArrayExpr}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::{expr::ExprRule, parsed_type::ParsedTypeRule, parsed_unit_type::ParsedUnitTypeRule}}, token::{PositionRange, TokenType}};
+use crate::ast::new_array_expr::NewArrayExpr;
+use crate::diagnostic::ErrMsg;
+use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
+use crate::parser::rules::{expr::ExprRule, parsed_type::ParsedTypeRule, parsed_unit_type::ParsedUnitTypeRule};
+use crate::lexer::token::TokenType;
 
 pub struct NewArrayRule {}
 
@@ -10,13 +14,14 @@ impl fmt::Display for NewArrayRule {
     }
 }
 
-impl ParseRule<ASTWrapper<NewArrayExpr>> for NewArrayRule {
+impl ParseRule<NewArrayExpr> for NewArrayRule {
     fn check_match(&self, mut cursor: ParserCursor) -> bool {
         cursor.try_consume(TokenType::New).is_some() && (ParsedTypeRule {}.check_match(cursor))
     }
 
-    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<NewArrayExpr>> {
-        let new_token = parser.try_consume(TokenType::New)?;
+    fn parse(&self, parser: &mut ExprParser) -> Option<NewArrayExpr> {
+        parser.begin_range();
+        parser.try_consume(TokenType::New)?;
 
         let array_type = parser.apply_rule(ParsedUnitTypeRule {}, "array type", None)?;
         
@@ -27,9 +32,7 @@ impl ParseRule<ASTWrapper<NewArrayExpr>> for NewArrayRule {
             sizes.push(size_expr);
             parser.consume_or_diagnostic(TokenType::RightSquare);
         }
-
-        let position = PositionRange::concat(&new_token.position, &parser.prev().position);
     
-        Some(ASTWrapper::new_new_array_expr(sizes, array_type, position))
+        Some(NewArrayExpr::new(sizes, array_type, parser.end_range()))
     }
 }

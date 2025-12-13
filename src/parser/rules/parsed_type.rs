@@ -1,6 +1,10 @@
 use std::fmt;
 
-use crate::{ast::{ASTWrapper, parsed_type::ParsedType}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::parsed_unit_type::ParsedUnitTypeRule}, token::{PositionRange, TokenType}};
+use crate::ast::parsed_type::ParsedType;
+use crate::diagnostic::ErrMsg;
+use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
+use crate::parser::rules::parsed_unit_type::ParsedUnitTypeRule;
+use crate::lexer::token::TokenType;
 
 pub struct ParsedTypeRule {}
 
@@ -10,21 +14,13 @@ impl fmt::Display for ParsedTypeRule {
     }
 }
 
-impl ParseRule<ASTWrapper<ParsedType>> for ParsedTypeRule {
+impl ParseRule<ParsedType> for ParsedTypeRule {
     fn check_match(&self, cursor: ParserCursor) -> bool {
-        let cur = cursor.cur();
-
-        matches!(
-            &cur.token_type,
-            TokenType::Int
-                | TokenType::Double
-                | TokenType::Bool
-                | TokenType::Identifier
-        )
+        (ParsedUnitTypeRule {}).check_match(cursor)
     }
 
-    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<ParsedType>> {
-        let start_pos = parser.cur().position;
+    fn parse(&self, parser: &mut ExprParser) -> Option<ParsedType> {
+        parser.begin_range();
         let unit_type = parser.apply_rule(ParsedUnitTypeRule {}, "unit type", Some(ErrMsg::ExpectedTypeNameOrIdentifier))?;
 
         let mut array_dimension: u32 = 0;
@@ -36,8 +32,6 @@ impl ParseRule<ASTWrapper<ParsedType>> for ParsedTypeRule {
 
         let is_reference = parser.try_consume(TokenType::Ampersand).is_some();
 
-        let position = PositionRange::concat(&start_pos, &parser.prev().position);
-
-        Some(ASTWrapper::new_parsed_type(is_reference, unit_type, array_dimension, position))
+        Some(ParsedType::new(is_reference, unit_type, array_dimension, parser.end_range()))
     }
 }

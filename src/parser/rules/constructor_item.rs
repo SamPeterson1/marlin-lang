@@ -1,6 +1,10 @@
 use std::fmt;
 
-use crate::{ast::{ASTWrapper, constructor_item::ConstructorItem}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::{block::BlockRule, parameters::ParametersRule,}}, token::{PositionRange, Positioned, TokenType}};
+use crate::ast::constructor_item::ConstructorItem;
+use crate::diagnostic::ErrMsg;
+use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
+use crate::parser::rules::{block::BlockRule, parameters::ParametersRule};
+use crate::lexer::token::TokenType;
 
 pub struct ConstructorRule {}
 
@@ -10,19 +14,18 @@ impl fmt::Display for ConstructorRule {
     }
 }
 
-impl ParseRule<ASTWrapper<ConstructorItem>> for ConstructorRule {
+impl ParseRule<ConstructorItem> for ConstructorRule {
     fn check_match(&self, mut cursor: ParserCursor) -> bool {
         cursor.try_consume(TokenType::DollarSign).is_some()
     }
 
-    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<ConstructorItem>> {
-        let dollar_token = parser.try_consume(TokenType::DollarSign)?;
+    fn parse(&self, parser: &mut ExprParser) -> Option<ConstructorItem> {
+        parser.begin_range();
+        parser.try_consume(TokenType::DollarSign)?;
 
         let parameters = parser.apply_rule(ParametersRule {}, "constructor parameters", Some(ErrMsg::ExpectedParameters))?;
         let body = parser.apply_rule(BlockRule {}, "constructor body", Some(ErrMsg::ExpectedBlock))?;        
         
-        let position = PositionRange::concat(&dollar_token.position, body.get_position());
-
-        Some(ASTWrapper::new_constructor_item(parameters, body, position))
+        Some(ConstructorItem::new(parameters, body, parser.end_range()))
     }
 }

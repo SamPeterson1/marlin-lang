@@ -1,13 +1,13 @@
-use std::fs::File;
-use std::io::prelude::*;
-use std::path::Path;
 use std::env;
+use std::fs::File;
+use std::io::Read;
+use std::path::Path;
 
-use crate::logger::{LogSource, Logger};
-use crate::parser::{ExprParser, ParseResult};
-use crate::lexer;
-use crate::token::Token;
-
+use crate::diagnostic::Diagnostic;
+use crate::lexer::Lexer;
+use crate::logger::Log;
+use crate::parser::ExprParser;
+use crate::lexer::token::Token;
 
 fn read_file(file: &str, contents: &mut String) {
     let working_dir = env::current_dir().expect("Error reading working directory");
@@ -33,48 +33,42 @@ pub fn run_file(file: &str) {
     let mut contents = String::new();
     
     read_file(file, &mut contents);
-    run(contents);
+
+    let runner = Runner::new(contents);
+    runner.run();
 }
 
-pub fn run_prompt() {
-    let stdin = std::io::stdin();
-    let mut stdout = std::io::stdout();
-
-    loop {
-        print!("> ");
-
-        stdout.flush().expect("Error flushing stdout");
-
-        let mut line = String::new();
-
-        match stdin.read_line(&mut line) {
-            Ok(_) => run(line),
-            Err(err) => panic!("Error reading user input: {}", err)
-        };
-    }
+struct Runner { 
+    diagnostics: Vec<Diagnostic>,
+    code: String
 }
 
-struct Runner { }
-
-impl LogSource for Runner {
+impl Log for Runner {
     fn get_source(&self) -> String {
         "Runner".to_string()
     }
 }
 
-fn run(code: String) {
-    let runner = Runner {};
+impl Runner {
+    fn new(code: String) -> Runner {
+        Runner {
+            diagnostics: Vec::new(),
+            code
+        }
+    }
 
-    Logger::log_info(&runner, "Running code");
-    Logger::log_debug(&runner, format!("Source code: {}", code).as_str());
+    fn run(mut self) {
+        self.log_info("Running code");
+        self.log_debug(&format!("Source code: {}", self.code));
 
-    Logger::log_info(&runner, "Lexing code");
-    let tokens: Vec<Token> = lexer::parse(&code);
-    Logger::log_info(&runner, "Done lexing");
-    
-    let parser = ExprParser::new(&tokens);
-
-    Logger::log_info(&runner, "Parsing code");
-    let ParseResult { program, diagnostics: parse_diagnostics } = parser.parse();
-    Logger::log_info(&runner, "Done parsing");
+        self.log_info("Lexing code");
+        let lexer = Lexer::new(&self.code, &mut self.diagnostics);
+        let tokens: Vec<Token> = lexer.parse();
+        self.log_info("Done lexing");
+        
+        self.log_info("Parsing code");
+        let parser = ExprParser::new(tokens, &mut self.diagnostics);
+        parser.parse();
+        self.log_info("Done parsing");
+    } 
 }

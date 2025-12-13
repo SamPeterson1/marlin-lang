@@ -1,5 +1,11 @@
-use crate::{ast::{ASTNode, ASTWrapper, member_access::AccessType}, logger::Log, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::{arguments::ArgumentsRule, expr::ExprRule, primary::PrimaryRule}}, token::{PositionRange, TokenType}};
 use std::fmt;
+
+use crate::ast::{ASTNode, member_access::{AccessType, MemberAccess}};
+use crate::diagnostic::ErrMsg;
+use crate::logger::Log;
+use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
+use crate::parser::rules::{arguments::ArgumentsRule, expr::ExprRule, primary::PrimaryRule};
+use crate::lexer::token::TokenType;
 
 pub struct MemberAccessRule {}
 
@@ -15,6 +21,7 @@ impl ParseRule<Box<dyn ASTNode>> for MemberAccessRule {
     }
 
     fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
+        parser.begin_range();
         let expr = parser.apply_rule(PrimaryRule {}, "member access expression", Some(ErrMsg::ExpectedExpression))?;
 
         let mut member_accesses = Vec::new();
@@ -23,18 +30,18 @@ impl ParseRule<Box<dyn ASTNode>> for MemberAccessRule {
 
         while let Some(token) = parser.try_match(&[TokenType::Dot, TokenType::Arrow, TokenType::LeftSquare, TokenType::LeftParen]) {
             
-            if token.token_type == TokenType::Dot {
+            if token.value == TokenType::Dot {
                 parser.next();
-                let identifier = parser.try_consume(TokenType::Identifier)?;
+                let identifier = parser.try_consume(TokenType::AnyIdentifier)?;
 
-                member_accesses.push(AccessType::Direct(identifier.get_string().to_string()));
-            } else if token.token_type == TokenType::Arrow {
+                member_accesses.push(AccessType::Direct(identifier.unwrap_identifier()));
+            } else if token.value == TokenType::Arrow {
                 parser.next();
 
-                let identifier = parser.try_consume(TokenType::Identifier)?;
+                let identifier = parser.try_consume(TokenType::AnyIdentifier)?;
 
-                member_accesses.push(AccessType::Indirect(identifier.get_string().to_string()));
-            } else if token.token_type == TokenType::LeftSquare {
+                member_accesses.push(AccessType::Indirect(identifier.unwrap_identifier()));
+            } else if token.value == TokenType::LeftSquare {
                 parser.next();
 
                 let index_expr = parser.apply_rule(ExprRule {}, "array index expression", Some(ErrMsg::ExpectedExpression))?;
@@ -42,15 +49,13 @@ impl ParseRule<Box<dyn ASTNode>> for MemberAccessRule {
                 parser.consume_or_diagnostic(TokenType::RightSquare);
 
                 member_accesses.push(AccessType::Array(index_expr));
-            } else if token.token_type == TokenType::LeftParen {
+            } else if token.value == TokenType::LeftParen {
                 let args = parser.apply_rule(ArgumentsRule {}, "function call arguments", Some(ErrMsg::ExpectedArguments))?;
 
                 member_accesses.push(AccessType::FunctionCall(args));
             }
         }
-
-        let position = PositionRange::concat(expr.get_position(), &parser.prev().position);
         
-        Some(Box::new(ASTWrapper::new_member_access(expr, member_accesses, position)))
+        Some(Box::new(MemberAccess::new(expr, member_accesses, parser.end_range())))
     }
 }

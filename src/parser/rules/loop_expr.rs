@@ -1,5 +1,10 @@
-use crate::{ast::{ASTWrapper, loop_expr::LoopExpr}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::block::BlockRule}, token::{PositionRange, Positioned, TokenType}};
 use std::fmt;
+
+use crate::ast::loop_expr::LoopExpr;
+use crate::diagnostic::ErrMsg;
+use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
+use crate::parser::rules::block::BlockRule;
+use crate::lexer::token::TokenType;
 
 pub struct LoopRule {}
 
@@ -9,18 +14,17 @@ impl fmt::Display for LoopRule {
     }
 }
 
-impl ParseRule<ASTWrapper<LoopExpr>> for LoopRule {
+impl ParseRule<LoopExpr> for LoopRule {
     fn check_match(&self, mut cursor: ParserCursor) -> bool {
         cursor.try_consume(TokenType::Loop).is_some()
     }
     
-    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<LoopExpr>> {
-        let loop_token = parser.try_consume(TokenType::Loop)?;
+    fn parse(&self, parser: &mut ExprParser) -> Option<LoopExpr> {
+        parser.begin_range();
+        parser.try_consume(TokenType::Loop)?;
     
         let body = parser.apply_rule(BlockRule {}, "loop body", Some(ErrMsg::ExpectedBlock))?;
-        
-        let position = PositionRange::concat(&loop_token.position, body.get_position());
-    
-        Some(ASTWrapper::new_loop(body, position))
+            
+        Some(LoopExpr::new_loop(body, parser.end_range()))
     }
 }

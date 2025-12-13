@@ -1,7 +1,10 @@
-
 use std::fmt;
 
-use crate::{ast::{ASTWrapper, arguments::Arguments}, parser::{ExprParser, ParseRule, ParserCursor, TokenCursor, diagnostic::ErrMsg, rules::expr::ExprRule}, token::{PositionRange, TokenType}};
+use crate::ast::arguments::Arguments;
+use crate::diagnostic::ErrMsg;
+use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
+use crate::parser::rules::expr::ExprRule;
+use crate::lexer::token::TokenType;
 
 pub struct ArgumentsRule {}
 
@@ -11,13 +14,15 @@ impl fmt::Display for ArgumentsRule {
     }
 }
 
-impl ParseRule<ASTWrapper<Arguments>> for ArgumentsRule {
+impl ParseRule<Arguments> for ArgumentsRule {
     fn check_match(&self, mut cursor: ParserCursor) -> bool {
         cursor.try_consume(TokenType::LeftParen).is_some()
     }
     
-    fn parse(&self, parser: &mut ExprParser) -> Option<ASTWrapper<Arguments>> {
-        let left_paren = parser.try_consume(TokenType::LeftParen)?;
+    fn parse(&self, parser: &mut ExprParser) -> Option<Arguments> {
+        parser.begin_range();
+        
+        parser.try_consume(TokenType::LeftParen)?;
 
         let mut arguments = Vec::new();
         
@@ -35,8 +40,6 @@ impl ParseRule<ASTWrapper<Arguments>> for ArgumentsRule {
             parser.consume_or_diagnostic(TokenType::RightParen);
         }
         
-        let position = PositionRange::concat(&left_paren.position, &parser.prev().position);
-
-        Some(ASTWrapper::new_arguments(arguments, position))
+        Some(Arguments::new(arguments, parser.end_range()))
     }
 }

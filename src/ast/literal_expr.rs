@@ -1,46 +1,31 @@
 use serde::Serialize;
 
-use crate::{ast::ASTWrapper, token::PositionRange};
+use crate::{impl_ast_node, impl_positioned};
+use crate::lexer::token::PositionRange;
 
 #[derive(Serialize)]
 pub enum Literal {    
     Int (i64),
     Double (f64),
     Bool (bool),
+    Char (char),
+    String (String),
 }
 
 #[derive(Serialize)]
 pub struct LiteralExpr {
     pub value: Literal,
+    position: PositionRange,
 }
 
-impl ASTWrapper<LiteralExpr> {
-    pub fn new_int_literal(value: i64, position: PositionRange) -> Self {
-        ASTWrapper {
-            data: LiteralExpr {
-                value: Literal::Int(value),
-            },
-            position
+impl LiteralExpr {
+    pub fn new(value: Literal, position: PositionRange) -> Self {
+        Self {
+            value,
+            position,
         }
     }
-
-    pub fn new_double_literal(value: f64, position: PositionRange) -> Self {
-        ASTWrapper {
-            data: LiteralExpr {
-                value: Literal::Double(value),
-            },
-            position
-        }
-    }
-
-    pub fn new_bool_literal(value: bool, position: PositionRange) -> Self {
-        ASTWrapper {
-            data: LiteralExpr {
-                value: Literal::Bool(value),
-            },
-            position
-        }
-    }    
 }
 
-crate::impl_ast_node!(LiteralExpr, visit_literal);
+impl_positioned!(LiteralExpr);
+impl_ast_node!(LiteralExpr, visit_literal);
