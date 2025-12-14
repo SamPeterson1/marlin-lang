@@ -53,13 +53,399 @@ impl ParseRule<Box<dyn ASTNode>> for StatementRule {
         }
 
         if (AssignmentRule {}).check_match(parser.get_cursor()) {
-            let result = parser.apply_rule_boxed(AssignmentRule {}, "statement assignment", None)?;
+            let result = parser.apply_rule(AssignmentRule {}, "statement assignment", None)?;
             parser.consume_or_diagnostic(TokenType::Semicolon);
 
             return Some(result);
         }
 
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lexer::token::{Token, TokenType, PositionRange, Position};
+
+    fn create_token(token_type: TokenType) -> Token {
+        Token::new(token_type, PositionRange::new(Position::new(1, 1)))
+    }
+
+    #[test]
+    fn test_statement_rule_check_match_always_true() {
+        let rule = StatementRule {};
+        let tokens = vec![create_token(TokenType::EOF)];
+        let cursor = ParserCursor { ptr: 0, tokens: &tokens };
+        
+        // Statement rule always returns true for check_match
+        assert!(rule.check_match(cursor));
+    }
+
+    #[test]
+    fn test_parse_loop_statement() {
+        let rule = StatementRule {};
+        let tokens = vec![
+            create_token(TokenType::Loop),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::Break),
+            create_token(TokenType::Semicolon),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        assert!(diagnostics.is_empty(), "Expected no diagnostics for valid loop statement");
+    }
+
+    #[test]
+    fn test_parse_if_statement() {
+        let rule = StatementRule {};
+        let tokens = vec![
+            create_token(TokenType::If),
+            create_token(TokenType::BoolLiteral(true)),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::IntLiteral(1)),
+            create_token(TokenType::Semicolon),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        assert!(diagnostics.is_empty(), "Expected no diagnostics for valid if statement");
+    }
+
+    #[test]
+    fn test_parse_block_statement() {
+        let rule = StatementRule {};
+        let tokens = vec![
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::Let),
+            create_token(TokenType::Int),
+            create_token(TokenType::Identifier("x".to_string())),
+            create_token(TokenType::Assignment),
+            create_token(TokenType::IntLiteral(42)),
+            create_token(TokenType::Semicolon),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        assert!(diagnostics.is_empty(), "Expected no diagnostics for valid block statement");
+    }
+
+    #[test]
+    fn test_parse_for_statement() {
+        let rule = StatementRule {};
+        let tokens = vec![
+            create_token(TokenType::For),
+            create_token(TokenType::LeftParen),
+            create_token(TokenType::Let),
+            create_token(TokenType::Int),
+            create_token(TokenType::Identifier("i".to_string())),
+            create_token(TokenType::Assignment),
+            create_token(TokenType::IntLiteral(0)),
+            create_token(TokenType::Semicolon),
+            create_token(TokenType::Identifier("i".to_string())),
+            create_token(TokenType::Less),
+            create_token(TokenType::IntLiteral(10)),
+            create_token(TokenType::Semicolon),
+            create_token(TokenType::Identifier("i".to_string())),
+            create_token(TokenType::Assignment),
+            create_token(TokenType::Identifier("i".to_string())),
+            create_token(TokenType::Plus),
+            create_token(TokenType::IntLiteral(1)),
+            create_token(TokenType::RightParen),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        assert!(diagnostics.is_empty(), "Expected no diagnostics for valid for statement");
+    }
+
+    #[test]
+    fn test_parse_while_statement() {
+        let rule = StatementRule {};
+        let tokens = vec![
+            create_token(TokenType::While),
+            create_token(TokenType::BoolLiteral(true)),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::Break),
+            create_token(TokenType::Semicolon),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        assert!(diagnostics.is_empty(), "Expected no diagnostics for valid while statement");
+    }
+
+    #[test]
+    fn test_parse_exit_statement() {
+        let rule = StatementRule {};
+        let tokens = vec![
+            create_token(TokenType::Return),
+            create_token(TokenType::IntLiteral(42)),
+            create_token(TokenType::Semicolon),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        assert!(diagnostics.is_empty(), "Expected no diagnostics for valid exit statement");
+    }
+
+    #[test]
+    fn test_parse_delete_statement() {
+        let rule = StatementRule {};
+        let tokens = vec![
+            create_token(TokenType::Delete),
+            create_token(TokenType::Identifier("ptr".to_string())),
+            create_token(TokenType::Semicolon),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        assert!(diagnostics.is_empty(), "Expected no diagnostics for valid delete statement");
+    }
+
+    #[test]
+    fn test_parse_declaration_statement() {
+        let rule = StatementRule {};
+        let tokens = vec![
+            create_token(TokenType::Let),
+            create_token(TokenType::Int),
+            create_token(TokenType::Identifier("x".to_string())),
+            create_token(TokenType::Assignment),
+            create_token(TokenType::IntLiteral(42)),
+            create_token(TokenType::Semicolon),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        assert!(diagnostics.is_empty(), "Expected no diagnostics for valid declaration statement");
+    }
+
+    #[test]
+    fn test_parse_assignment_statement() {
+        let rule = StatementRule {};
+        let tokens = vec![
+            create_token(TokenType::Identifier("x".to_string())),
+            create_token(TokenType::Assignment),
+            create_token(TokenType::IntLiteral(42)),
+            create_token(TokenType::Semicolon),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        assert!(diagnostics.is_empty(), "Expected no diagnostics for valid assignment statement");
+    }
+
+    #[test]
+    fn test_parse_expression_statement() {
+        let rule = StatementRule {};
+        let tokens = vec![
+            create_token(TokenType::Identifier("func".to_string())),
+            create_token(TokenType::LeftParen),
+            create_token(TokenType::RightParen),
+            create_token(TokenType::Semicolon),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        
+        let result = rule.parse(&mut parser);
+        
+        // Should parse as expression statement via AssignmentRule (which handles singular expressions)
+        assert!(result.is_some());
+        assert!(diagnostics.is_empty(), "Expected no diagnostics for valid expression statement");
+    }
+
+    #[test]
+    fn test_parse_statement_missing_semicolon() {
+        let rule = StatementRule {};
+        let tokens = vec![
+            create_token(TokenType::Identifier("x".to_string())),
+            create_token(TokenType::Assignment),
+            create_token(TokenType::IntLiteral(42)),
+            create_token(TokenType::EOF), // Missing semicolon
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        // Should have diagnostic for missing semicolon
+        assert!(!diagnostics.is_empty(), "Expected diagnostic for missing semicolon");
+        assert!(diagnostics.iter().any(|d| d.message.contains("';'")));
+    }
+
+    #[test]
+    fn test_parse_break_statement() {
+        let rule = StatementRule {};
+        let tokens = vec![
+            create_token(TokenType::Break),
+            create_token(TokenType::Semicolon),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        assert!(diagnostics.is_empty(), "Expected no diagnostics for valid break statement");
+    }
+
+    #[test]
+    fn test_parse_result_statement() {
+        let rule = StatementRule {};
+        let tokens = vec![
+            create_token(TokenType::Result),
+            create_token(TokenType::StringLiteral("success".to_string())),
+            create_token(TokenType::Semicolon),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        assert!(diagnostics.is_empty(), "Expected no diagnostics for valid result statement");
+    }
+
+    #[test]
+    fn test_parse_invalid_statement() {
+        let rule = StatementRule {};
+        let tokens = vec![
+            create_token(TokenType::RightCurly), // Invalid token to start statement
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_rule_precedence() {
+        // Test that more specific rules are checked before general assignment rule
+        let rule = StatementRule {};
+        
+        // Declaration should be parsed as declaration, not as assignment
+        let tokens = vec![
+            create_token(TokenType::Let),
+            create_token(TokenType::Int),
+            create_token(TokenType::Identifier("x".to_string())),
+            create_token(TokenType::Assignment),
+            create_token(TokenType::IntLiteral(42)),
+            create_token(TokenType::Semicolon),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        assert!(diagnostics.is_empty(), "Expected no diagnostics for declaration precedence");
+        
+        // Loop should be parsed as loop, not as assignment
+        let tokens = vec![
+            create_token(TokenType::Loop),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        assert!(diagnostics.is_empty(), "Expected no diagnostics for loop precedence");
+    }
+
+    #[test]
+    fn test_complex_nested_statement() {
+        let rule = StatementRule {};
+        let tokens = vec![
+            create_token(TokenType::If),
+            create_token(TokenType::Identifier("condition".to_string())),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::For),
+            create_token(TokenType::LeftParen),
+            create_token(TokenType::Let),
+            create_token(TokenType::Int),
+            create_token(TokenType::Identifier("i".to_string())),
+            create_token(TokenType::Assignment),
+            create_token(TokenType::IntLiteral(0)),
+            create_token(TokenType::Semicolon),
+            create_token(TokenType::Identifier("i".to_string())),
+            create_token(TokenType::Less),
+            create_token(TokenType::IntLiteral(5)),
+            create_token(TokenType::Semicolon),
+            create_token(TokenType::Identifier("i".to_string())),
+            create_token(TokenType::Assignment),
+            create_token(TokenType::Identifier("i".to_string())),
+            create_token(TokenType::Plus),
+            create_token(TokenType::IntLiteral(1)),
+            create_token(TokenType::RightParen),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::Break),
+            create_token(TokenType::Semicolon),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        assert!(diagnostics.is_empty(), "Expected no diagnostics for complex nested statement");
     }
 }
 

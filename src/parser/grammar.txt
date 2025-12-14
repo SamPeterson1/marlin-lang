@@ -12,12 +12,11 @@ impl: "impl" type "{" function* "}"
 function: "fn" identifier parameters "->" type block-expression
 parameters: "(" [type identifier ("," type identifier)*] ")"
 
-statement: loop | if | block | for | while | exit | delete | declaration | assignment
+statement: loop | if | block | for | while | exit | delete | declaration | assignment ";"
 expression: condition
 block: "{" statement* "}"
 declaration: "let" type identifier "=" expression ";"
-ptr-assignment: "*" expression "=" expression ";"
-value-assignment: expression "=" expression
+assignment: expression "=" expression | expression
 for: "for" "(" declaration expression ";" assignment ")" block
 while: "while" expression block
 exit: ("return" | "break" | "result") [expression] ";"
@@ -37,10 +36,10 @@ arithmetic-term: arithmetic-factor (("-" | "+") arithmetic-factor)*
 arithmetic-factor: unary (("*" | "/") unary)*
 unary: ("!" | "-" | "*" | "&") unary | member-access
 member-access: primary (("->" | ".") identifier | "[" expression "]" | arguments)*
-arguments: "(" [expression (expression ",")*] ")"
+arguments: "(" [expression ("," expression)*] ")"
 primary: new-array | constructor | loop | if | block | for | while | "(" expression ")" | literal | identifier
 
 
-type: unit-type ("[]")* ["&"]
-unit-type: (primitive-type | identifier) ["&" | "*"*]
+type: unit-type ("[]" ["&"])*
+unit-type: (primitive-type | identifier) "*"* ["&"]
 primitive-type: "int" | "double" | "bool" | "char";

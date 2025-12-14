@@ -11,44 +11,44 @@ pub enum ParsedBaseType {
     TypeName(Rc<String>),
 }
 
-#[derive(Serialize, Clone)]
-pub enum ParsedUnitModifier {
-    None,
-    Reference,
-    Pointer(u32),
-}
 
 #[derive(Serialize)]
 pub struct ParsedUnitType {
     pub base_type: Located<ParsedBaseType>,
-    pub modifier: ParsedUnitModifier,
+    pub n_pointers: u32,
+    pub is_reference: bool,
     position: PositionRange,
 }
 
 #[derive(Serialize)]
-pub struct ParsedType {
+pub struct ArrayModifier {
     pub is_reference: bool,
+}
+
+#[derive(Serialize)]
+pub struct ParsedType {
     pub unit_type: ParsedUnitType,
-    pub array_dimension: u32,
+    pub array_modifiers: Vec<ArrayModifier>,
+
     position: PositionRange,
 }
 
 impl ParsedType {
-    pub fn new(is_reference: bool, unit_type: ParsedUnitType, array_dimension: u32, position: PositionRange) -> Self {
+    pub fn new(unit_type: ParsedUnitType, array_modifiers: Vec<ArrayModifier>, position: PositionRange) -> Self {
         Self {
-            is_reference,
             unit_type,
-            array_dimension,
+            array_modifiers,
             position,
         }
     }
 }
 
 impl ParsedUnitType {
-    pub fn new(base_type: Located<ParsedBaseType>, modifier: ParsedUnitModifier, position: PositionRange) -> Self {
+    pub fn new(base_type: Located<ParsedBaseType>, n_pointers: u32, is_reference: bool, position: PositionRange) -> Self {
         Self {
             base_type,
-            modifier,
+            n_pointers,
+            is_reference,
             position,
         }
     }

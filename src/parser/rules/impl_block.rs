@@ -38,3 +38,281 @@ impl ParseRule<ImplItem> for ImplBlockRule {
         Some(ImplItem::new(impl_type, functions, parser.end_range()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lexer::token::{Token, TokenType, PositionRange};
+    use crate::parser::ExprParser;
+
+    fn create_parser_with_tokens(tokens: Vec<TokenType>) -> ExprParser<'static> {
+        let diagnostics = Box::leak(Box::new(Vec::new()));
+        let tokens: Vec<Token> = tokens
+            .into_iter()
+            .map(|token_type| Token::new(token_type, PositionRange::zero()))
+            .collect();
+        ExprParser::new(tokens, diagnostics)
+    }
+
+    #[test]
+    fn test_impl_block_check_match_with_impl_keyword() {
+        let parser = create_parser_with_tokens(vec![
+            TokenType::Impl,
+            TokenType::Identifier("MyType".to_string()),
+            TokenType::LeftCurly,
+            TokenType::RightCurly,
+            TokenType::EOF,
+        ]);
+        let rule = ImplBlockRule {};
+        assert!(rule.check_match(parser.get_cursor()));
+    }
+
+    #[test]
+    fn test_impl_block_check_match_without_impl_keyword() {
+        let parser = create_parser_with_tokens(vec![
+            TokenType::Struct,
+            TokenType::Identifier("MyType".to_string()),
+            TokenType::LeftCurly,
+            TokenType::RightCurly,
+            TokenType::EOF,
+        ]);
+        let rule = ImplBlockRule {};
+        assert!(!rule.check_match(parser.get_cursor()));
+    }
+
+    #[test]
+    fn test_parse_empty_impl_block() {
+        let mut parser = create_parser_with_tokens(vec![
+            TokenType::Impl,
+            TokenType::Identifier("MyType".to_string()),
+            TokenType::LeftCurly,
+            TokenType::RightCurly,
+            TokenType::EOF,
+        ]);
+        let rule = ImplBlockRule {};
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        let impl_item = result.unwrap();
+        assert_eq!(impl_item.functions.len(), 0);
+    }
+
+    #[test]
+    fn test_parse_impl_block_with_single_function() {
+        let mut parser = create_parser_with_tokens(vec![
+            TokenType::Impl,
+            TokenType::Identifier("MyStruct".to_string()),
+            TokenType::LeftCurly,
+            TokenType::Fn,
+            TokenType::Identifier("get_value".to_string()),
+            TokenType::LeftParen,
+            TokenType::RightParen,
+            TokenType::Arrow,
+            TokenType::Int,
+            TokenType::LeftCurly,
+            TokenType::Return,
+            TokenType::IntLiteral(42),
+            TokenType::Semicolon,
+            TokenType::RightCurly,
+            TokenType::RightCurly,
+            TokenType::EOF,
+        ]);
+        let rule = ImplBlockRule {};
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        let impl_item = result.unwrap();
+        assert_eq!(impl_item.functions.len(), 1);
+        assert_eq!(impl_item.functions[0].name.data, "get_value");
+    }
+
+    #[test]
+    fn test_parse_impl_block_with_multiple_functions() {
+        let mut parser = create_parser_with_tokens(vec![
+            TokenType::Impl,
+            TokenType::Identifier("Calculator".to_string()),
+            TokenType::LeftCurly,
+            // First function: add
+            TokenType::Fn,
+            TokenType::Identifier("add".to_string()),
+            TokenType::LeftParen,
+            TokenType::Int,
+            TokenType::Identifier("a".to_string()),
+            TokenType::Comma,
+            TokenType::Int,
+            TokenType::Identifier("b".to_string()),
+            TokenType::RightParen,
+            TokenType::Arrow,
+            TokenType::Int,
+            TokenType::LeftCurly,
+            TokenType::Return,
+            TokenType::Identifier("a".to_string()),
+            TokenType::Plus,
+            TokenType::Identifier("b".to_string()),
+            TokenType::Semicolon,
+            TokenType::RightCurly,
+            // Second function: multiply
+            TokenType::Fn,
+            TokenType::Identifier("multiply".to_string()),
+            TokenType::LeftParen,
+            TokenType::Int,
+            TokenType::Identifier("x".to_string()),
+            TokenType::Comma,
+            TokenType::Int,
+            TokenType::Identifier("y".to_string()),
+            TokenType::RightParen,
+            TokenType::Arrow,
+            TokenType::Int,
+            TokenType::LeftCurly,
+            TokenType::Return,
+            TokenType::Identifier("x".to_string()),
+            TokenType::Star,
+            TokenType::Identifier("y".to_string()),
+            TokenType::Semicolon,
+            TokenType::RightCurly,
+            TokenType::RightCurly,
+            TokenType::EOF,
+        ]);
+        let rule = ImplBlockRule {};
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        let impl_item = result.unwrap();
+        assert_eq!(impl_item.functions.len(), 2);
+        assert_eq!(impl_item.functions[0].name.data, "add");
+        assert_eq!(impl_item.functions[1].name.data, "multiply");
+    }
+
+    #[test]
+    fn test_parse_impl_block_missing_type() {
+        let mut parser = create_parser_with_tokens(vec![
+            TokenType::Impl,
+            TokenType::LeftCurly,
+            TokenType::RightCurly,
+            TokenType::EOF,
+        ]);
+        let rule = ImplBlockRule {};
+        let result = rule.parse(&mut parser);
+        
+        // Should fail to parse due to missing type
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_parse_impl_block_missing_opening_brace() {
+        let mut parser = create_parser_with_tokens(vec![
+            TokenType::Impl,
+            TokenType::Identifier("MyType".to_string()),
+            TokenType::Fn,
+            TokenType::Identifier("test".to_string()),
+            TokenType::LeftParen,
+            TokenType::RightParen,
+            TokenType::Arrow,
+            TokenType::Int,
+            TokenType::LeftCurly,
+            TokenType::Return,
+            TokenType::IntLiteral(1),
+            TokenType::Semicolon,
+            TokenType::RightCurly,
+            TokenType::EOF,
+        ]);
+        let rule = ImplBlockRule {};
+        let result = rule.parse(&mut parser);
+        
+        // Should still parse the impl part but generate diagnostic for missing brace
+        assert!(result.is_some());
+    }
+
+    #[test]
+    fn test_parse_impl_block_missing_closing_brace() {
+        let mut parser = create_parser_with_tokens(vec![
+            TokenType::Impl,
+            TokenType::Identifier("MyType".to_string()),
+            TokenType::LeftCurly,
+            TokenType::Fn,
+            TokenType::Identifier("test".to_string()),
+            TokenType::LeftParen,
+            TokenType::RightParen,
+            TokenType::Arrow,
+            TokenType::Int,
+            TokenType::LeftCurly,
+            TokenType::Return,
+            TokenType::IntLiteral(1),
+            TokenType::Semicolon,
+            TokenType::RightCurly,
+            TokenType::EOF,
+        ]);
+        let rule = ImplBlockRule {};
+        let result = rule.parse(&mut parser);
+        
+        // Should parse but generate diagnostic for missing closing brace
+        assert!(result.is_some());
+    }
+
+    #[test]
+    fn test_parse_impl_block_with_invalid_function() {
+        let mut parser = create_parser_with_tokens(vec![
+            TokenType::Impl,
+            TokenType::Identifier("MyType".to_string()),
+            TokenType::LeftCurly,
+            TokenType::Fn,
+            TokenType::Identifier("incomplete_function".to_string()),
+            TokenType::LeftParen,
+            TokenType::RightCurly,
+            TokenType::EOF,
+        ]);
+        let rule = ImplBlockRule {};
+        let result = rule.parse(&mut parser);
+        
+        // Should parse the impl block structure but have errors from the malformed function
+        assert!(result.is_some());
+        let impl_item = result.unwrap();
+        // The malformed function shouldn't be added to the functions list
+        assert_eq!(impl_item.functions.len(), 0);
+    }
+
+    #[test]
+    fn test_parse_impl_block_with_generic_type() {
+        let mut parser = create_parser_with_tokens(vec![
+            TokenType::Impl,
+            TokenType::Identifier("Array".to_string()),
+            TokenType::Less,
+            TokenType::Int,
+            TokenType::Greater,
+            TokenType::LeftCurly,
+            TokenType::RightCurly,
+            TokenType::EOF,
+        ]);
+        let rule = ImplBlockRule {};
+        let result = rule.parse(&mut parser);
+        
+        // May succeed or fail depending on how generic types are handled
+        // This test documents the current behavior
+        assert!(result.is_some());
+        let impl_item = result.unwrap();
+        assert_eq!(impl_item.functions.len(), 0);
+    }
+
+    #[test]
+    fn test_parse_impl_block_empty_input() {
+        let mut parser = create_parser_with_tokens(vec![TokenType::EOF]);
+        let rule = ImplBlockRule {};
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_impl_block_check_match_empty_input() {
+        let parser = create_parser_with_tokens(vec![TokenType::EOF]);
+        let rule = ImplBlockRule {};
+        
+        assert!(!rule.check_match(parser.get_cursor()));
+    }
+
+    #[test]
+    fn test_display_trait() {
+        let rule = ImplBlockRule {};
+        assert_eq!(format!("{}", rule), "ImplBlock");
+    }
+}

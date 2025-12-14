@@ -23,3 +23,99 @@ impl ParseRule<VarExpr> for VarRule {
         Some(VarExpr::new(identifier.unwrap_identifier()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lexer::token::{Token, TokenType, PositionRange, Position};
+    use crate::diagnostic::Diagnostic;
+
+    fn create_token(token_type: TokenType) -> Token {
+        Token::new(token_type, PositionRange::new(Position::new(1, 1)))
+    }
+
+    #[test]
+    fn test_check_match_with_identifier() {
+        let rule = VarRule {};
+        let tokens = vec![create_token(TokenType::Identifier("variable".to_string()))];
+        let cursor = ParserCursor { ptr: 0, tokens: &tokens };
+
+        assert!(rule.check_match(cursor));
+    }
+
+    #[test]
+    fn test_check_match_fails_with_non_identifier() {
+        let rule = VarRule {};
+        let tokens = vec![create_token(TokenType::IntLiteral(42))];
+        let cursor = ParserCursor { ptr: 0, tokens: &tokens };
+
+        assert!(!rule.check_match(cursor));
+    }
+
+    #[test]
+    fn test_parse_simple_identifier() {
+        let rule = VarRule {};
+        let tokens = vec![
+            create_token(TokenType::Identifier("variable".to_string())),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+
+        let result = rule.parse(&mut parser);
+
+        assert!(result.is_some());
+        let var_expr = result.unwrap();
+        assert_eq!(var_expr.identifier.data, "variable");
+        assert!(diagnostics.is_empty());
+    }
+
+    #[test]
+    fn test_parse_fails_with_non_identifier() {
+        let rule = VarRule {};
+        let tokens = vec![
+            create_token(TokenType::IntLiteral(42)),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+
+        let result = rule.parse(&mut parser);
+
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_parse_underscore_identifier() {
+        let rule = VarRule {};
+        let tokens = vec![
+            create_token(TokenType::Identifier("_private".to_string())),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+
+        let result = rule.parse(&mut parser);
+
+        assert!(result.is_some());
+        let var_expr = result.unwrap();
+        assert_eq!(var_expr.identifier.data, "_private");
+    }
+
+    #[test]
+    fn test_parse_alphanumeric_identifier() {
+        let rule = VarRule {};
+        let tokens = vec![
+            create_token(TokenType::Identifier("var123".to_string())),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+
+        let result = rule.parse(&mut parser);
+
+        assert!(result.is_some());
+        let var_expr = result.unwrap();
+        assert_eq!(var_expr.identifier.data, "var123");
+    }
+}

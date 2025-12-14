@@ -15,8 +15,11 @@ impl fmt::Display for ItemRule {
 }
 
 impl ParseRule<Box<dyn ASTNode>> for ItemRule {
-    fn check_match(&self, _cursor: ParserCursor) -> bool {
-        true
+    fn check_match(&self, cursor: ParserCursor) -> bool {
+        (MainItemRule {}).check_match(cursor)
+            || (FunctionRule {}).check_match(cursor)
+            || (StructRule {}).check_match(cursor)
+            || (ImplBlockRule {}).check_match(cursor)
     }
 
     fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
@@ -37,5 +40,171 @@ impl ParseRule<Box<dyn ASTNode>> for ItemRule {
         }
 
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lexer::token::{Token, TokenType, PositionRange, Position};
+
+    fn create_token(token_type: TokenType) -> Token {
+        Token::new(token_type, PositionRange::new(Position::new(1, 1)))
+    }
+
+    #[test]
+    fn test_item_rule_check_match_main() {
+        let rule = ItemRule {};
+        let tokens = vec![
+            create_token(TokenType::Main),
+            create_token(TokenType::EOF),
+        ];
+        let cursor = ParserCursor { ptr: 0, tokens: &tokens };
+        
+        assert!(rule.check_match(cursor));
+    }
+
+    #[test]
+    fn test_item_rule_check_match_function() {
+        let rule = ItemRule {};
+        let tokens = vec![
+            create_token(TokenType::Fn),
+            create_token(TokenType::EOF),
+        ];
+        let cursor = ParserCursor { ptr: 0, tokens: &tokens };
+        
+        assert!(rule.check_match(cursor));
+    }
+
+    #[test]
+    fn test_item_rule_check_match_struct() {
+        let rule = ItemRule {};
+        let tokens = vec![
+            create_token(TokenType::Struct),
+            create_token(TokenType::EOF),
+        ];
+        let cursor = ParserCursor { ptr: 0, tokens: &tokens };
+        
+        assert!(rule.check_match(cursor));
+    }
+
+    #[test]
+    fn test_item_rule_check_match_impl() {
+        let rule = ItemRule {};
+        let tokens = vec![
+            create_token(TokenType::Impl),
+            create_token(TokenType::EOF),
+        ];
+        let cursor = ParserCursor { ptr: 0, tokens: &tokens };
+        
+        assert!(rule.check_match(cursor));
+    }
+
+    #[test]
+    fn test_item_rule_check_match_no_match() {
+        let rule = ItemRule {};
+        let tokens = vec![
+            create_token(TokenType::Let),
+            create_token(TokenType::EOF),
+        ];
+        let cursor = ParserCursor { ptr: 0, tokens: &tokens };
+        
+        assert!(!rule.check_match(cursor));
+    }
+
+    #[test]
+    fn test_parse_main_item() {
+        let rule = ItemRule {};
+        let tokens = vec![
+            create_token(TokenType::Main),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        assert!(diagnostics.is_empty(), "Expected no diagnostics for valid main item");
+    }
+
+    #[test]
+    fn test_parse_function_item() {
+        let rule = ItemRule {};
+        let tokens = vec![
+            create_token(TokenType::Fn),
+            create_token(TokenType::Identifier("test".to_string())),
+            create_token(TokenType::LeftParen),
+            create_token(TokenType::RightParen),
+            create_token(TokenType::Arrow),
+            create_token(TokenType::Int),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        assert!(diagnostics.is_empty(), "Expected no diagnostics for valid function item");
+    }
+
+    #[test]
+    fn test_parse_struct_item() {
+        let rule = ItemRule {};
+        let tokens = vec![
+            create_token(TokenType::Struct),
+            create_token(TokenType::Identifier("TestStruct".to_string())),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        assert!(diagnostics.is_empty(), "Expected no diagnostics for valid struct item");
+    }
+
+    #[test]
+    fn test_parse_impl_item() {
+        let rule = ItemRule {};
+        let tokens = vec![
+            create_token(TokenType::Impl),
+            create_token(TokenType::Identifier("TestStruct".to_string())),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        assert!(diagnostics.is_empty(), "Expected no diagnostics for valid impl item");
+    }
+
+    #[test]
+    fn test_parse_no_match() {
+        let rule = ItemRule {};
+        let tokens = vec![
+            create_token(TokenType::Let),
+            create_token(TokenType::Int),
+            create_token(TokenType::Identifier("x".to_string())),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_none());
     }
 }

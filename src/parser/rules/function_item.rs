@@ -36,3 +36,176 @@ impl ParseRule<FunctionItem> for FunctionRule {
         Some(FunctionItem::new(name, parameters, ret_type, block, parser.end_range()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lexer::token::{Token, TokenType, PositionRange};
+    use crate::parser::ExprParser;
+
+    fn create_parser_with_tokens(tokens: Vec<TokenType>) -> ExprParser<'static> {
+        let diagnostics = Box::leak(Box::new(Vec::new()));
+        let tokens: Vec<Token> = tokens
+            .into_iter()
+            .map(|token_type| Token::new(token_type, PositionRange::zero()))
+            .collect();
+        ExprParser::new(tokens, diagnostics)
+    }
+
+    #[test]
+    fn test_function_check_match_with_fn_keyword() {
+        let parser = create_parser_with_tokens(vec![
+            TokenType::Fn,
+            TokenType::Identifier("test".to_string()),
+            TokenType::LeftParen,
+            TokenType::RightParen,
+            TokenType::Arrow,
+            TokenType::Int,
+            TokenType::LeftCurly,
+            TokenType::RightCurly,
+            TokenType::EOF,
+        ]);
+        let rule = FunctionRule;
+        assert!(rule.check_match(parser.get_cursor()));
+    }
+
+    #[test]
+    fn test_function_check_match_without_fn_keyword() {
+        let parser = create_parser_with_tokens(vec![
+            TokenType::Identifier("test".to_string()),
+            TokenType::LeftParen,
+            TokenType::RightParen,
+            TokenType::Arrow,
+            TokenType::Int,
+            TokenType::LeftCurly,
+            TokenType::RightCurly,
+            TokenType::EOF,
+        ]);
+        let rule = FunctionRule;
+        assert!(!rule.check_match(parser.get_cursor()));
+    }
+
+    #[test]
+    fn test_parse_simple_function() {
+        let mut parser = create_parser_with_tokens(vec![
+            TokenType::Fn,
+            TokenType::Identifier("test".to_string()),
+            TokenType::LeftParen,
+            TokenType::RightParen,
+            TokenType::Arrow,
+            TokenType::Int,
+            TokenType::LeftCurly,
+            TokenType::Return,
+            TokenType::IntLiteral(42),
+            TokenType::Semicolon,
+            TokenType::RightCurly,
+            TokenType::EOF,
+        ]);
+        let rule = FunctionRule;
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        let function = result.unwrap();
+        assert_eq!(function.name.data, "test");
+    }
+
+    #[test]
+    fn test_parse_function_with_parameters() {
+        let mut parser = create_parser_with_tokens(vec![
+            TokenType::Fn,
+            TokenType::Identifier("add".to_string()),
+            TokenType::LeftParen,
+            TokenType::Int,
+            TokenType::Identifier("a".to_string()),
+            TokenType::Comma,
+            TokenType::Int,
+            TokenType::Identifier("b".to_string()),
+            TokenType::RightParen,
+            TokenType::Arrow,
+            TokenType::Int,
+            TokenType::LeftCurly,
+            TokenType::Return,
+            TokenType::Identifier("a".to_string()),
+            TokenType::Plus,
+            TokenType::Identifier("b".to_string()),
+            TokenType::Semicolon,
+            TokenType::RightCurly,
+            TokenType::EOF,
+        ]);
+        let rule = FunctionRule;
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_some());
+        let function = result.unwrap();
+        assert_eq!(function.name.data, "add");
+    }
+
+    #[test]
+    fn test_parse_function_missing_name() {
+        let mut parser = create_parser_with_tokens(vec![
+            TokenType::Fn,
+            TokenType::LeftParen,
+            TokenType::RightParen,
+            TokenType::Arrow,
+            TokenType::Int,
+            TokenType::LeftCurly,
+            TokenType::RightCurly,
+            TokenType::EOF,
+        ]);
+        let rule = FunctionRule;
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_parse_function_missing_parameters() {
+        let mut parser = create_parser_with_tokens(vec![
+            TokenType::Fn,
+            TokenType::Identifier("test".to_string()),
+            TokenType::Arrow,
+            TokenType::Int,
+            TokenType::LeftCurly,
+            TokenType::RightCurly,
+            TokenType::EOF,
+        ]);
+        let rule = FunctionRule;
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_parse_function_missing_return_type() {
+        let mut parser = create_parser_with_tokens(vec![
+            TokenType::Fn,
+            TokenType::Identifier("test".to_string()),
+            TokenType::LeftParen,
+            TokenType::RightParen,
+            TokenType::LeftCurly,
+            TokenType::RightCurly,
+            TokenType::EOF,
+        ]);
+        let rule = FunctionRule;
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_parse_function_missing_body() {
+        let mut parser = create_parser_with_tokens(vec![
+            TokenType::Fn,
+            TokenType::Identifier("test".to_string()),
+            TokenType::LeftParen,
+            TokenType::RightParen,
+            TokenType::Arrow,
+            TokenType::Int,
+            TokenType::EOF,
+        ]);
+        let rule = FunctionRule;
+        let result = rule.parse(&mut parser);
+        
+        assert!(result.is_none());
+    }
+}

@@ -31,6 +31,7 @@ use if_expr::IfExpr;
 use literal_expr::LiteralExpr;
 use loop_expr::LoopExpr;
 use unary_expr::UnaryExpr;
+use std::any::Any;
 
 use crate::ast::delete_expr::DeleteExpr;
 use crate::ast::{constructor_call::ConstructorCallExpr, constructor_item::ConstructorItem, exit_expr::ExitExpr, function_item::FunctionItem, impl_item::ImplItem, main_item::MainItem, member_access::MemberAccess, new_array_expr::NewArrayExpr, struct_item::StructItem, var_expr::VarExpr};
@@ -42,7 +43,9 @@ pub trait AcceptsASTVisitor<T> {
     fn accept_visitor(&self, visitor: &mut dyn ASTVisitor<T>) -> T;
 }
 
-pub trait ASTNode: ASTVisitable + Positioned + erased_serde::Serialize {}
+pub trait ASTNode: ASTVisitable + Positioned + erased_serde::Serialize {
+    fn as_any(&self) -> &dyn Any;
+}
 serialize_trait_object!(ASTNode);
 
 pub trait ASTVisitor<T> {
@@ -70,7 +73,11 @@ pub trait ASTVisitor<T> {
 #[macro_export]
 macro_rules! impl_ast_node {
     ($Name: ident, $VisitFunction: ident) => {
-        impl crate::ast::ASTNode for $Name {}
+        impl crate::ast::ASTNode for $Name {
+            fn as_any(&self) -> &dyn std::any::Any {
+                self
+            }
+        }
         impl crate::ast::ASTVisitable for $Name {}
         
         impl<T> crate::ast::AcceptsASTVisitor<T> for $Name {

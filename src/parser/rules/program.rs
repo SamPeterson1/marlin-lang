@@ -25,6 +25,11 @@ impl ParseRule<Program> for ProgramRule {
             if let Some(item) = parser.apply_rule(ItemRule {}, "item", None) {
                 items.push(item);
             }
+
+            if !((ItemRule {})).check_match(parser.get_cursor()) {
+                // Skip invalid tokens to avoid infinite loops
+                parser.next();
+            }
         }
 
         Some(Program::new(items, parser.end_range()))

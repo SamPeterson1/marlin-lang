@@ -58,6 +58,7 @@ trait TokenCursor {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct ParserCursor<'tok> {
     ptr: usize,
     tokens: &'tok[Token],

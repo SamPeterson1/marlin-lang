@@ -8,7 +8,7 @@ use crate::lexer::token::PositionRange;
 pub struct LoopExpr {
     pub initial: Option<DeclarationExpr>,
     pub condition: Option<Box<dyn ASTNode>>,
-    pub increment: Option<AssignmentExpr>,
+    pub increment: Option<Box<dyn ASTNode>>,
     pub body: BlockExpr,
     position: PositionRange,
 }
@@ -34,7 +34,7 @@ impl LoopExpr {
         }
     }
 
-    pub fn new_for(initial: DeclarationExpr, condition: Box<dyn ASTNode>, increment: AssignmentExpr,  body: BlockExpr, position: PositionRange) -> Self {
+    pub fn new_for(initial: DeclarationExpr, condition: Box<dyn ASTNode>, increment: Box<dyn ASTNode>, body: BlockExpr, position: PositionRange) -> Self {
         Self {
             initial: Some(initial), 
             condition: Some(condition), 
