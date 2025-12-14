@@ -1,7 +1,7 @@
 use std::fmt;
 
 use crate::ast::{ASTNode, block_expr::BlockExpr};
-use crate::diagnostic::{Diagnostic, DiagnosticSeverity, ErrMsg};
+use crate::diagnostic::ErrMsg;
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
 use crate::parser::rules::statement::StatementRule;
 use crate::lexer::token::{Positioned, TokenType};
@@ -49,11 +49,10 @@ impl ParseRule<BlockExpr> for BlockRule {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::lexer::token::{Token, TokenType, PositionRange, Position};
-    use crate::diagnostic::Diagnostic;
+    use crate::lexer::token::{Token, TokenType, PositionRange};
 
     fn create_token(token_type: TokenType) -> Token {
-        Token::new(token_type, PositionRange::new(Position::new(1, 1)))
+        Token::new(token_type, PositionRange::zero())
     }
 
     #[test]

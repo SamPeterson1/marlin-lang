@@ -52,10 +52,10 @@ impl ParseRule<StructItem> for StructRule {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::lexer::token::{Token, TokenType, PositionRange, Position};
+    use crate::lexer::token::{Token, TokenType, PositionRange};
 
     fn create_token(token_type: TokenType) -> Token {
-        Token::new(token_type, PositionRange::new(Position::new(1, 1)))
+        Token::new(token_type, PositionRange::zero())
     }
 
     #[test]

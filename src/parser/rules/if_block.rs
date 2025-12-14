@@ -44,20 +44,11 @@ impl ParseRule<IfExpr> for IfBlockRule {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::lexer::token::{Token, TokenType, PositionRange, Position};
+    use crate::lexer::token::{Token, TokenType, PositionRange};
     use crate::parser::ExprParser;
 
     fn create_token(token_type: TokenType) -> Token {
-        Token::new(token_type, PositionRange::new(Position::new(1, 1)))
-    }
-
-    fn create_parser_with_tokens(tokens: Vec<TokenType>) -> ExprParser<'static> {
-        let diagnostics = Box::leak(Box::new(Vec::new()));
-        let tokens: Vec<Token> = tokens
-            .into_iter()
-            .map(|token_type| Token::new(token_type, PositionRange::zero()))
-            .collect();
-        ExprParser::new(tokens, diagnostics)
+        Token::new(token_type, PositionRange::zero())
     }
 
     #[test]
@@ -86,19 +77,21 @@ mod tests {
 
     #[test]
     fn test_parse_simple_if_statement() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::If,
-            TokenType::BoolLiteral(true),
-            TokenType::LeftCurly,
-            TokenType::Let,
-            TokenType::Int,
-            TokenType::Identifier("x".to_string()),
-            TokenType::Assignment,
-            TokenType::IntLiteral(1),
-            TokenType::Semicolon,
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
+        let tokens = vec![
+            Token::new(TokenType::If, PositionRange::zero()),
+            Token::new(TokenType::BoolLiteral(true), PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::Let, PositionRange::zero()),
+            Token::new(TokenType::Int, PositionRange::zero()),
+            Token::new(TokenType::Identifier("x".to_string()), PositionRange::zero()),
+            Token::new(TokenType::Assignment, PositionRange::zero()),
+            Token::new(TokenType::IntLiteral(1), PositionRange::zero()),
+            Token::new(TokenType::Semicolon, PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::EOF, PositionRange::zero()),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let rule = IfBlockRule {};
         let result = rule.parse(&mut parser);
         
@@ -107,18 +100,20 @@ mod tests {
 
     #[test]
     fn test_parse_if_else_statement() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::If,
-            TokenType::BoolLiteral(true),
-            TokenType::LeftCurly,
-            TokenType::IntLiteral(1),
-            TokenType::RightCurly,
-            TokenType::Else,
-            TokenType::LeftCurly,
-            TokenType::IntLiteral(2),
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
+        let tokens = vec![
+            Token::new(TokenType::If, PositionRange::zero()),
+            Token::new(TokenType::BoolLiteral(true), PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::IntLiteral(1), PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::Else, PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::IntLiteral(2), PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::EOF, PositionRange::zero()),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let rule = IfBlockRule {};
         let result = rule.parse(&mut parser);
         
@@ -127,28 +122,30 @@ mod tests {
 
     #[test]
     fn test_parse_if_elif_else_statement() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::If,
-            TokenType::Identifier("x".to_string()),
-            TokenType::Equal,
-            TokenType::IntLiteral(1),
-            TokenType::LeftCurly,
-            TokenType::StringLiteral("one".to_string()),
-            TokenType::RightCurly,
-            TokenType::Else,
-            TokenType::If,
-            TokenType::Identifier("x".to_string()),
-            TokenType::Equal,
-            TokenType::IntLiteral(2),
-            TokenType::LeftCurly,
-            TokenType::StringLiteral("two".to_string()),
-            TokenType::RightCurly,
-            TokenType::Else,
-            TokenType::LeftCurly,
-            TokenType::StringLiteral("other".to_string()),
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
+        let tokens = vec![
+            Token::new(TokenType::If, PositionRange::zero()),
+            Token::new(TokenType::Identifier("x".to_string()), PositionRange::zero()),
+            Token::new(TokenType::Equal, PositionRange::zero()),
+            Token::new(TokenType::IntLiteral(1), PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::StringLiteral("one".to_string()), PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::Else, PositionRange::zero()),
+            Token::new(TokenType::If, PositionRange::zero()),
+            Token::new(TokenType::Identifier("x".to_string()), PositionRange::zero()),
+            Token::new(TokenType::Equal, PositionRange::zero()),
+            Token::new(TokenType::IntLiteral(2), PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::StringLiteral("two".to_string()), PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::Else, PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::StringLiteral("other".to_string()), PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::EOF, PositionRange::zero()),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let rule = IfBlockRule {};
         let result = rule.parse(&mut parser);
         
@@ -157,36 +154,38 @@ mod tests {
 
     #[test]
     fn test_parse_multiple_elif_statements() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::If,
-            TokenType::Identifier("grade".to_string()),
-            TokenType::GreaterEqual,
-            TokenType::IntLiteral(90),
-            TokenType::LeftCurly,
-            TokenType::StringLiteral("A".to_string()),
-            TokenType::RightCurly,
-            TokenType::Else,
-            TokenType::If,
-            TokenType::Identifier("grade".to_string()),
-            TokenType::GreaterEqual,
-            TokenType::IntLiteral(80),
-            TokenType::LeftCurly,
-            TokenType::StringLiteral("B".to_string()),
-            TokenType::RightCurly,
-            TokenType::Else,
-            TokenType::If,
-            TokenType::Identifier("grade".to_string()),
-            TokenType::GreaterEqual,
-            TokenType::IntLiteral(70),
-            TokenType::LeftCurly,
-            TokenType::StringLiteral("C".to_string()),
-            TokenType::RightCurly,
-            TokenType::Else,
-            TokenType::LeftCurly,
-            TokenType::StringLiteral("F".to_string()),
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
+        let tokens = vec![
+            Token::new(TokenType::If, PositionRange::zero()),
+            Token::new(TokenType::Identifier("grade".to_string()), PositionRange::zero()),
+            Token::new(TokenType::GreaterEqual, PositionRange::zero()),
+            Token::new(TokenType::IntLiteral(90), PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::StringLiteral("A".to_string()), PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::Else, PositionRange::zero()),
+            Token::new(TokenType::If, PositionRange::zero()),
+            Token::new(TokenType::Identifier("grade".to_string()), PositionRange::zero()),
+            Token::new(TokenType::GreaterEqual, PositionRange::zero()),
+            Token::new(TokenType::IntLiteral(80), PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::StringLiteral("B".to_string()), PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::Else, PositionRange::zero()),
+            Token::new(TokenType::If, PositionRange::zero()),
+            Token::new(TokenType::Identifier("grade".to_string()), PositionRange::zero()),
+            Token::new(TokenType::GreaterEqual, PositionRange::zero()),
+            Token::new(TokenType::IntLiteral(70), PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::StringLiteral("C".to_string()), PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::Else, PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::StringLiteral("F".to_string()), PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::EOF, PositionRange::zero()),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let rule = IfBlockRule {};
         let result = rule.parse(&mut parser);
         
@@ -195,26 +194,28 @@ mod tests {
 
     #[test]
     fn test_parse_nested_if_statements() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::If,
-            TokenType::Identifier("x".to_string()),
-            TokenType::Greater,
-            TokenType::IntLiteral(0),
-            TokenType::LeftCurly,
-            TokenType::If,
-            TokenType::Identifier("x".to_string()),
-            TokenType::Greater,
-            TokenType::IntLiteral(10),
-            TokenType::LeftCurly,
-            TokenType::StringLiteral("big".to_string()),
-            TokenType::RightCurly,
-            TokenType::Else,
-            TokenType::LeftCurly,
-            TokenType::StringLiteral("small".to_string()),
-            TokenType::RightCurly,
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
+        let tokens = vec![
+            Token::new(TokenType::If, PositionRange::zero()),
+            Token::new(TokenType::Identifier("x".to_string()), PositionRange::zero()),
+            Token::new(TokenType::Greater, PositionRange::zero()),
+            Token::new(TokenType::IntLiteral(0), PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::If, PositionRange::zero()),
+            Token::new(TokenType::Identifier("x".to_string()), PositionRange::zero()),
+            Token::new(TokenType::Greater, PositionRange::zero()),
+            Token::new(TokenType::IntLiteral(10), PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::StringLiteral("big".to_string()), PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::Else, PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::StringLiteral("small".to_string()), PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::EOF, PositionRange::zero()),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let rule = IfBlockRule {};
         let result = rule.parse(&mut parser);
         
@@ -223,26 +224,28 @@ mod tests {
 
     #[test]
     fn test_parse_if_with_complex_condition() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::If,
-            TokenType::Identifier("x".to_string()),
-            TokenType::Greater,
-            TokenType::IntLiteral(0),
-            TokenType::And,
-            TokenType::Identifier("y".to_string()),
-            TokenType::Less,
-            TokenType::IntLiteral(10),
-            TokenType::Or,
-            TokenType::Identifier("z".to_string()),
-            TokenType::Equal,
-            TokenType::IntLiteral(5),
-            TokenType::LeftCurly,
-            TokenType::Return,
-            TokenType::BoolLiteral(true),
-            TokenType::Semicolon,
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
+        let tokens = vec![
+            Token::new(TokenType::If, PositionRange::zero()),
+            Token::new(TokenType::Identifier("x".to_string()), PositionRange::zero()),
+            Token::new(TokenType::Greater, PositionRange::zero()),
+            Token::new(TokenType::IntLiteral(0), PositionRange::zero()),
+            Token::new(TokenType::And, PositionRange::zero()),
+            Token::new(TokenType::Identifier("y".to_string()), PositionRange::zero()),
+            Token::new(TokenType::Less, PositionRange::zero()),
+            Token::new(TokenType::IntLiteral(10), PositionRange::zero()),
+            Token::new(TokenType::Or, PositionRange::zero()),
+            Token::new(TokenType::Identifier("z".to_string()), PositionRange::zero()),
+            Token::new(TokenType::Equal, PositionRange::zero()),
+            Token::new(TokenType::IntLiteral(5), PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::Return, PositionRange::zero()),
+            Token::new(TokenType::BoolLiteral(true), PositionRange::zero()),
+            Token::new(TokenType::Semicolon, PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::EOF, PositionRange::zero()),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let rule = IfBlockRule {};
         let result = rule.parse(&mut parser);
         
@@ -251,21 +254,23 @@ mod tests {
 
     #[test]
     fn test_parse_if_with_function_call_condition() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::If,
-            TokenType::Identifier("isValid".to_string()),
-            TokenType::LeftParen,
-            TokenType::Identifier("input".to_string()),
-            TokenType::RightParen,
-            TokenType::LeftCurly,
-            TokenType::Identifier("process".to_string()),
-            TokenType::LeftParen,
-            TokenType::Identifier("input".to_string()),
-            TokenType::RightParen,
-            TokenType::Semicolon,
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
+        let tokens = vec![
+            Token::new(TokenType::If, PositionRange::zero()),
+            Token::new(TokenType::Identifier("isValid".to_string()), PositionRange::zero()),
+            Token::new(TokenType::LeftParen, PositionRange::zero()),
+            Token::new(TokenType::Identifier("input".to_string()), PositionRange::zero()),
+            Token::new(TokenType::RightParen, PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::Identifier("process".to_string()), PositionRange::zero()),
+            Token::new(TokenType::LeftParen, PositionRange::zero()),
+            Token::new(TokenType::Identifier("input".to_string()), PositionRange::zero()),
+            Token::new(TokenType::RightParen, PositionRange::zero()),
+            Token::new(TokenType::Semicolon, PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::EOF, PositionRange::zero()),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let rule = IfBlockRule {};
         let result = rule.parse(&mut parser);
         
@@ -274,21 +279,23 @@ mod tests {
 
     #[test]
     fn test_parse_if_with_member_access_condition() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::If,
-            TokenType::Identifier("obj".to_string()),
-            TokenType::Dot,
-            TokenType::Identifier("isReady".to_string()),
-            TokenType::LeftCurly,
-            TokenType::Identifier("obj".to_string()),
-            TokenType::Dot,
-            TokenType::Identifier("execute".to_string()),
-            TokenType::LeftParen,
-            TokenType::RightParen,
-            TokenType::Semicolon,
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
+        let tokens = vec![
+            Token::new(TokenType::If, PositionRange::zero()),
+            Token::new(TokenType::Identifier("obj".to_string()), PositionRange::zero()),
+            Token::new(TokenType::Dot, PositionRange::zero()),
+            Token::new(TokenType::Identifier("isReady".to_string()), PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::Identifier("obj".to_string()), PositionRange::zero()),
+            Token::new(TokenType::Dot, PositionRange::zero()),
+            Token::new(TokenType::Identifier("execute".to_string()), PositionRange::zero()),
+            Token::new(TokenType::LeftParen, PositionRange::zero()),
+            Token::new(TokenType::RightParen, PositionRange::zero()),
+            Token::new(TokenType::Semicolon, PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::EOF, PositionRange::zero()),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let rule = IfBlockRule {};
         let result = rule.parse(&mut parser);
         
@@ -297,13 +304,15 @@ mod tests {
 
     #[test]
     fn test_parse_missing_condition() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::If,
-            TokenType::LeftCurly,
-            TokenType::IntLiteral(1),
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
+        let tokens = vec![
+            Token::new(TokenType::If, PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::IntLiteral(1), PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::EOF, PositionRange::zero()),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let rule = IfBlockRule {};
         let result = rule.parse(&mut parser);
         
@@ -313,11 +322,13 @@ mod tests {
 
     #[test]
     fn test_parse_missing_then_block() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::If,
-            TokenType::BoolLiteral(true),
-            TokenType::EOF,
-        ]);
+        let tokens = vec![
+            Token::new(TokenType::If, PositionRange::zero()),
+            Token::new(TokenType::BoolLiteral(true), PositionRange::zero()),
+            Token::new(TokenType::EOF, PositionRange::zero()),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let rule = IfBlockRule {};
         let result = rule.parse(&mut parser);
         
@@ -327,14 +338,16 @@ mod tests {
 
     #[test]
     fn test_parse_invalid_condition() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::If,
-            TokenType::RightCurly, // Invalid condition
-            TokenType::LeftCurly,
-            TokenType::IntLiteral(1),
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
+        let tokens = vec![
+            Token::new(TokenType::If, PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()), // Invalid condition
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::IntLiteral(1), PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::EOF, PositionRange::zero()),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let rule = IfBlockRule {};
         let result = rule.parse(&mut parser);
         
@@ -344,18 +357,20 @@ mod tests {
 
     #[test]
     fn test_parse_if_expression_as_value() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::If,
-            TokenType::Identifier("condition".to_string()),
-            TokenType::LeftCurly,
-            TokenType::IntLiteral(42),
-            TokenType::RightCurly,
-            TokenType::Else,
-            TokenType::LeftCurly,
-            TokenType::IntLiteral(0),
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
+        let tokens = vec![
+            Token::new(TokenType::If, PositionRange::zero()),
+            Token::new(TokenType::Identifier("condition".to_string()), PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::IntLiteral(42), PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::Else, PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::IntLiteral(0), PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::EOF, PositionRange::zero()),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let rule = IfBlockRule {};
         let result = rule.parse(&mut parser);
         
@@ -364,16 +379,18 @@ mod tests {
 
     #[test]
     fn test_parse_if_with_empty_blocks() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::If,
-            TokenType::BoolLiteral(true),
-            TokenType::LeftCurly,
-            TokenType::RightCurly,
-            TokenType::Else,
-            TokenType::LeftCurly,
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
+        let tokens = vec![
+            Token::new(TokenType::If, PositionRange::zero()),
+            Token::new(TokenType::BoolLiteral(true), PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::Else, PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::EOF, PositionRange::zero()),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let rule = IfBlockRule {};
         let result = rule.parse(&mut parser);
         
@@ -382,20 +399,22 @@ mod tests {
 
     #[test]
     fn test_parse_if_with_single_expression_blocks() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::If,
-            TokenType::Identifier("flag".to_string()),
-            TokenType::LeftCurly,
-            TokenType::Return,
-            TokenType::Semicolon,
-            TokenType::RightCurly,
-            TokenType::Else,
-            TokenType::LeftCurly,
-            TokenType::Break,
-            TokenType::Semicolon,
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
+        let tokens = vec![
+            Token::new(TokenType::If, PositionRange::zero()),
+            Token::new(TokenType::Identifier("flag".to_string()), PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::Return, PositionRange::zero()),
+            Token::new(TokenType::Semicolon, PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::Else, PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::Break, PositionRange::zero()),
+            Token::new(TokenType::Semicolon, PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::EOF, PositionRange::zero()),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let rule = IfBlockRule {};
         let result = rule.parse(&mut parser);
         
@@ -404,21 +423,23 @@ mod tests {
 
     #[test]
     fn test_parse_if_with_constructor_condition() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::If,
-            TokenType::Identifier("result".to_string()),
-            TokenType::Equal,
-            TokenType::DollarSign,
-            TokenType::Identifier("Success".to_string()),
-            TokenType::LeftParen,
-            TokenType::RightParen,
-            TokenType::LeftCurly,
-            TokenType::Return,
-            TokenType::BoolLiteral(true),
-            TokenType::Semicolon,
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
+        let tokens = vec![
+            Token::new(TokenType::If, PositionRange::zero()),
+            Token::new(TokenType::Identifier("result".to_string()), PositionRange::zero()),
+            Token::new(TokenType::Equal, PositionRange::zero()),
+            Token::new(TokenType::DollarSign, PositionRange::zero()),
+            Token::new(TokenType::Identifier("Success".to_string()), PositionRange::zero()),
+            Token::new(TokenType::LeftParen, PositionRange::zero()),
+            Token::new(TokenType::RightParen, PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::Return, PositionRange::zero()),
+            Token::new(TokenType::BoolLiteral(true), PositionRange::zero()),
+            Token::new(TokenType::Semicolon, PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::EOF, PositionRange::zero()),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let rule = IfBlockRule {};
         let result = rule.parse(&mut parser);
         
@@ -427,24 +448,26 @@ mod tests {
 
     #[test]
     fn test_parse_elif_without_else() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::If,
-            TokenType::Identifier("x".to_string()),
-            TokenType::Equal,
-            TokenType::IntLiteral(1),
-            TokenType::LeftCurly,
-            TokenType::StringLiteral("one".to_string()),
-            TokenType::RightCurly,
-            TokenType::Else,
-            TokenType::If,
-            TokenType::Identifier("x".to_string()),
-            TokenType::Equal,
-            TokenType::IntLiteral(2),
-            TokenType::LeftCurly,
-            TokenType::StringLiteral("two".to_string()),
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
+        let tokens = vec![
+            Token::new(TokenType::If, PositionRange::zero()),
+            Token::new(TokenType::Identifier("x".to_string()), PositionRange::zero()),
+            Token::new(TokenType::Equal, PositionRange::zero()),
+            Token::new(TokenType::IntLiteral(1), PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::StringLiteral("one".to_string()), PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::Else, PositionRange::zero()),
+            Token::new(TokenType::If, PositionRange::zero()),
+            Token::new(TokenType::Identifier("x".to_string()), PositionRange::zero()),
+            Token::new(TokenType::Equal, PositionRange::zero()),
+            Token::new(TokenType::IntLiteral(2), PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::StringLiteral("two".to_string()), PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::EOF, PositionRange::zero()),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let rule = IfBlockRule {};
         let result = rule.parse(&mut parser);
         
@@ -453,19 +476,21 @@ mod tests {
 
     #[test]
     fn test_parse_if_with_array_access_condition() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::If,
-            TokenType::Identifier("flags".to_string()),
-            TokenType::LeftSquare,
-            TokenType::IntLiteral(0),
-            TokenType::RightSquare,
-            TokenType::LeftCurly,
-            TokenType::Return,
-            TokenType::BoolLiteral(true),
-            TokenType::Semicolon,
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
+        let tokens = vec![
+            Token::new(TokenType::If, PositionRange::zero()),
+            Token::new(TokenType::Identifier("flags".to_string()), PositionRange::zero()),
+            Token::new(TokenType::LeftSquare, PositionRange::zero()),
+            Token::new(TokenType::IntLiteral(0), PositionRange::zero()),
+            Token::new(TokenType::RightSquare, PositionRange::zero()),
+            Token::new(TokenType::LeftCurly, PositionRange::zero()),
+            Token::new(TokenType::Return, PositionRange::zero()),
+            Token::new(TokenType::BoolLiteral(true), PositionRange::zero()),
+            Token::new(TokenType::Semicolon, PositionRange::zero()),
+            Token::new(TokenType::RightCurly, PositionRange::zero()),
+            Token::new(TokenType::EOF, PositionRange::zero()),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let rule = IfBlockRule {};
         let result = rule.parse(&mut parser);
         

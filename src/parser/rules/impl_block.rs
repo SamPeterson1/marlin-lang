@@ -45,51 +45,52 @@ mod tests {
     use crate::lexer::token::{Token, TokenType, PositionRange};
     use crate::parser::ExprParser;
 
-    fn create_parser_with_tokens(tokens: Vec<TokenType>) -> ExprParser<'static> {
-        let diagnostics = Box::leak(Box::new(Vec::new()));
-        let tokens: Vec<Token> = tokens
-            .into_iter()
-            .map(|token_type| Token::new(token_type, PositionRange::zero()))
-            .collect();
-        ExprParser::new(tokens, diagnostics)
+    fn create_token(token_type: TokenType) -> Token {
+        Token::new(token_type, PositionRange::zero())
     }
 
     #[test]
     fn test_impl_block_check_match_with_impl_keyword() {
-        let parser = create_parser_with_tokens(vec![
-            TokenType::Impl,
-            TokenType::Identifier("MyType".to_string()),
-            TokenType::LeftCurly,
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
         let rule = ImplBlockRule {};
-        assert!(rule.check_match(parser.get_cursor()));
+        let tokens = vec![
+            create_token(TokenType::Impl),
+            create_token(TokenType::Identifier("MyType".to_string())),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::EOF),
+        ];
+        let cursor = ParserCursor { ptr: 0, tokens: &tokens };
+        
+        assert!(rule.check_match(cursor));
     }
 
     #[test]
     fn test_impl_block_check_match_without_impl_keyword() {
-        let parser = create_parser_with_tokens(vec![
-            TokenType::Struct,
-            TokenType::Identifier("MyType".to_string()),
-            TokenType::LeftCurly,
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
         let rule = ImplBlockRule {};
-        assert!(!rule.check_match(parser.get_cursor()));
+        let tokens = vec![
+            create_token(TokenType::Struct),
+            create_token(TokenType::Identifier("MyType".to_string())),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::EOF),
+        ];
+        let cursor = ParserCursor { ptr: 0, tokens: &tokens };
+        
+        assert!(!rule.check_match(cursor));
     }
 
     #[test]
     fn test_parse_empty_impl_block() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::Impl,
-            TokenType::Identifier("MyType".to_string()),
-            TokenType::LeftCurly,
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
         let rule = ImplBlockRule {};
+        let tokens = vec![
+            create_token(TokenType::Impl),
+            create_token(TokenType::Identifier("MyType".to_string())),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let result = rule.parse(&mut parser);
         
         assert!(result.is_some());
@@ -99,25 +100,27 @@ mod tests {
 
     #[test]
     fn test_parse_impl_block_with_single_function() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::Impl,
-            TokenType::Identifier("MyStruct".to_string()),
-            TokenType::LeftCurly,
-            TokenType::Fn,
-            TokenType::Identifier("get_value".to_string()),
-            TokenType::LeftParen,
-            TokenType::RightParen,
-            TokenType::Arrow,
-            TokenType::Int,
-            TokenType::LeftCurly,
-            TokenType::Return,
-            TokenType::IntLiteral(42),
-            TokenType::Semicolon,
-            TokenType::RightCurly,
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
         let rule = ImplBlockRule {};
+        let tokens = vec![
+            create_token(TokenType::Impl),
+            create_token(TokenType::Identifier("MyStruct".to_string())),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::Fn),
+            create_token(TokenType::Identifier("get_value".to_string())),
+            create_token(TokenType::LeftParen),
+            create_token(TokenType::RightParen),
+            create_token(TokenType::Arrow),
+            create_token(TokenType::Int),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::Return),
+            create_token(TokenType::IntLiteral(42)),
+            create_token(TokenType::Semicolon),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let result = rule.parse(&mut parser);
         
         assert!(result.is_some());
@@ -128,52 +131,54 @@ mod tests {
 
     #[test]
     fn test_parse_impl_block_with_multiple_functions() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::Impl,
-            TokenType::Identifier("Calculator".to_string()),
-            TokenType::LeftCurly,
-            // First function: add
-            TokenType::Fn,
-            TokenType::Identifier("add".to_string()),
-            TokenType::LeftParen,
-            TokenType::Int,
-            TokenType::Identifier("a".to_string()),
-            TokenType::Comma,
-            TokenType::Int,
-            TokenType::Identifier("b".to_string()),
-            TokenType::RightParen,
-            TokenType::Arrow,
-            TokenType::Int,
-            TokenType::LeftCurly,
-            TokenType::Return,
-            TokenType::Identifier("a".to_string()),
-            TokenType::Plus,
-            TokenType::Identifier("b".to_string()),
-            TokenType::Semicolon,
-            TokenType::RightCurly,
-            // Second function: multiply
-            TokenType::Fn,
-            TokenType::Identifier("multiply".to_string()),
-            TokenType::LeftParen,
-            TokenType::Int,
-            TokenType::Identifier("x".to_string()),
-            TokenType::Comma,
-            TokenType::Int,
-            TokenType::Identifier("y".to_string()),
-            TokenType::RightParen,
-            TokenType::Arrow,
-            TokenType::Int,
-            TokenType::LeftCurly,
-            TokenType::Return,
-            TokenType::Identifier("x".to_string()),
-            TokenType::Star,
-            TokenType::Identifier("y".to_string()),
-            TokenType::Semicolon,
-            TokenType::RightCurly,
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
         let rule = ImplBlockRule {};
+        let tokens = vec![
+            create_token(TokenType::Impl),
+            create_token(TokenType::Identifier("Calculator".to_string())),
+            create_token(TokenType::LeftCurly),
+            // First function: add
+            create_token(TokenType::Fn),
+            create_token(TokenType::Identifier("add".to_string())),
+            create_token(TokenType::LeftParen),
+            create_token(TokenType::Int),
+            create_token(TokenType::Identifier("a".to_string())),
+            create_token(TokenType::Comma),
+            create_token(TokenType::Int),
+            create_token(TokenType::Identifier("b".to_string())),
+            create_token(TokenType::RightParen),
+            create_token(TokenType::Arrow),
+            create_token(TokenType::Int),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::Return),
+            create_token(TokenType::Identifier("a".to_string())),
+            create_token(TokenType::Plus),
+            create_token(TokenType::Identifier("b".to_string())),
+            create_token(TokenType::Semicolon),
+            create_token(TokenType::RightCurly),
+            // Second function: multiply
+            create_token(TokenType::Fn),
+            create_token(TokenType::Identifier("multiply".to_string())),
+            create_token(TokenType::LeftParen),
+            create_token(TokenType::Int),
+            create_token(TokenType::Identifier("x".to_string())),
+            create_token(TokenType::Comma),
+            create_token(TokenType::Int),
+            create_token(TokenType::Identifier("y".to_string())),
+            create_token(TokenType::RightParen),
+            create_token(TokenType::Arrow),
+            create_token(TokenType::Int),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::Return),
+            create_token(TokenType::Identifier("x".to_string())),
+            create_token(TokenType::Star),
+            create_token(TokenType::Identifier("y".to_string())),
+            create_token(TokenType::Semicolon),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let result = rule.parse(&mut parser);
         
         assert!(result.is_some());
@@ -185,13 +190,15 @@ mod tests {
 
     #[test]
     fn test_parse_impl_block_missing_type() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::Impl,
-            TokenType::LeftCurly,
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
         let rule = ImplBlockRule {};
+        let tokens = vec![
+            create_token(TokenType::Impl),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let result = rule.parse(&mut parser);
         
         // Should fail to parse due to missing type
@@ -200,23 +207,25 @@ mod tests {
 
     #[test]
     fn test_parse_impl_block_missing_opening_brace() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::Impl,
-            TokenType::Identifier("MyType".to_string()),
-            TokenType::Fn,
-            TokenType::Identifier("test".to_string()),
-            TokenType::LeftParen,
-            TokenType::RightParen,
-            TokenType::Arrow,
-            TokenType::Int,
-            TokenType::LeftCurly,
-            TokenType::Return,
-            TokenType::IntLiteral(1),
-            TokenType::Semicolon,
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
         let rule = ImplBlockRule {};
+        let tokens = vec![
+            create_token(TokenType::Impl),
+            create_token(TokenType::Identifier("MyType".to_string())),
+            create_token(TokenType::Fn),
+            create_token(TokenType::Identifier("test".to_string())),
+            create_token(TokenType::LeftParen),
+            create_token(TokenType::RightParen),
+            create_token(TokenType::Arrow),
+            create_token(TokenType::Int),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::Return),
+            create_token(TokenType::IntLiteral(1)),
+            create_token(TokenType::Semicolon),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let result = rule.parse(&mut parser);
         
         // Should still parse the impl part but generate diagnostic for missing brace
@@ -225,24 +234,26 @@ mod tests {
 
     #[test]
     fn test_parse_impl_block_missing_closing_brace() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::Impl,
-            TokenType::Identifier("MyType".to_string()),
-            TokenType::LeftCurly,
-            TokenType::Fn,
-            TokenType::Identifier("test".to_string()),
-            TokenType::LeftParen,
-            TokenType::RightParen,
-            TokenType::Arrow,
-            TokenType::Int,
-            TokenType::LeftCurly,
-            TokenType::Return,
-            TokenType::IntLiteral(1),
-            TokenType::Semicolon,
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
         let rule = ImplBlockRule {};
+        let tokens = vec![
+            create_token(TokenType::Impl),
+            create_token(TokenType::Identifier("MyType".to_string())),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::Fn),
+            create_token(TokenType::Identifier("test".to_string())),
+            create_token(TokenType::LeftParen),
+            create_token(TokenType::RightParen),
+            create_token(TokenType::Arrow),
+            create_token(TokenType::Int),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::Return),
+            create_token(TokenType::IntLiteral(1)),
+            create_token(TokenType::Semicolon),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let result = rule.parse(&mut parser);
         
         // Should parse but generate diagnostic for missing closing brace
@@ -251,17 +262,19 @@ mod tests {
 
     #[test]
     fn test_parse_impl_block_with_invalid_function() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::Impl,
-            TokenType::Identifier("MyType".to_string()),
-            TokenType::LeftCurly,
-            TokenType::Fn,
-            TokenType::Identifier("incomplete_function".to_string()),
-            TokenType::LeftParen,
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
         let rule = ImplBlockRule {};
+        let tokens = vec![
+            create_token(TokenType::Impl),
+            create_token(TokenType::Identifier("MyType".to_string())),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::Fn),
+            create_token(TokenType::Identifier("incomplete_function".to_string())),
+            create_token(TokenType::LeftParen),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let result = rule.parse(&mut parser);
         
         // Should parse the impl block structure but have errors from the malformed function
@@ -273,17 +286,19 @@ mod tests {
 
     #[test]
     fn test_parse_impl_block_with_generic_type() {
-        let mut parser = create_parser_with_tokens(vec![
-            TokenType::Impl,
-            TokenType::Identifier("Array".to_string()),
-            TokenType::Less,
-            TokenType::Int,
-            TokenType::Greater,
-            TokenType::LeftCurly,
-            TokenType::RightCurly,
-            TokenType::EOF,
-        ]);
         let rule = ImplBlockRule {};
+        let tokens = vec![
+            create_token(TokenType::Impl),
+            create_token(TokenType::Identifier("Array".to_string())),
+            create_token(TokenType::Less),
+            create_token(TokenType::Int),
+            create_token(TokenType::Greater),
+            create_token(TokenType::LeftCurly),
+            create_token(TokenType::RightCurly),
+            create_token(TokenType::EOF),
+        ];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let result = rule.parse(&mut parser);
         
         // May succeed or fail depending on how generic types are handled
@@ -295,8 +310,10 @@ mod tests {
 
     #[test]
     fn test_parse_impl_block_empty_input() {
-        let mut parser = create_parser_with_tokens(vec![TokenType::EOF]);
         let rule = ImplBlockRule {};
+        let tokens = vec![create_token(TokenType::EOF)];
+        let mut diagnostics = Vec::new();
+        let mut parser = ExprParser::new(tokens, &mut diagnostics);
         let result = rule.parse(&mut parser);
         
         assert!(result.is_none());
@@ -304,10 +321,11 @@ mod tests {
 
     #[test]
     fn test_impl_block_check_match_empty_input() {
-        let parser = create_parser_with_tokens(vec![TokenType::EOF]);
         let rule = ImplBlockRule {};
+        let tokens = vec![create_token(TokenType::EOF)];
+        let cursor = ParserCursor { ptr: 0, tokens: &tokens };
         
-        assert!(!rule.check_match(parser.get_cursor()));
+        assert!(!rule.check_match(cursor));
     }
 
     #[test]
