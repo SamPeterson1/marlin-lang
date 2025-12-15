@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::ast::{ASTNode, assignment_expr::AssignmentExpr, block_expr::BlockExpr, declaration_expr::DeclarationExpr};
+use crate::ast::{ASTNode, block_expr::BlockExpr, declaration_expr::DeclarationExpr};
 use crate::{impl_ast_node, impl_positioned};
 use crate::lexer::token::PositionRange;
 
