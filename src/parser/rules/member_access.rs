@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::ast::{ASTNode, member_access::{AccessType, MemberAccess}};
+use crate::ast::{ASTNode, AccessType, MemberAccess};
 use crate::diagnostic::ErrMsg;
 use crate::logger::Log;
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};

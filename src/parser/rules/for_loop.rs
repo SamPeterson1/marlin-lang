@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::ast::loop_expr::LoopExpr;
+use crate::ast::LoopExpr;
 use crate::diagnostic::ErrMsg;
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
 use crate::parser::rules::{assignment::AssignmentRule, block::BlockRule, declaration::DeclarationRule, expr::ExprRule};

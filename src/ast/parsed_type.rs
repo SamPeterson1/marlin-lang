@@ -12,7 +12,7 @@ pub enum ParsedBaseType {
 }
 
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct ParsedUnitType {
     pub base_type: Located<ParsedBaseType>,
     pub n_pointers: u32,
@@ -20,12 +20,12 @@ pub struct ParsedUnitType {
     position: PositionRange,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct ArrayModifier {
     pub is_reference: bool,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct ParsedType {
     pub unit_type: ParsedUnitType,
     pub array_modifiers: Vec<ArrayModifier>,

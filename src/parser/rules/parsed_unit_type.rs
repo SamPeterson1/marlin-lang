@@ -1,7 +1,7 @@
 use std::fmt;
 use std::rc::Rc;
 
-use crate::ast::parsed_type::{ParsedBaseType, ParsedUnitType};
+use crate::ast::{ParsedBaseType, ParsedUnitType};
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
 use crate::lexer::token::{Located, Positioned, TokenType};
 

@@ -9,6 +9,7 @@ mod diagnostic;
 mod lexer;
 mod logger;
 mod parser;
+mod resolver;
 mod run;
 
 fn main() {

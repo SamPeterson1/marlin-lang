@@ -1,0 +1,23 @@
+// Valid at type resolution stage: circular dependencies through value members
+// Note: These types will resolve successfully, but should fail at a later stage
+// (e.g., during struct layout or size calculation) since they create infinite-sized types
+
+struct CircularA {
+    CircularB b;
+}
+
+struct CircularB {
+    CircularA a;
+}
+
+struct IndirectCircular1 {
+    IndirectCircular2 field;
+}
+
+struct IndirectCircular2 {
+    IndirectCircular3 field;
+}
+
+struct IndirectCircular3 {
+    IndirectCircular1 field;
+}

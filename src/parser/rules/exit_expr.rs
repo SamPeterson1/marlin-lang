@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::ast::exit_expr::{ExitExpr, ExitType};
+use crate::ast::{ExitExpr, ExitType};
 use crate::diagnostic::ErrMsg;
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
 use crate::parser::rules::expr::ExprRule;

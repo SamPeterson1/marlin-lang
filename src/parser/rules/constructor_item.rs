@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::ast::constructor_item::ConstructorItem;
+use crate::ast::ConstructorItem;
 use crate::diagnostic::ErrMsg;
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
 use crate::parser::rules::{block::BlockRule, parameters::ParametersRule};

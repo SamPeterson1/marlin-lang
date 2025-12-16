@@ -1,0 +1,15 @@
+// Valid forward references
+
+struct A {
+    B* b_ptr;
+    C& c_ref;
+}
+
+struct B {
+    int value;
+    C* c_ptr;
+}
+
+struct C {
+    double data;
+}

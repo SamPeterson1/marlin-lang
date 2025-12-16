@@ -6,7 +6,7 @@ use serde::Serialize;
 
 use crate::ast::ASTNode;
 
-use crate::ast::program::Program;
+use crate::ast::Program;
 use crate::logger::Log;
 use crate::diagnostic::{Diagnostic, ErrMsg};
 use crate::parser::rules::program::ProgramRule;

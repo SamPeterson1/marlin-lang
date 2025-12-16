@@ -1,0 +1,12 @@
+// Valid self-referential structures (through pointers/refs)
+
+struct LinkedList {
+    int data;
+    LinkedList* next;
+}
+
+struct BinaryTree {
+    int value;
+    BinaryTree* left;
+    BinaryTree* right;
+}

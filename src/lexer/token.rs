@@ -17,7 +17,7 @@ macro_rules! impl_positioned {
     };
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct Located<T> {
     pub data: T,
     position: PositionRange,

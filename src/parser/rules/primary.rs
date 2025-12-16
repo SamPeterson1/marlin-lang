@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::ast::{ASTNode, literal_expr::{Literal, LiteralExpr}};
+use crate::ast::{ASTNode, Literal, LiteralExpr};
 use crate::diagnostic::ErrMsg;
 use crate::parser::{ExprParser, ParseRule, TokenCursor};
 use crate::parser::rules::{block::BlockRule, constructor_call::ConstructorCallRule, expr::ExprRule, for_loop::ForLoopRule, if_block::IfBlockRule, loop_expr::LoopRule, new_array::NewArrayRule, var::VarRule, while_loop::WhileLoopRule};

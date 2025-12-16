@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::ast::{ASTNode, binary_expr::{BinaryExpr, BinaryOperator}};
+use crate::ast::{ASTNode, BinaryExpr, BinaryOperator};
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
 use crate::parser::rules::comparison::ComparisonRule;
 use crate::lexer::token::TokenType;

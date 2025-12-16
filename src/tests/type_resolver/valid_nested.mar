@@ -1,0 +1,21 @@
+// Valid nested value types (no cycles)
+
+struct Point {
+    double x;
+    double y;
+}
+
+struct Line {
+    Point start;
+    Point end;
+}
+
+struct Rectangle {
+    Point top_left;
+    Point bottom_right;
+}
+
+struct Scene {
+    Rectangle bounds;
+    Line* lines;
+}

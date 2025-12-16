@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::ast::delete_expr::DeleteExpr;
+use crate::ast::DeleteExpr;
 use crate::diagnostic::ErrMsg;
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
 use crate::parser::rules::expr::ExprRule;

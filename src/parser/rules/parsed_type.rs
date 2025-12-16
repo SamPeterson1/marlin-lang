@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::ast::parsed_type::{ArrayModifier, ParsedType};
+use crate::ast::{ArrayModifier, ParsedType};
 use crate::diagnostic::ErrMsg;
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
 use crate::parser::rules::parsed_unit_type::ParsedUnitTypeRule;

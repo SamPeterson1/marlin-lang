@@ -57,6 +57,7 @@ pub enum ErrMsg {
     ExpectedParameters,
     ExpectedToken(TokenType),
     UnknownEscapeSequence(char),
+    UnknownTypeName(String),
 }
 
 impl ErrMsg {
@@ -86,6 +87,7 @@ impl fmt::Display for ErrMsg {
             Self::ExpectedType => "expected type",
             Self::ExpectedToken(token) => &format!("expected '{}' token", token),
             Self::UnknownEscapeSequence(x) => &format!("unknown escape sequence: \\{}", x),
+            Self::UnknownTypeName(name) => &format!("unknown type name: '{}'", name),
         };
 
         write!(f, "{}", msg)

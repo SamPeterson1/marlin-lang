@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 use crate::ast::ASTNode;
-use crate::{impl_positioned};
+use crate::{impl_ast_node, impl_positioned};
 use crate::lexer::token::PositionRange;
 
 #[derive(Serialize)]
@@ -20,3 +20,4 @@ impl Program {
 }
 
 impl_positioned!(Program);
+impl_ast_node!(Program, visit_program);

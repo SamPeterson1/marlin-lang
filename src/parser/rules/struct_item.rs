@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::ast::struct_item::StructItem;
+use crate::ast::StructItem;
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
 use crate::parser::rules::{constructor_item::ConstructorRule, parsed_type::ParsedTypeRule};
 use crate::lexer::token::TokenType;
