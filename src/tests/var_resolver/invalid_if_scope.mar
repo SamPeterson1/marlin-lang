@@ -1,0 +1,11 @@
+// Test: variables from if-block should not leak out
+
+main {
+    let int x = 5;
+    
+    if (x > 0) {
+        let int y = 10;
+    }
+    
+    let int z = y;  // ERROR: y is out of scope
+}

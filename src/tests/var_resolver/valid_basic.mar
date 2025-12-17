@@ -1,0 +1,15 @@
+// Valid variable usage with proper scoping
+
+main {
+    let int x = 5;
+    let int y = x + 10;
+    let double z = 3.14;
+    
+    {
+        let int a = x + y;
+        let double b = z * 2.0;
+        let char c = 'a';
+    }
+    
+    let int result = x + y;
+}

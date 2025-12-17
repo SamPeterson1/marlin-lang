@@ -3,13 +3,12 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-use crate::ast::AcceptsASTVisitor;
 use crate::diagnostic::Diagnostic;
 use crate::lexer::Lexer;
 use crate::logger::Log;
 use crate::parser::ExprParser;
 use crate::lexer::token::Token;
-use crate::resolver::{SymbolTable, TypeResolver};
+use crate::resolver::{SymbolTable, TypeResolver, VarResolver};
 
 fn read_file(file: &str, contents: &mut String) {
     let working_dir = env::current_dir().expect("Error reading working directory");
@@ -74,7 +73,12 @@ impl Runner {
         self.log_info("Done parsing");
 
         let mut symbol_table = SymbolTable::new();
-        let type_resolver = TypeResolver::new();
-        type_resolver.resolve(&mut symbol_table, &mut self.diagnostics, &program);
+        let type_resolver = TypeResolver::new(&mut symbol_table, &mut self.diagnostics);
+        type_resolver.resolve(&program);
+
+        let var_resolver = VarResolver::new(&mut symbol_table, &mut self.diagnostics);
+        var_resolver.resolve_vars(&program);
+
+        let codegen = CodeGen::new();
     } 
 }

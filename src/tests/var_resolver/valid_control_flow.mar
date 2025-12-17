@@ -1,0 +1,21 @@
+// Valid variable usage in control flow
+
+main {
+    let int x = 5;
+    
+    if (x > 0) {
+        let int y = x + 1;
+        let int z = y * 2;
+    }
+    
+    loop {
+        let int counter = 0;
+        let int value = counter + x;
+        
+        if (counter > 10) {
+            break;
+        }
+    }
+    
+    let int result = x;
+}

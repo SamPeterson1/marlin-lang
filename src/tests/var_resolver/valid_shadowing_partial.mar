@@ -1,0 +1,13 @@
+// Test: shadowing only affects the shadowed variable
+
+main {
+    let int x = 5;
+    let int y = 10;
+    
+    {
+        let int x = 20;  // Shadows x, but not y
+        let int z = x + y;  // Uses inner x (20) and outer y (10)
+    }
+    
+    let int result = x + y;  // Uses outer x (5) and y (10)
+}

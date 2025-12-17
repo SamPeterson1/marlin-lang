@@ -1,0 +1,12 @@
+// Test: variables from loop body should not leak out
+
+main {
+    let int x = 5;
+    
+    loop {
+        let int counter = 0;
+        break;
+    }
+    
+    let int y = counter;  // ERROR: counter is out of scope
+}

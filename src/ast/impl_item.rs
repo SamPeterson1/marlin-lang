@@ -2,20 +2,20 @@ use serde::Serialize;
 
 use crate::ast::{function_item::FunctionItem, parsed_type::ParsedType};
 use crate::{impl_ast_node, impl_positioned};
-use crate::lexer::token::PositionRange;
+use crate::lexer::token::{Located, PositionRange};
 
 #[derive(Serialize)]
 pub struct ImplItem {
-    pub impl_type: ParsedType,
+    pub identifier: Located<String>,
     pub functions: Vec<FunctionItem>,
     position: PositionRange,
 }
 
 
 impl ImplItem {
-    pub fn new(impl_type: ParsedType, functions: Vec<FunctionItem>, position: PositionRange) -> Self {
+    pub fn new(identifier: Located<String>, functions: Vec<FunctionItem>, position: PositionRange) -> Self {
         Self {
-            impl_type,
+            identifier,
             functions,
             position,
         }

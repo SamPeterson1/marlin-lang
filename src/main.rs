@@ -5,6 +5,7 @@ use std::process;
 use crate::logger::Logger;
 
 mod ast;
+mod codegen;
 mod diagnostic;
 mod lexer;
 mod logger;

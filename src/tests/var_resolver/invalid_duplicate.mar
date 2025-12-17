@@ -1,0 +1,6 @@
+// Invalid: duplicate variable in same scope
+
+main {
+    let int x = 5;
+    let int x = 10;  // ERROR: duplicate variable
+}

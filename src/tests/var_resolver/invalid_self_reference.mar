@@ -1,0 +1,10 @@
+// Invalid: variable used in its own declaration
+
+main {
+    let int x = x + 5;  // ERROR: x cannot be used in its own declaration
+    let int y = y;      // ERROR: y cannot be used in its own declaration
+    
+    {
+        let int z = z * 2;  // ERROR: z cannot be used in its own declaration
+    }
+}

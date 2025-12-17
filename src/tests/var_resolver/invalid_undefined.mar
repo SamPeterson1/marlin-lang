@@ -1,0 +1,6 @@
+// Invalid: undefined variables
+
+main {
+    let int x = y + 5;  // ERROR: y is undefined
+    let int z = undefined_var;  // ERROR: undefined_var is undefined
+}

@@ -1,0 +1,7 @@
+// Test: variables should be usable after declaration
+
+main {
+    let int x = 5;
+    let int y = x;     // Valid: x is already declared
+    let int z = y + x; // Valid: both x and y are declared
+}

@@ -1,0 +1,17 @@
+// Invalid: variable out of scope
+
+main {
+    {
+        let int x = 5;
+    }
+    
+    let int y = x;  // ERROR: x is out of scope
+    
+    {
+        let int a = 10;
+        {
+            let int b = a;  // Valid: a is in scope
+        }
+        let int c = b;  // ERROR: b is out of scope
+    }
+}

@@ -1,0 +1,24 @@
+// Valid variable shadowing across different scopes
+
+main {
+    let int x = 5;
+    
+    {
+        let int x = 10;  // Shadows outer x
+        let int y = x;   // Uses inner x (10)
+    }
+    
+    let int z = x;  // Uses outer x (5)
+    
+    {
+        {
+            let int x = 20;  // Shadows outer x again
+            let int a = x;   // Uses innermost x (20)
+        }
+        
+        let int x = 15;  // Shadows outer x
+        let int b = x;   // Uses this scope's x (15)
+    }
+    
+    let int c = x;  // Uses original x (5)
+}

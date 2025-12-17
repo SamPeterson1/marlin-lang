@@ -1,0 +1,6 @@
+// Test: cannot use variable before it's declared
+
+main {
+    let int x = y;  // ERROR: y not declared yet
+    let int y = 5;
+}

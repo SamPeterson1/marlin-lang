@@ -58,6 +58,8 @@ pub enum ErrMsg {
     ExpectedToken(TokenType),
     UnknownEscapeSequence(char),
     UnknownTypeName(String),
+    UnknownVariable(String),
+    DuplicateVariable(String),
 }
 
 impl ErrMsg {
@@ -88,6 +90,8 @@ impl fmt::Display for ErrMsg {
             Self::ExpectedToken(token) => &format!("expected '{}' token", token),
             Self::UnknownEscapeSequence(x) => &format!("unknown escape sequence: \\{}", x),
             Self::UnknownTypeName(name) => &format!("unknown type name: '{}'", name),
+            Self::UnknownVariable(name) => &format!("unknown variable: '{}'", name),
+            Self::DuplicateVariable(name) => &format!("duplicate variable declaration: '{}'", name),
         };
 
         write!(f, "{}", msg)

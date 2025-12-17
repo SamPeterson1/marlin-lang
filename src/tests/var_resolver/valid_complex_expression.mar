@@ -1,0 +1,9 @@
+// Test: complex expressions should resolve all variables
+
+main {
+    let int a = 5;
+    let int b = 10;
+    let int c = 15;
+    
+    let int result = a + b * c;  // All variables should be in scope
+}

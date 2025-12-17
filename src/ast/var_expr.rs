@@ -7,7 +7,7 @@ use crate::lexer::token::{Located, PositionRange, Positioned};
 
 static VAR_ID_COUNTER: Mutex<u64> = Mutex::new(0);
 
-#[derive(Clone, Copy, Serialize, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Serialize, PartialEq, Eq, Hash, Debug)]
 pub struct VarId(u64);
 
 #[derive(Serialize)]

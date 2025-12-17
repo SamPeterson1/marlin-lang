@@ -1,0 +1,15 @@
+// Test: variables in sibling scopes should not interfere
+
+main {
+    {
+        let int a = 5;
+    }
+    
+    {
+        let int b = 10;
+    }
+    
+    {
+        let int c = 15;
+    }
+}

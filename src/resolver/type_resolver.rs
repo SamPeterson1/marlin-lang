@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 
-use crate::{ast::*, diagnostic::{Diagnostic, ErrMsg}, lexer::token::Positioned, logger::Log, resolver::{ResolvedBaseType, StructType, SymbolTable}};
+use crate::{ast::*, diagnostic::{Diagnostic, ErrMsg}, lexer::token::Positioned, logger::Log, resolver::{FunctionType, ResolvedBaseType, StructType, SymbolTable}};
 
 pub struct TypeResolver<'ast> {
-    struct_declarations: HashMap<String, &'ast StructItem>,
+    symbol_table: &'ast mut SymbolTable,
+    diagnostics: &'ast mut Vec<Diagnostic>,
+    struct_declarations: HashMap<String, &'ast StructItem>
 }
 
 impl Log for TypeResolver<'_> {
@@ -13,13 +15,15 @@ impl Log for TypeResolver<'_> {
 }
 
 impl<'ast> TypeResolver<'ast> {
-    pub fn new() -> Self {
+    pub fn new(symbol_table: &'ast mut SymbolTable, diagnostics: &'ast mut Vec<Diagnostic>) -> Self {
         Self { 
+            symbol_table,
+            diagnostics,
             struct_declarations: HashMap::new(),
         }
     }
 
-    pub fn resolve(mut self, symbol_table: &mut SymbolTable, diagnostics: &mut Vec<Diagnostic>, program: &'ast Program) {
+    pub fn resolve(mut self, program: &'ast Program) {
         program.accept_visitor(&mut self);
 
         for struct_item in self.struct_declarations.values() {
@@ -32,7 +36,7 @@ impl<'ast> TypeResolver<'ast> {
                     ParsedBaseType::TypeName(type_name) => {
                         if !self.struct_declarations.contains_key(&**type_name) {
                             self.log_error(&format!("Unknown type name: {}", type_name));
-                            diagnostics.push(ErrMsg::UnknownTypeName(type_name.to_string()).make_diagnostic(*base_type.get_position()));
+                            self.diagnostics.push(ErrMsg::UnknownTypeName(type_name.to_string()).make_diagnostic(*base_type.get_position()));
                             valid = false;
 
                             continue;
@@ -47,18 +51,37 @@ impl<'ast> TypeResolver<'ast> {
             if valid {
                 self.log_debug(&format!("Resolved struct {}", struct_item.name.data));
                 let struct_type = StructType { members };
-                symbol_table.insert_type(struct_item.name.data.to_string(), ResolvedBaseType::Struct(struct_type));
+                self.symbol_table.insert_type(struct_item.name.data.to_string(), ResolvedBaseType::Struct(struct_type));
             } else {
                 self.log_error(&format!("Failed to resolve struct {}", struct_item.name.data));
             }
         }
     }
+
+    fn get_fn_type(&self, function: &FunctionItem) -> FunctionType {
+        let mut param_types = Vec::new();
+
+        for (param_type, _) in &function.parameters.parameters {
+            param_types.push(param_type.clone());
+        }
+
+        FunctionType {
+            param_types,
+            return_type: function.return_type.clone(),
+        }
+    }
 }
 
 impl<'ast> ASTVisitor<'ast, ()> for TypeResolver<'ast> {
-    fn visit_impl(&mut self, _node: &ImplItem) { }
+    fn visit_impl(&mut self, node: &ImplItem) { 
+        for function in &node.functions {
+            self.symbol_table.insert_impl(node.identifier.data.to_string(), self.get_fn_type(function));
+        }
+    }
 
-    fn visit_function(&mut self, _node: &FunctionItem) { }
+    fn visit_function(&mut self, node: &FunctionItem) { 
+        self.symbol_table.insert_function(self.get_fn_type(node));
+    }
 
     fn visit_struct(&mut self, node: &'ast StructItem) {
         self.struct_declarations.insert(node.name.data.to_string(), node);
@@ -91,8 +114,8 @@ mod tests {
         let program = parser.parse();
         
         let mut symbol_table = SymbolTable::new();
-        let type_resolver = TypeResolver::new();
-        type_resolver.resolve(&mut symbol_table, &mut diagnostics, &program);
+        let type_resolver = TypeResolver::new(&mut symbol_table, &mut diagnostics);
+        type_resolver.resolve(&program);
         
         (symbol_table, diagnostics)
     }

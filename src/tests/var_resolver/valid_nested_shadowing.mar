@@ -1,0 +1,16 @@
+// Test: nested shadowing should resolve to nearest scope
+
+main {
+    let int x = 1;
+    
+    {
+        let int x = 2;
+        
+        {
+            let int x = 3;
+            let int y = x;  // Should use innermost x (3)
+        }
+    }
+    
+    let int z = x;  // Should use outermost x (1)
+}

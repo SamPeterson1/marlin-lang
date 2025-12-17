@@ -1,0 +1,15 @@
+// Invalid: multiple errors in one file
+
+main {
+    let int x = y + 5;      // ERROR: y undefined
+    let int x = 10;         // ERROR: x duplicate
+    let int z = z;          // ERROR: z self-reference
+    
+    {
+        let int a = b;      // ERROR: b undefined
+        let int c = 20;
+        let int c = 30;     // ERROR: c duplicate
+    }
+    
+    let int d = c;          // ERROR: c out of scope
+}
