@@ -22,10 +22,15 @@ impl ParseRule<LoopExpr> for LoopRule {
     fn parse(&self, parser: &mut ExprParser) -> Option<LoopExpr> {
         parser.begin_range();
         parser.try_consume(TokenType::Loop)?;
+
+        let label = match parser.try_consume(TokenType::Colon) {
+            Some(_) => Some(parser.consume_or_diagnostic(TokenType::AnyIdentifier)?.unwrap_identifier()),
+            _ => None
+        };
     
         let body = parser.apply_rule(BlockRule {}, "loop body", Some(ErrMsg::ExpectedBlock))?;
             
-        Some(LoopExpr::new_loop(body, parser.end_range()))
+        Some(LoopExpr::new_loop(body, label, parser.end_range()))
     }
 }
 

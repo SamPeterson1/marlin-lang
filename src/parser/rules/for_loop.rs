@@ -22,6 +22,11 @@ impl ParseRule<LoopExpr> for ForLoopRule {
     fn parse(&self, parser: &mut ExprParser) -> Option<LoopExpr> {
         parser.begin_range();
         parser.try_consume(TokenType::For)?;
+        
+        let label = match parser.try_consume(TokenType::Colon) {
+            Some(_) => Some(parser.consume_or_diagnostic(TokenType::AnyIdentifier)?.unwrap_identifier()),
+            _ => None
+        };
 
         parser.consume_or_diagnostic(TokenType::LeftParen);
 
@@ -37,7 +42,7 @@ impl ParseRule<LoopExpr> for ForLoopRule {
 
         let body = parser.apply_rule(BlockRule {}, "for body", Some(ErrMsg::ExpectedBlock))?;    
                 
-        Some(LoopExpr::new_for(initial, condition, increment, body, parser.end_range()))
+        Some(LoopExpr::new_for(initial, condition, increment, body, label, parser.end_range()))
     }
 }
 

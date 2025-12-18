@@ -2,7 +2,7 @@ use serde::Serialize;
 
 use crate::ast::{ASTNode, block_expr::BlockExpr, declaration_expr::DeclarationExpr};
 use crate::{impl_ast_node, impl_positioned};
-use crate::lexer::token::PositionRange;
+use crate::lexer::token::{Located, PositionRange};
 
 #[derive(Serialize)]
 pub struct LoopExpr {
@@ -10,36 +10,40 @@ pub struct LoopExpr {
     pub condition: Option<Box<dyn ASTNode>>,
     pub increment: Option<Box<dyn ASTNode>>,
     pub body: BlockExpr,
+    pub label: Option<Located<String>>,
     position: PositionRange,
 }
 
 impl LoopExpr {
-    pub fn new_loop(body: BlockExpr, position: PositionRange) -> Self {
+    pub fn new_loop(body: BlockExpr, label: Option<Located<String>>, position: PositionRange) -> Self {
         Self {
             initial: None, 
             condition: None, 
             increment: None, 
             body,
+            label,
             position,
         }
     }
     
-    pub fn new_while(condition: Box<dyn ASTNode>, body: BlockExpr, position: PositionRange) -> Self {
+    pub fn new_while(condition: Box<dyn ASTNode>, body: BlockExpr, label: Option<Located<String>>, position: PositionRange) -> Self {
         Self {
             initial: None, 
             condition: Some(condition), 
             increment: None, 
             body,
+            label,
             position,
         }
     }
 
-    pub fn new_for(initial: DeclarationExpr, condition: Box<dyn ASTNode>, increment: Box<dyn ASTNode>, body: BlockExpr, position: PositionRange) -> Self {
+    pub fn new_for(initial: DeclarationExpr, condition: Box<dyn ASTNode>, increment: Box<dyn ASTNode>, body: BlockExpr, label: Option<Located<String>>, position: PositionRange) -> Self {
         Self {
             initial: Some(initial), 
             condition: Some(condition), 
             increment: Some(increment), 
             body,
+            label,
             position,
         }
     }

@@ -1,0 +1,24 @@
+main {
+    let int count = 0;
+    let int value = loop:outer {
+        loop:inner {
+            let int input = getchar();
+
+            if input == 'a' {
+                break:inner;
+            } else if input == 'b' {
+                break:inner;
+            } else if input == 'x' {
+                break:outer 'x';
+            }
+        }
+
+        count = count + 1;
+
+        if count == 5 {
+            break 'X';
+        }
+    };
+    
+    putchar(value);
+}

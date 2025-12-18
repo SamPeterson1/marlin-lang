@@ -111,6 +111,7 @@ impl<'ch, 'diag> Lexer<'ch, 'diag> {
         self.begin_token(self.next_position);
         
         match *self.peek()? {
+            ':' => Some(self.end_token_consume(TokenType::Colon)),
             '$' => Some(self.end_token_consume(TokenType::DollarSign)),
             ';' => Some(self.end_token_consume(TokenType::Semicolon)),
             ',' => Some(self.end_token_consume(TokenType::Comma)),

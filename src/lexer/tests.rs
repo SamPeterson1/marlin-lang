@@ -12,10 +12,11 @@ fn tokenize(code: &str) -> (Vec<Token>, Vec<Diagnostic>) {
 
 #[test]
 fn test_single_character_tokens() {
-    let (tokens, _) = tokenize("$;,.{}()[]+-*&");
+    let (tokens, _) = tokenize("$:;,.{}()[]+-*&");
     
     let expected = vec![
         TokenType::DollarSign,
+        TokenType::Colon,
         TokenType::Semicolon,
         TokenType::Comma,
         TokenType::Dot,

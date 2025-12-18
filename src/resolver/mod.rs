@@ -38,6 +38,10 @@ impl SymbolTable {
         self.types.get(type_name)
     }
 
+    pub fn get_variable(&self, var_id: &VarId) -> Option<&DeclarationId> {
+        self.variables.get(var_id)
+    }
+
     pub fn insert_function(&mut self, function: FunctionType) {
         self.functions.push(function);
     }

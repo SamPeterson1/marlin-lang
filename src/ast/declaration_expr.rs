@@ -11,6 +11,12 @@ static DECLARATION_ID_COUNTER: Mutex<u64> = Mutex::new(0);
 #[derive(Clone, Copy, Serialize, PartialEq, Eq, Hash, Debug)]
 pub struct DeclarationId(u64);
 
+impl ToString for DeclarationId {
+    fn to_string(&self) -> String {
+        format!("decl_{}", self.0)
+    }
+}
+
 #[derive(Serialize)]
 pub struct DeclarationExpr {
     pub identifier: Located<String>,

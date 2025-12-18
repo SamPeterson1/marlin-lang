@@ -45,6 +45,20 @@ impl<'ast> ASTVisitor<'ast, ()> for VarResolver<'ast> {
     fn visit_literal(&mut self, _node: &'ast LiteralExpr) { }
     
     fn visit_member_access(&mut self, node: &'ast MemberAccess) {
+        for member_access in &node.member_accesses {
+            match member_access {
+                AccessType::Array(index_expr) => {
+                    index_expr.accept_visitor(self);
+                },
+                AccessType::FunctionCall(arguments) => {
+                    for arg in &arguments.args {
+                        arg.accept_visitor(self);
+                    }
+                },
+                _ => {}
+            }
+        }
+
         node.expr.accept_visitor(self);
     }
     
@@ -109,6 +123,18 @@ impl<'ast> ASTVisitor<'ast, ()> for VarResolver<'ast> {
     }
     
     fn visit_loop(&mut self, node: &'ast LoopExpr) {
+        if let Some(initial) = &node.initial {
+            initial.accept_visitor(self);
+        }
+
+        if let Some(condition) = &node.condition {
+            condition.accept_visitor(self);
+        }
+
+        if let Some(increment) = &node.increment {
+            increment.accept_visitor(self);
+        }
+
         node.body.accept_visitor(self);
     }
     

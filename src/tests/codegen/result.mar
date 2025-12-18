@@ -1,0 +1,11 @@
+main {
+
+    let int input = getchar();
+    let int x = if input == 'a' {
+        'Y'
+    } else {
+        'N'
+    };
+
+    putchar(x);
+}

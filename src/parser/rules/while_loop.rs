@@ -22,11 +22,16 @@ impl ParseRule<LoopExpr> for WhileLoopRule {
     fn parse(&self, parser: &mut ExprParser) -> Option<LoopExpr> {
         parser.begin_range();
         parser.try_consume(TokenType::While)?;
+
+        let label = match parser.try_consume(TokenType::Colon) {
+            Some(_) => Some(parser.consume_or_diagnostic(TokenType::AnyIdentifier)?.unwrap_identifier()),
+            _ => None
+        };
     
         let condition = parser.apply_rule(ExprRule {}, "while condition", Some(ErrMsg::ExpectedExpression))?;
         let body = parser.apply_rule(BlockRule {}, "while body", Some(ErrMsg::ExpectedBlock))?;
     
-        Some(LoopExpr::new_while(condition, body, parser.end_range()))
+        Some(LoopExpr::new_while(condition, body, label, parser.end_range()))
     }
 }
 

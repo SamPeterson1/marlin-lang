@@ -3,6 +3,10 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
+use inkwell::context::Context;
+
+use crate::ast::AcceptsASTVisitor;
+use crate::codegen::CodeGen;
 use crate::diagnostic::Diagnostic;
 use crate::lexer::Lexer;
 use crate::logger::Log;
@@ -79,6 +83,17 @@ impl Runner {
         let var_resolver = VarResolver::new(&mut symbol_table, &mut self.diagnostics);
         var_resolver.resolve_vars(&program);
 
-        let codegen = CodeGen::new();
+        let context = Context::create();
+        let mut codegen = CodeGen::new(&context, &symbol_table);
+        program.accept_visitor(&mut codegen);
+        
+        self.log_info("Compiling to executable");
+        match codegen.compile_with_clang("a.out") {
+            Ok(_) => self.log_info("Compilation successful"),
+            Err(e) => {
+                self.log_error(&format!("Compilation failed: {}", e));
+                return;
+            }
+        }
     } 
 }

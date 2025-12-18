@@ -17,11 +17,11 @@ expression: condition
 block: "{" statement* "}"
 declaration: "let" type identifier "=" expression ";"
 assignment: expression "=" expression | expression
-for: "for" "(" declaration expression ";" assignment ")" block
-while: "while" expression block
-exit: ("return" | "break" | "result") [expression] ";"
+for: "for" [":" identifier] "(" declaration expression ";" assignment ")" block
+while: "while" [":" identifier] expression block
+exit: ("return" | "break" [":" label] | "result" [":" label]) [expression] ";"
 delete: "delete" expression ";"
-loop: "loop" block
+loop: "loop" [":" identifier] block
 if: "if" expression block elif* [else]
 elif: "else" "if" expression block
 

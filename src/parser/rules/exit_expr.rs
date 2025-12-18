@@ -29,6 +29,15 @@ impl ParseRule<ExitExpr> for ExitRule {
             _ => return None,
         };
 
+        let label = if exit_type == ExitType::Break || exit_type == ExitType::Result {
+            match parser.try_consume(TokenType::Colon) {
+                Some(_) => Some(parser.consume_or_diagnostic(TokenType::AnyIdentifier)?.unwrap_identifier()),
+                _ => None
+            }
+        } else {
+            None
+        };
+
         let expr = if parser.try_consume(TokenType::Semicolon).is_none() {
             let result = parser.apply_rule(ExprRule {}, "exit expression", Some(ErrMsg::ExpectedExpression))?;
             parser.consume_or_diagnostic(TokenType::Semicolon);
@@ -38,7 +47,7 @@ impl ParseRule<ExitExpr> for ExitRule {
             None
         };
 
-        Some(ExitExpr::new(exit_type, expr, parser.end_range()))
+        Some(ExitExpr::new(exit_type, expr, label, parser.end_range()))
     }
 }
 

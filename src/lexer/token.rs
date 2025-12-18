@@ -190,7 +190,7 @@ impl Token {
 
 #[derive(Debug, Clone)]
 pub enum TokenType {
-    Semicolon, Dot, Comma, Assignment, DollarSign, Arrow,
+    Semicolon, Colon, Dot, Comma, Assignment, DollarSign, Arrow,
     LeftCurly, RightCurly, LeftSquare, RightSquare, LeftParen, RightParen,
     Plus, Minus, Slash, Star, Ampersand,
     NotEqual, Equal, Greater, GreaterEqual, Less, LessEqual,
@@ -263,6 +263,7 @@ impl fmt::Display for TokenType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let name = match self {
             TokenType::Semicolon => ";",
+            TokenType::Colon => ":",
             TokenType::Dot => ".",
             TokenType::Comma => ",",
             TokenType::Assignment => "=",

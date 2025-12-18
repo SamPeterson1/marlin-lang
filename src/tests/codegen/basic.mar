@@ -1,0 +1,25 @@
+main {
+    let int foo = getchar();
+    let int bar = getchar();
+
+    if foo == 'a' {
+        for (let int i = foo; i < bar; i = i + 1) {
+            if i != 'b' {
+                for (let int j = 0; j < 5; j = j + 1) {
+                    putchar(i + j);
+
+                    if i + j == 'z' {
+                        putchar('!');
+                        return;
+                    }
+                }
+                putchar('\n');
+            }
+        }
+    } else {
+        for (let int i = foo; i < bar; i = i + 1) {
+            putchar(i);
+        }
+    }
+    
+}
