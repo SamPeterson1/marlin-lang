@@ -21,7 +21,7 @@ impl ParseRule<Box<dyn ASTNode>> for UnaryRule {
     fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
         parser.begin_range();
 
-        if let Some(operator) = parser.try_consume_match(&[TokenType::Not, TokenType::Minus, TokenType::Star, TokenType::Ampersand]) {
+        if let Some(operator) = parser.try_consume_match(&[TokenType::Not, TokenType::Minus, TokenType::Star, TokenType::Ampersand, TokenType::Tilda]) {
             let unary_operator: UnaryOperator = operator.value.try_into().unwrap();
             let unary = parser.apply_rule(UnaryRule {}, "unary expression", None)?;
             Some(Box::new(UnaryExpr::new(unary, unary_operator, parser.end_range())))

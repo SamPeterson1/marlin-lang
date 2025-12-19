@@ -111,6 +111,8 @@ impl<'ch, 'diag> Lexer<'ch, 'diag> {
         self.begin_token(self.next_position);
         
         match *self.peek()? {
+            '~' => Some(self.end_token_consume(TokenType::Tilda)),
+            '|' => Some(self.end_token_consume(TokenType::Bar)),
             ':' => Some(self.end_token_consume(TokenType::Colon)),
             '$' => Some(self.end_token_consume(TokenType::DollarSign)),
             ';' => Some(self.end_token_consume(TokenType::Semicolon)),
@@ -141,7 +143,7 @@ impl<'ch, 'diag> Lexer<'ch, 'diag> {
     fn parse_other(&mut self, peek: char) -> Option<Token> {
         if Self::is_alphabetic(peek) {
             Some(self.parse_alphabetic())
-        } else if Self::is_numeric(peek) {
+        } else if Self::is_numeric(peek, 10) {
             self.parse_numeric()
         } else {
             let cur = self.next_char()?;
@@ -267,33 +269,58 @@ impl<'ch, 'diag> Lexer<'ch, 'diag> {
     
         let mut is_decimal = false;
         let mut decimal_places = 0;
-    
-        while let Some(cur) = self.next_char() {
-            if is_decimal {
-                frac_part = 10 * frac_part + cur.to_digit(10).unwrap() as u64;
-                decimal_places += 1;
-            } else {
-                whole_part = 10 * whole_part + cur.to_digit(10).unwrap() as u64;
-            }
-    
-            if let Some(&peek) = self.peek() {
-                if peek == '.' { 
-                    if !is_decimal {
-                        is_decimal = true;
 
-                        self.next();
-                    } else {
-                        break;
-                    }
-                } else if !Self::is_numeric(peek) {
+        let mut radix: u64 = 10;
+
+        if self.peek() == Some(&'0') {
+            self.next(); // Consume '0'
+            match self.peek() {
+                Some('x') => {
+                    radix = 16;
+                    self.next(); // Consume 'x'
+                },
+                Some('b') => {
+                    radix = 2;
+                    self.next(); // Consume 'b'
+                },
+                Some('o') => {
+                    radix = 8;
+                    self.next(); // Consume 'o'
+                },
+                _ => {}
+            }
+        }
+    
+        while let Some(peek) = self.peek() {
+            if *peek == '.' { 
+                if !is_decimal {
+                    is_decimal = true;
+
+                    self.next();
+                } else {
                     break;
                 }
+            } else if !Self::is_numeric(*peek, radix as u32) {
+                break;
+            }
+            
+            let cur = self.next_char().unwrap();
+
+            if is_decimal {
+                frac_part = radix * frac_part + cur.to_digit(radix as u32).unwrap() as u64;
+                decimal_places += 1;
+            } else {
+                whole_part = radix * whole_part + cur.to_digit(radix as u32).unwrap() as u64;
             }
         }
 
     
-        let value = whole_part as f64 + frac_part as f64 / (10_i32.pow(decimal_places) as f64);
+        let value = whole_part as f64 + frac_part as f64 / (radix.pow(decimal_places) as f64);
         
+        if self.peek() == Some(&'_') {
+            self.next(); // Consume suffix underscore
+        }
+
         let peek = self.peek().cloned();
 
         match peek {
@@ -369,7 +396,7 @@ impl<'ch, 'diag> Lexer<'ch, 'diag> {
     }
 
     fn is_alphanumeric(c: char) -> bool {
-        Self::is_alphabetic(c) || Self::is_numeric(c)
+        Self::is_alphabetic(c) || Self::is_numeric(c, 10)
     }
     
     fn is_alphabetic(c: char) -> bool {
@@ -378,7 +405,7 @@ impl<'ch, 'diag> Lexer<'ch, 'diag> {
         || (c == '_')
     }
     
-    fn is_numeric(c: char) -> bool {
-        c >= '0' && c <= '9'
+    fn is_numeric(c: char, radix: u32) -> bool {
+        c.to_digit(radix).is_some()
     }
 }

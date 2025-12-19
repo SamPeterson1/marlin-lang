@@ -3,56 +3,38 @@ use std::rc::Rc;
 use serde::Serialize;
 
 use crate::impl_positioned;
-use crate::lexer::token::{Located, PositionRange};
+use crate::lexer::token::PositionRange;
 
-#[derive(Serialize, Clone)]
-pub enum ParsedBaseType {
+#[derive(Serialize, Clone, PartialEq, Eq, Debug)]
+pub enum ParsedTypeEnum {
     Integer, Double, Boolean, Char,
     TypeName(Rc<String>),
+    Pointer(Rc<ParsedType>),
+    Reference(Rc<ParsedType>),
+    Array(Rc<ParsedType>),
 }
 
-
-#[derive(Serialize, Clone)]
-pub struct ParsedUnitType {
-    pub base_type: Located<ParsedBaseType>,
-    pub n_pointers: u32,
-    pub is_reference: bool,
-    position: PositionRange,
-}
-
-#[derive(Serialize, Clone)]
-pub struct ArrayModifier {
-    pub is_reference: bool,
-}
-
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Debug)]
 pub struct ParsedType {
-    pub unit_type: ParsedUnitType,
-    pub array_modifiers: Vec<ArrayModifier>,
-
+    pub parsed_type: ParsedTypeEnum,
     position: PositionRange,
 }
 
-impl ParsedType {
-    pub fn new(unit_type: ParsedUnitType, array_modifiers: Vec<ArrayModifier>, position: PositionRange) -> Self {
-        Self {
-            unit_type,
-            array_modifiers,
-            position,
-        }
+impl PartialEq for ParsedType {
+    fn eq(&self, other: &Self) -> bool {
+        self.parsed_type == other.parsed_type
     }
 }
 
-impl ParsedUnitType {
-    pub fn new(base_type: Located<ParsedBaseType>, n_pointers: u32, is_reference: bool, position: PositionRange) -> Self {
+impl Eq for ParsedType {}
+
+impl ParsedType {
+    pub fn new(parsed_type: ParsedTypeEnum, position: PositionRange) -> Self {
         Self {
-            base_type,
-            n_pointers,
-            is_reference,
+            parsed_type,
             position,
         }
     }
 }
 
 impl_positioned!(ParsedType);
-impl_positioned!(ParsedUnitType);

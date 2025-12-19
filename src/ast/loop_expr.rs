@@ -1,7 +1,8 @@
 use serde::Serialize;
 
 use crate::ast::{ASTNode, block_expr::BlockExpr, declaration_expr::DeclarationExpr};
-use crate::{impl_ast_node, impl_positioned};
+use crate::resolver::ResolvedType;
+use crate::{impl_ast_node, impl_positioned, impl_typed};
 use crate::lexer::token::{Located, PositionRange};
 
 #[derive(Serialize)]
@@ -12,6 +13,7 @@ pub struct LoopExpr {
     pub body: BlockExpr,
     pub label: Option<Located<String>>,
     position: PositionRange,
+    resolved_type: Option<ResolvedType>,
 }
 
 impl LoopExpr {
@@ -23,6 +25,7 @@ impl LoopExpr {
             body,
             label,
             position,
+            resolved_type: None,
         }
     }
     
@@ -34,6 +37,7 @@ impl LoopExpr {
             body,
             label,
             position,
+            resolved_type: None,
         }
     }
 
@@ -45,9 +49,11 @@ impl LoopExpr {
             body,
             label,
             position,
+            resolved_type: None,
         }
     }
 }
 
 impl_positioned!(LoopExpr);
+impl_typed!(LoopExpr);
 impl_ast_node!(LoopExpr, visit_loop);

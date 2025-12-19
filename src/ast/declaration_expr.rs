@@ -3,7 +3,8 @@ use std::sync::Mutex;
 use serde::Serialize;
 
 use crate::ast::{ASTNode, parsed_type::ParsedType};
-use crate::{impl_ast_node, impl_positioned};
+use crate::resolver::ResolvedType;
+use crate::{impl_ast_node, impl_positioned, impl_typed};
 use crate::lexer::token::{Located, PositionRange};
 
 static DECLARATION_ID_COUNTER: Mutex<u64> = Mutex::new(0);
@@ -24,6 +25,7 @@ pub struct DeclarationExpr {
     pub expr: Box<dyn ASTNode>,
     pub id: DeclarationId,
     position: PositionRange,
+    resolved_type: Option<ResolvedType>,
 }
 
 impl DeclarationExpr {
@@ -37,10 +39,12 @@ impl DeclarationExpr {
             declaration_type,
             expr,
             id: DeclarationId(current_id),
-            position
+            position,
+            resolved_type: None,
         }
     }
 }
 
 impl_positioned!(DeclarationExpr);
+impl_typed!(DeclarationExpr);
 impl_ast_node!(DeclarationExpr, visit_declaration);

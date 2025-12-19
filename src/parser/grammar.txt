@@ -30,8 +30,10 @@ constructor: ["new"] "$" identifier arguments
 new-array: "new" type ("[" expression "]")+
 condition: boolean-factor ("or" boolean-factor)*
 boolean-factor: comparison ("and" comparison)*
-comparison: arithmetic-term (comparator arithmetic-term)*
+comparison: bitwise-term (comparator bitwise-term)*
 comparator: "<" | "<=" | "==" | "!=" | ">" | ">="
+bitwise-term: bitwise-factor ("|" bitwise-factor)
+bitwise-factor: arithmetic-term ("&" arithmetic-term)
 arithmetic-term: arithmetic-factor (("-" | "+") arithmetic-factor)*
 arithmetic-factor: unary (("*" | "/") unary)*
 unary: ("!" | "-" | "*" | "&") unary | member-access

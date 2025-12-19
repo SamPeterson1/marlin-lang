@@ -1,6 +1,7 @@
 use serde::Serialize;
 
-use crate::{impl_ast_node, impl_positioned};
+use crate::resolver::ResolvedType;
+use crate::{impl_ast_node, impl_positioned, impl_typed};
 use crate::lexer::token::PositionRange;
 
 #[derive(Serialize)]
@@ -16,6 +17,7 @@ pub enum Literal {
 pub struct LiteralExpr {
     pub value: Literal,
     position: PositionRange,
+    resolved_type: Option<ResolvedType>,
 }
 
 impl LiteralExpr {
@@ -23,9 +25,11 @@ impl LiteralExpr {
         Self {
             value,
             position,
+            resolved_type: None,
         }
     }
 }
 
 impl_positioned!(LiteralExpr);
+impl_typed!(LiteralExpr);
 impl_ast_node!(LiteralExpr, visit_literal);

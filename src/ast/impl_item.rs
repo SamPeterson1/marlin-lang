@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::ast::{function_item::FunctionItem, parsed_type::ParsedType};
+use crate::ast::function_item::FunctionItem;
 use crate::{impl_ast_node, impl_positioned};
 use crate::lexer::token::{Located, PositionRange};
 

@@ -12,6 +12,7 @@ mod logger;
 mod parser;
 mod resolver;
 mod run;
+mod type_checker;
 
 fn main() {
     dotenv().unwrap();

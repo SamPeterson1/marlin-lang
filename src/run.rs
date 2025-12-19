@@ -7,12 +7,13 @@ use inkwell::context::Context;
 
 use crate::ast::AcceptsASTVisitor;
 use crate::codegen::CodeGen;
-use crate::diagnostic::Diagnostic;
+use crate::diagnostic::{self, Diagnostic};
 use crate::lexer::Lexer;
 use crate::logger::Log;
 use crate::parser::ExprParser;
 use crate::lexer::token::Token;
 use crate::resolver::{SymbolTable, TypeResolver, VarResolver};
+use crate::type_checker::TypeChecker;
 
 fn read_file(file: &str, contents: &mut String) {
     let working_dir = env::current_dir().expect("Error reading working directory");
@@ -73,7 +74,7 @@ impl Runner {
         
         self.log_info("Parsing code");
         let parser = ExprParser::new(tokens, &mut self.diagnostics);
-        let program = parser.parse();
+        let mut program = parser.parse();
         self.log_info("Done parsing");
 
         let mut symbol_table = SymbolTable::new();
@@ -83,10 +84,22 @@ impl Runner {
         let var_resolver = VarResolver::new(&mut symbol_table, &mut self.diagnostics);
         var_resolver.resolve_vars(&program);
 
+        let mut type_checker = TypeChecker::new(&mut self.diagnostics, &mut symbol_table);
+        program.accept_visitor_mut(&mut type_checker);
+        
+        if self.diagnostics.len() > 0 {
+            for diagnostic in &self.diagnostics {
+                self.log_error(&format!("{}", diagnostic));
+            }
+            self.log_error("Aborting due to previous errors");
+            return;
+        }
+
         let context = Context::create();
         let mut codegen = CodeGen::new(&context, &symbol_table);
         program.accept_visitor(&mut codegen);
-        
+
+
         self.log_info("Compiling to executable");
         match codegen.compile_with_clang("a.out") {
             Ok(_) => self.log_info("Compilation successful"),

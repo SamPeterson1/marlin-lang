@@ -1,9 +1,9 @@
 use std::fmt;
 use std::rc::Rc;
 
-use crate::ast::{ParsedBaseType, ParsedUnitType};
+use crate::ast::{ParsedType, ParsedTypeEnum};
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
-use crate::lexer::token::{Located, Positioned, TokenType};
+use crate::lexer::token::{Positioned, TokenType};
 
 pub struct ParsedUnitTypeRule {}
 
@@ -13,7 +13,7 @@ impl fmt::Display for ParsedUnitTypeRule {
     }
 }
 
-impl ParseRule<ParsedUnitType> for ParsedUnitTypeRule {
+impl ParseRule<ParsedType> for ParsedUnitTypeRule {
     fn check_match(&self, cursor: ParserCursor) -> bool {
         cursor.try_match(&[
             TokenType::Int,
@@ -24,32 +24,34 @@ impl ParseRule<ParsedUnitType> for ParsedUnitTypeRule {
         ]).is_some()
     }
 
-    fn parse(&self, parser: &mut ExprParser) -> Option<ParsedUnitType> {
+    fn parse(&self, parser: &mut ExprParser) -> Option<ParsedType> {
         parser.begin_range();
         let cur= parser.next();
 
-        let base_type = match cur.value {
-            TokenType::Int => Located::new(ParsedBaseType::Integer, *cur.get_position()),
-            TokenType::Double => Located::new(ParsedBaseType::Double, *cur.get_position()),
-            TokenType::Bool => Located::new(ParsedBaseType::Boolean, *cur.get_position()),
-            TokenType::Char => Located::new(ParsedBaseType::Char, *cur.get_position()),
+        let mut base_type = match cur.value {
+            TokenType::Int => ParsedType::new(ParsedTypeEnum::Integer, *cur.get_position()),
+            TokenType::Double => ParsedType::new(ParsedTypeEnum::Double, *cur.get_position()),
+            TokenType::Bool => ParsedType::new(ParsedTypeEnum::Boolean, *cur.get_position()),
+            TokenType::Char => ParsedType::new(ParsedTypeEnum::Char, *cur.get_position()),
             TokenType::Identifier(ref type_name) => {
-                Located::new(ParsedBaseType::TypeName(Rc::new(type_name.to_string())), *cur.get_position())
+                ParsedType::new(ParsedTypeEnum::TypeName(Rc::new(type_name.to_string())), *cur.get_position())
             }
             _ => {
                 return None;
             }
         };
 
-        let mut n_pointers = 0;
-
         while parser.try_consume(TokenType::Star).is_some() {
-            n_pointers += 1;
+            base_type = ParsedType::new(ParsedTypeEnum::Pointer(Rc::new(base_type)), parser.current_range())
         }
 
-        let is_reference = parser.try_consume(TokenType::Ampersand).is_some();
+        if parser.try_consume(TokenType::Ampersand).is_some() {
+            base_type = ParsedType::new(ParsedTypeEnum::Reference(Rc::new(base_type)), parser.current_range())
+        }
 
-        Some(ParsedUnitType::new(base_type, n_pointers, is_reference, parser.end_range()))
+        parser.end_range();
+
+        Some(base_type)
     }
 }
 
@@ -147,10 +149,8 @@ mod tests {
         let result = rule.parse(&mut parser);
         
         assert!(result.is_some());
-        let unit_type = result.unwrap();
-        assert_eq!(unit_type.n_pointers, 0);
-        assert!(!unit_type.is_reference);
-        assert!(matches!(unit_type.base_type.data, ParsedBaseType::Integer));
+        let parsed_type = result.unwrap();
+        assert!(matches!(parsed_type.parsed_type, ParsedTypeEnum::Integer));
         assert!(diagnostics.is_empty(), "Expected no diagnostics for int type");
     }
 
@@ -167,10 +167,8 @@ mod tests {
         let result = rule.parse(&mut parser);
         
         assert!(result.is_some());
-        let unit_type = result.unwrap();
-        assert_eq!(unit_type.n_pointers, 0);
-        assert!(!unit_type.is_reference);
-        assert!(matches!(unit_type.base_type.data, ParsedBaseType::Double));
+        let parsed_type = result.unwrap();
+        assert!(matches!(parsed_type.parsed_type, ParsedTypeEnum::Double));
         assert!(diagnostics.is_empty(), "Expected no diagnostics for double type");
     }
 
@@ -187,10 +185,8 @@ mod tests {
         let result = rule.parse(&mut parser);
         
         assert!(result.is_some());
-        let unit_type = result.unwrap();
-        assert_eq!(unit_type.n_pointers, 0);
-        assert!(!unit_type.is_reference);
-        assert!(matches!(unit_type.base_type.data, ParsedBaseType::Boolean));
+        let parsed_type = result.unwrap();
+        assert!(matches!(parsed_type.parsed_type, ParsedTypeEnum::Boolean));
         assert!(diagnostics.is_empty(), "Expected no diagnostics for bool type");
     }
 
@@ -207,10 +203,8 @@ mod tests {
         let result = rule.parse(&mut parser);
         
         assert!(result.is_some());
-        let unit_type = result.unwrap();
-        assert_eq!(unit_type.n_pointers, 0);
-        assert!(!unit_type.is_reference);
-        assert!(matches!(unit_type.base_type.data, ParsedBaseType::Char));
+        let parsed_type = result.unwrap();
+        assert!(matches!(parsed_type.parsed_type, ParsedTypeEnum::Char));
         assert!(diagnostics.is_empty(), "Expected no diagnostics for char type");
     }
 
@@ -227,10 +221,8 @@ mod tests {
         let result = rule.parse(&mut parser);
         
         assert!(result.is_some());
-        let unit_type = result.unwrap();
-        assert_eq!(unit_type.n_pointers, 0);
-        assert!(!unit_type.is_reference);
-        if let ParsedBaseType::TypeName(type_name) = &unit_type.base_type.data {
+        let parsed_type = result.unwrap();
+        if let ParsedTypeEnum::TypeName(type_name) = &parsed_type.parsed_type {
             assert_eq!(type_name.as_str(), "CustomType");
         } else {
             panic!("Expected TypeName variant");
@@ -252,10 +244,12 @@ mod tests {
         let result = rule.parse(&mut parser);
         
         assert!(result.is_some());
-        let unit_type = result.unwrap();
-        assert_eq!(unit_type.n_pointers, 1);
-        assert!(!unit_type.is_reference);
-        assert!(matches!(unit_type.base_type.data, ParsedBaseType::Integer));
+        let parsed_type = result.unwrap();
+        if let ParsedTypeEnum::Pointer(inner) = &parsed_type.parsed_type {
+            assert!(matches!(inner.parsed_type, ParsedTypeEnum::Integer));
+        } else {
+            panic!("Expected Pointer variant");
+        }
         assert!(diagnostics.is_empty(), "Expected no diagnostics for pointer type");
     }
 
@@ -275,10 +269,22 @@ mod tests {
         let result = rule.parse(&mut parser);
         
         assert!(result.is_some());
-        let unit_type = result.unwrap();
-        assert_eq!(unit_type.n_pointers, 3);
-        assert!(!unit_type.is_reference);
-        assert!(matches!(unit_type.base_type.data, ParsedBaseType::Char));
+        let parsed_type = result.unwrap();
+        
+        // Unwrap three levels of pointers
+        if let ParsedTypeEnum::Pointer(level1) = &parsed_type.parsed_type {
+            if let ParsedTypeEnum::Pointer(level2) = &level1.parsed_type {
+                if let ParsedTypeEnum::Pointer(level3) = &level2.parsed_type {
+                    assert!(matches!(level3.parsed_type, ParsedTypeEnum::Char));
+                } else {
+                    panic!("Expected third Pointer level");
+                }
+            } else {
+                panic!("Expected second Pointer level");
+            }
+        } else {
+            panic!("Expected first Pointer level");
+        }
         assert!(diagnostics.is_empty(), "Expected no diagnostics for multiple pointers");
     }
 
@@ -296,10 +302,12 @@ mod tests {
         let result = rule.parse(&mut parser);
         
         assert!(result.is_some());
-        let unit_type = result.unwrap();
-        assert_eq!(unit_type.n_pointers, 0);
-        assert!(unit_type.is_reference);
-        assert!(matches!(unit_type.base_type.data, ParsedBaseType::Double));
+        let parsed_type = result.unwrap();
+        if let ParsedTypeEnum::Reference(inner) = &parsed_type.parsed_type {
+            assert!(matches!(inner.parsed_type, ParsedTypeEnum::Double));
+        } else {
+            panic!("Expected Reference variant");
+        }
         assert!(diagnostics.is_empty(), "Expected no diagnostics for reference type");
     }
 
@@ -318,10 +326,18 @@ mod tests {
         let result = rule.parse(&mut parser);
         
         assert!(result.is_some());
-        let unit_type = result.unwrap();
-        assert_eq!(unit_type.n_pointers, 1);
-        assert!(unit_type.is_reference);
-        assert!(matches!(unit_type.base_type.data, ParsedBaseType::Boolean));
+        let parsed_type = result.unwrap();
+        
+        // Should be Reference(Pointer(Bool))
+        if let ParsedTypeEnum::Reference(ref_inner) = &parsed_type.parsed_type {
+            if let ParsedTypeEnum::Pointer(ptr_inner) = &ref_inner.parsed_type {
+                assert!(matches!(ptr_inner.parsed_type, ParsedTypeEnum::Boolean));
+            } else {
+                panic!("Expected Pointer inside Reference");
+            }
+        } else {
+            panic!("Expected Reference variant");
+        }
         assert!(diagnostics.is_empty(), "Expected no diagnostics for pointer reference");
     }
 
@@ -344,13 +360,25 @@ mod tests {
         let result = rule.parse(&mut parser);
         
         assert!(result.is_some());
-        let unit_type = result.unwrap();
-        assert_eq!(unit_type.n_pointers, 5);
-        assert!(unit_type.is_reference);
-        if let ParsedBaseType::TypeName(type_name) = &unit_type.base_type.data {
-            assert_eq!(type_name.as_str(), "MyStruct");
+        let parsed_type = result.unwrap();
+        
+        // Should be Reference(Pointer(Pointer(Pointer(Pointer(Pointer(TypeName))))))
+        if let ParsedTypeEnum::Reference(ref_inner) = &parsed_type.parsed_type {
+            let mut current = &ref_inner.parsed_type;
+            for _ in 0..5 {
+                if let ParsedTypeEnum::Pointer(ptr_inner) = current {
+                    current = &ptr_inner.parsed_type;
+                } else {
+                    panic!("Expected Pointer level");
+                }
+            }
+            if let ParsedTypeEnum::TypeName(type_name) = current {
+                assert_eq!(type_name.as_str(), "MyStruct");
+            } else {
+                panic!("Expected TypeName at base");
+            }
         } else {
-            panic!("Expected TypeName variant");
+            panic!("Expected Reference variant");
         }
         assert!(diagnostics.is_empty(), "Expected no diagnostics for multiple pointers with reference");
     }
@@ -370,10 +398,18 @@ mod tests {
         let result = rule.parse(&mut parser);
         
         assert!(result.is_some());
-        let unit_type = result.unwrap();
-        assert_eq!(unit_type.n_pointers, 2);
-        assert!(!unit_type.is_reference);
-        assert!(matches!(unit_type.base_type.data, ParsedBaseType::Integer));
+        let parsed_type = result.unwrap();
+        
+        // Should be Pointer(Pointer(Integer))
+        if let ParsedTypeEnum::Pointer(level1) = &parsed_type.parsed_type {
+            if let ParsedTypeEnum::Pointer(level2) = &level1.parsed_type {
+                assert!(matches!(level2.parsed_type, ParsedTypeEnum::Integer));
+            } else {
+                panic!("Expected second Pointer level");
+            }
+        } else {
+            panic!("Expected first Pointer level");
+        }
         assert!(diagnostics.is_empty(), "Expected no diagnostics for just pointers");
     }
 
@@ -393,13 +429,25 @@ mod tests {
         let result = rule.parse(&mut parser);
         
         assert!(result.is_some());
-        let unit_type = result.unwrap();
-        assert_eq!(unit_type.n_pointers, 2);
-        assert!(unit_type.is_reference);
-        if let ParsedBaseType::TypeName(type_name) = &unit_type.base_type.data {
-            assert_eq!(type_name.as_str(), "Vector");
+        let parsed_type = result.unwrap();
+        
+        // Should be Reference(Pointer(Pointer(TypeName)))
+        if let ParsedTypeEnum::Reference(ref_inner) = &parsed_type.parsed_type {
+            if let ParsedTypeEnum::Pointer(ptr1) = &ref_inner.parsed_type {
+                if let ParsedTypeEnum::Pointer(ptr2) = &ptr1.parsed_type {
+                    if let ParsedTypeEnum::TypeName(type_name) = &ptr2.parsed_type {
+                        assert_eq!(type_name.as_str(), "Vector");
+                    } else {
+                        panic!("Expected TypeName at base");
+                    }
+                } else {
+                    panic!("Expected second Pointer level");
+                }
+            } else {
+                panic!("Expected first Pointer level");
+            }
         } else {
-            panic!("Expected TypeName variant");
+            panic!("Expected Reference variant");
         }
         assert!(diagnostics.is_empty(), "Expected no diagnostics for custom type with pointers and reference");
     }
@@ -417,7 +465,6 @@ mod tests {
         let result = rule.parse(&mut parser);
         
         assert!(result.is_none());
-        // No diagnostics expected here since the rule simply returns None for invalid tokens
         assert!(diagnostics.is_empty());
     }
 
@@ -464,10 +511,8 @@ mod tests {
         let result = rule.parse(&mut parser);
         
         assert!(result.is_some());
-        let unit_type = result.unwrap();
-        assert_eq!(unit_type.n_pointers, 0);
-        assert!(!unit_type.is_reference);
-        if let ParsedBaseType::TypeName(type_name) = &unit_type.base_type.data {
+        let parsed_type = result.unwrap();
+        if let ParsedTypeEnum::TypeName(type_name) = &parsed_type.parsed_type {
             assert_eq!(type_name.as_str(), "VeryLongCustomTypeNameThatIsStillValid");
         } else {
             panic!("Expected TypeName variant");
@@ -479,7 +524,6 @@ mod tests {
     fn test_parse_excessive_pointers() {
         let rule = ParsedUnitTypeRule {};
         let mut tokens = vec![create_token(TokenType::Int)];
-        // Add 10 pointer levels
         for _ in 0..10 {
             tokens.push(create_token(TokenType::Star));
         }
@@ -491,10 +535,18 @@ mod tests {
         let result = rule.parse(&mut parser);
         
         assert!(result.is_some());
-        let unit_type = result.unwrap();
-        assert_eq!(unit_type.n_pointers, 10);
-        assert!(!unit_type.is_reference);
-        assert!(matches!(unit_type.base_type.data, ParsedBaseType::Integer));
+        let parsed_type = result.unwrap();
+        
+        // Verify we have 10 levels of pointers
+        let mut current = &parsed_type.parsed_type;
+        for _ in 0..10 {
+            if let ParsedTypeEnum::Pointer(inner) = current {
+                current = &inner.parsed_type;
+            } else {
+                panic!("Expected Pointer level");
+            }
+        }
+        assert!(matches!(current, ParsedTypeEnum::Integer));
         assert!(diagnostics.is_empty(), "Expected no diagnostics for excessive pointers");
     }
 }

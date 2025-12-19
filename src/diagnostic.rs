@@ -1,7 +1,9 @@
 use core::fmt;
 
+use crate::ast::{BinaryOperator, UnaryOperator};
 use crate::logger::LogLevel;
 use crate::lexer::token::{PositionRange, TokenType};
+use crate::resolver::ResolvedType;
 
 #[derive(Clone, Copy)]
 pub enum DiagnosticSeverity {
@@ -60,6 +62,13 @@ pub enum ErrMsg {
     UnknownTypeName(String),
     UnknownVariable(String),
     DuplicateVariable(String),
+    IncompatibleBinaryTypes(ResolvedType, ResolvedType, BinaryOperator),
+    IncompatibleUnaryType(ResolvedType, UnaryOperator),
+    FieldNotFound(String),
+    IncompatibleMemberAccessType(ResolvedType),
+    ArrayIndexNotInteger(ResolvedType),
+    MismatchedIfBranches(ResolvedType, ResolvedType),
+    IncompatibleAssignment(ResolvedType, ResolvedType),
 }
 
 impl ErrMsg {
@@ -92,6 +101,27 @@ impl fmt::Display for ErrMsg {
             Self::UnknownTypeName(name) => &format!("unknown type name: '{}'", name),
             Self::UnknownVariable(name) => &format!("unknown variable: '{}'", name),
             Self::DuplicateVariable(name) => &format!("duplicate variable declaration: '{}'", name),
+            Self::IncompatibleBinaryTypes(left, right, operator) => {
+                &format!("incompatible types for operator '{}': left is '{:?}', right is '{:?}'", operator, left, right)
+            },
+            Self::IncompatibleUnaryType(ty, operator) => {
+                &format!("incompatible type for operator '{}': expression is of type '{:?}'", operator, ty)
+            },
+            Self::FieldNotFound(field_name) => {
+                &format!("field '{}' not found in struct", field_name)
+            },
+            Self::IncompatibleMemberAccessType(ty) => {
+                &format!("cannot access member of type '{:?}'", ty)
+            },
+            Self::ArrayIndexNotInteger(ty) => {
+                &format!("array index must be of integer type, found '{:?}'", ty)
+            },
+            Self::MismatchedIfBranches(then_type, else_type) => {
+                &format!("mismatched types in if branches: 'then' is '{:?}', 'else' is '{:?}'", then_type, else_type)
+            },
+            Self::IncompatibleAssignment(var_type, expr_type) => {
+                &format!("cannot assign expression of type '{:?}' to variable of type '{:?}'", expr_type, var_type)
+            },
         };
 
         write!(f, "{}", msg)

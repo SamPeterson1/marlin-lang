@@ -1,0 +1,1007 @@
+Archive member included to satisfy reference by file (symbol)
+
+/nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-errno.o)
+                              build/syscalls.o (__errno)
+/nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-exit.o)
+                              /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o (exit)
+/nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-impure.o)
+                              /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-exit.o) (_global_impure_ptr)
+/nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-init.o)
+                              /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o (__libc_init_array)
+/nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-memset.o)
+                              /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o (memset)
+/nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+                              output.o (__aeabi_unwind_cpp_pr0)
+/nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+                              /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o) (restore_core_regs)
+/nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+                              /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o) (__gnu_unwind_execute)
+/nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-abort.o)
+                              /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o) (abort)
+/nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-memcpy-stub.o)
+                              /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o) (memcpy)
+/nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+                              /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-abort.o) (raise)
+/nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signalr.o)
+                              /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o) (_kill_r)
+/nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-mallocr.o)
+                              /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o) (_malloc_r)
+/nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-reent.o)
+                              /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signalr.o) (errno)
+/nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-sbrkr.o)
+                              /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-mallocr.o) (_sbrk_r)
+/nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-mlock.o)
+                              /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-mallocr.o) (__malloc_lock)
+/nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-freer.o)
+                              /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-reent.o) (_free_r)
+/nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+                              /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-mlock.o) (__retarget_lock_acquire_recursive)
+
+Discarded input sections
+
+ .text          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crti.o
+ .data          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crti.o
+ .bss           0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crti.o
+ .data          0x0000000000000000        0x4 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+ .rodata        0x0000000000000000       0x24 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+ .text          0x0000000000000000       0x7c /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o
+ .data          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o
+ .bss           0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o
+ .ARM.extab     0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o
+ .ARM.exidx     0x0000000000000000       0x10 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o
+ .ARM.attributes
+                0x0000000000000000       0x1c /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o
+ .text          0x0000000000000000        0x0 build/syscalls.o
+ .data          0x0000000000000000        0x0 build/syscalls.o
+ .bss           0x0000000000000000        0x0 build/syscalls.o
+ .text.initialise_monitor_handles
+                0x0000000000000000        0x2 build/syscalls.o
+ .text._read    0x0000000000000000       0x20 build/syscalls.o
+ .text._write   0x0000000000000000       0x1c build/syscalls.o
+ .text._close   0x0000000000000000        0x6 build/syscalls.o
+ .text._fstat   0x0000000000000000        0xa build/syscalls.o
+ .text._isatty  0x0000000000000000        0x4 build/syscalls.o
+ .text._lseek   0x0000000000000000        0x4 build/syscalls.o
+ .text._open    0x0000000000000000        0xa build/syscalls.o
+ .text._wait    0x0000000000000000       0x10 build/syscalls.o
+ .text._unlink  0x0000000000000000       0x10 build/syscalls.o
+ .text._times   0x0000000000000000        0x6 build/syscalls.o
+ .text._stat    0x0000000000000000        0xa build/syscalls.o
+ .text._link    0x0000000000000000       0x10 build/syscalls.o
+ .text._fork    0x0000000000000000       0x10 build/syscalls.o
+ .text._execve  0x0000000000000000       0x10 build/syscalls.o
+ .bss.__env     0x0000000000000000        0x4 build/syscalls.o
+ .data.environ  0x0000000000000000        0x4 build/syscalls.o
+ .debug_info    0x0000000000000000      0x835 build/syscalls.o
+ .debug_abbrev  0x0000000000000000      0x1c4 build/syscalls.o
+ .debug_loc     0x0000000000000000      0x511 build/syscalls.o
+ .debug_aranges
+                0x0000000000000000       0xa8 build/syscalls.o
+ .debug_ranges  0x0000000000000000       0x98 build/syscalls.o
+ .debug_line    0x0000000000000000      0x41b build/syscalls.o
+ .debug_str     0x0000000000000000      0x3cf build/syscalls.o
+ .comment       0x0000000000000000       0x4a build/syscalls.o
+ .debug_frame   0x0000000000000000      0x190 build/syscalls.o
+ .ARM.attributes
+                0x0000000000000000       0x34 build/syscalls.o
+ .text          0x0000000000000000        0x0 build/sysmem.o
+ .data          0x0000000000000000        0x0 build/sysmem.o
+ .bss           0x0000000000000000        0x0 build/sysmem.o
+ .text._sbrk    0x0000000000000000       0x48 build/sysmem.o
+ .bss.__sbrk_heap_end
+                0x0000000000000000        0x4 build/sysmem.o
+ .debug_info    0x0000000000000000      0x185 build/sysmem.o
+ .debug_abbrev  0x0000000000000000       0xea build/sysmem.o
+ .debug_loc     0x0000000000000000       0x84 build/sysmem.o
+ .debug_aranges
+                0x0000000000000000       0x20 build/sysmem.o
+ .debug_ranges  0x0000000000000000       0x10 build/sysmem.o
+ .debug_line    0x0000000000000000      0x1ec build/sysmem.o
+ .debug_str     0x0000000000000000      0x1fb build/sysmem.o
+ .comment       0x0000000000000000       0x4a build/sysmem.o
+ .debug_frame   0x0000000000000000       0x28 build/sysmem.o
+ .ARM.attributes
+                0x0000000000000000       0x34 build/sysmem.o
+ .text          0x0000000000000000       0x14 build/startup_stm32f429xx.o
+ .data          0x0000000000000000        0x0 build/startup_stm32f429xx.o
+ .bss           0x0000000000000000        0x0 build/startup_stm32f429xx.o
+ .text          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-errno.o)
+ .data          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-errno.o)
+ .bss           0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-errno.o)
+ .text          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-exit.o)
+ .data          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-exit.o)
+ .bss           0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-exit.o)
+ .text.exit     0x0000000000000000       0x28 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-exit.o)
+ .debug_frame   0x0000000000000000       0x28 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-exit.o)
+ .ARM.attributes
+                0x0000000000000000       0x34 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-exit.o)
+ .text          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-impure.o)
+ .data          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-impure.o)
+ .bss           0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-impure.o)
+ .rodata._global_impure_ptr
+                0x0000000000000000        0x4 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-impure.o)
+ .text          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-init.o)
+ .data          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-init.o)
+ .bss           0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-init.o)
+ .text          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-memset.o)
+ .data          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-memset.o)
+ .bss           0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-memset.o)
+ .text.memset   0x0000000000000000       0x10 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-memset.o)
+ .debug_frame   0x0000000000000000       0x20 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-memset.o)
+ .ARM.attributes
+                0x0000000000000000       0x34 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-memset.o)
+ .data          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+ .bss           0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+ .ARM.extab     0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+ .data          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+ .bss           0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+ .data          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+ .bss           0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+ .text.unlikely
+                0x0000000000000000        0xc /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+ .ARM.extab.text.unlikely
+                0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+ .ARM.exidx.text.unlikely
+                0x0000000000000000       0x10 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+ .text          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-abort.o)
+ .data          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-abort.o)
+ .bss           0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-abort.o)
+ .text          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-memcpy-stub.o)
+ .data          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-memcpy-stub.o)
+ .bss           0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-memcpy-stub.o)
+ .text          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+ .data          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+ .bss           0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+ .text._init_signal_r
+                0x0000000000000000       0x28 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+ .text._signal_r
+                0x0000000000000000       0x30 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+ .text.__sigtramp_r
+                0x0000000000000000       0x48 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+ .text.signal   0x0000000000000000       0x10 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+ .text._init_signal
+                0x0000000000000000        0xc /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+ .text.__sigtramp
+                0x0000000000000000       0x10 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+ .text          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signalr.o)
+ .data          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signalr.o)
+ .bss           0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signalr.o)
+ .text          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-mallocr.o)
+ .data          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-mallocr.o)
+ .bss           0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-mallocr.o)
+ .text.sbrk_aligned
+                0x0000000000000000       0x40 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-mallocr.o)
+ .text._malloc_r
+                0x0000000000000000       0xe8 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-mallocr.o)
+ .bss.__malloc_free_list
+                0x0000000000000000        0x4 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-mallocr.o)
+ .bss.__malloc_sbrk_start
+                0x0000000000000000        0x4 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-mallocr.o)
+ .debug_frame   0x0000000000000000       0x4c /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-mallocr.o)
+ .ARM.attributes
+                0x0000000000000000       0x34 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-mallocr.o)
+ .text          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-reent.o)
+ .data          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-reent.o)
+ .bss           0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-reent.o)
+ .text.cleanup_glue
+                0x0000000000000000       0x1a /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-reent.o)
+ .text._reclaim_reent
+                0x0000000000000000       0xb8 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-reent.o)
+ .text          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-sbrkr.o)
+ .data          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-sbrkr.o)
+ .bss           0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-sbrkr.o)
+ .text._sbrk_r  0x0000000000000000       0x20 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-sbrkr.o)
+ .debug_frame   0x0000000000000000       0x2c /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-sbrkr.o)
+ .ARM.attributes
+                0x0000000000000000       0x34 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-sbrkr.o)
+ .text          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-mlock.o)
+ .data          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-mlock.o)
+ .bss           0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-mlock.o)
+ .text.__malloc_lock
+                0x0000000000000000        0xc /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-mlock.o)
+ .text.__malloc_unlock
+                0x0000000000000000        0xc /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-mlock.o)
+ .debug_frame   0x0000000000000000       0x30 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-mlock.o)
+ .ARM.attributes
+                0x0000000000000000       0x34 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-mlock.o)
+ .text          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-freer.o)
+ .data          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-freer.o)
+ .bss           0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-freer.o)
+ .text._free_r  0x0000000000000000       0x98 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-freer.o)
+ .debug_frame   0x0000000000000000       0x38 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-freer.o)
+ .ARM.attributes
+                0x0000000000000000       0x34 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-freer.o)
+ .text          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .data          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .bss           0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .text.__retarget_lock_init
+                0x0000000000000000        0x2 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .text.__retarget_lock_init_recursive
+                0x0000000000000000        0x2 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .text.__retarget_lock_close
+                0x0000000000000000        0x2 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .text.__retarget_lock_close_recursive
+                0x0000000000000000        0x2 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .text.__retarget_lock_acquire
+                0x0000000000000000        0x2 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .text.__retarget_lock_acquire_recursive
+                0x0000000000000000        0x2 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .text.__retarget_lock_try_acquire
+                0x0000000000000000        0x4 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .text.__retarget_lock_try_acquire_recursive
+                0x0000000000000000        0x4 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .text.__retarget_lock_release
+                0x0000000000000000        0x2 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .text.__retarget_lock_release_recursive
+                0x0000000000000000        0x2 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .bss.__lock___arc4random_mutex
+                0x0000000000000000        0x1 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .bss.__lock___at_quick_exit_mutex
+                0x0000000000000000        0x1 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .bss.__lock___atexit_recursive_mutex
+                0x0000000000000000        0x1 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .bss.__lock___dd_hash_mutex
+                0x0000000000000000        0x1 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .bss.__lock___env_recursive_mutex
+                0x0000000000000000        0x1 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .bss.__lock___malloc_recursive_mutex
+                0x0000000000000000        0x1 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .bss.__lock___sfp_recursive_mutex
+                0x0000000000000000        0x1 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .bss.__lock___sinit_recursive_mutex
+                0x0000000000000000        0x1 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .bss.__lock___tz_mutex
+                0x0000000000000000        0x1 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .debug_frame   0x0000000000000000       0xb0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .ARM.attributes
+                0x0000000000000000       0x34 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+ .text          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtend.o
+ .data          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtend.o
+ .bss           0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtend.o
+ .rodata        0x0000000000000000       0x24 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtend.o
+ .eh_frame      0x0000000000000000        0x4 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtend.o
+ .ARM.attributes
+                0x0000000000000000       0x34 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtend.o
+ .text          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtn.o
+ .data          0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtn.o
+ .bss           0x0000000000000000        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtn.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+RAM              0x0000000020000000 0x0000000000030000 xrw
+CCMRAM           0x0000000010000000 0x0000000000010000 xrw
+FLASH            0x0000000008000000 0x0000000000200000 xr
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+LOAD /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crti.o
+LOAD /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+LOAD /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o
+LOAD build/syscalls.o
+LOAD build/sysmem.o
+LOAD build/startup_stm32f429xx.o
+LOAD output.o
+LOAD /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a
+LOAD /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libm.a
+LOAD /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libnosys.a
+START GROUP
+LOAD /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a
+LOAD /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a
+END GROUP
+START GROUP
+LOAD /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a
+LOAD /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a
+END GROUP
+LOAD /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtend.o
+LOAD /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtn.o
+                0x0000000020030000                _estack = (ORIGIN (RAM) + LENGTH (RAM))
+                0x0000000000000200                _Min_Heap_Size = 0x200
+                0x0000000000000400                _Min_Stack_Size = 0x400
+
+.isr_vector     0x0000000008000000      0x1ac
+                0x0000000008000000                . = ALIGN (0x4)
+ *(.isr_vector)
+ .isr_vector    0x0000000008000000      0x1ac build/startup_stm32f429xx.o
+                0x0000000008000000                g_pfnVectors
+                0x00000000080001ac                . = ALIGN (0x4)
+
+.text           0x00000000080001ac     0x1120
+                0x00000000080001ac                . = ALIGN (0x4)
+ *(.text)
+ .text          0x00000000080001ac       0x40 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+ .text          0x00000000080001ec       0x7c output.o
+                0x00000000080001ec                main
+ .text          0x0000000008000268      0x9d8 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+                0x0000000008000510                _Unwind_GetCFA
+                0x0000000008000514                __gnu_Unwind_RaiseException
+                0x000000000800057c                __gnu_Unwind_ForcedUnwind
+                0x000000000800058c                __gnu_Unwind_Resume
+                0x00000000080005d0                __gnu_Unwind_Resume_or_Rethrow
+                0x00000000080005e0                _Unwind_Complete
+                0x00000000080005e4                _Unwind_DeleteException
+                0x00000000080005f0                _Unwind_VRS_Get
+                0x000000000800063c                _Unwind_VRS_Set
+                0x0000000008000684                __gnu_Unwind_Backtrace
+                0x00000000080009b0                __aeabi_unwind_cpp_pr0
+                0x00000000080009b4                __aeabi_unwind_cpp_pr1
+                0x00000000080009b8                __aeabi_unwind_cpp_pr2
+                0x00000000080009bc                _Unwind_VRS_Pop
+ .text          0x0000000008000c40      0x1ac /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+                0x0000000008000c40                __restore_core_regs
+                0x0000000008000c40                restore_core_regs
+                0x0000000008000c58                __gnu_Unwind_Restore_VFP
+                0x0000000008000c60                __gnu_Unwind_Save_VFP
+                0x0000000008000c68                __gnu_Unwind_Restore_VFP_D
+                0x0000000008000c70                __gnu_Unwind_Save_VFP_D
+                0x0000000008000c78                __gnu_Unwind_Restore_VFP_D_16_to_31
+                0x0000000008000c80                __gnu_Unwind_Save_VFP_D_16_to_31
+                0x0000000008000c88                __gnu_Unwind_Restore_WMMXD
+                0x0000000008000ccc                __gnu_Unwind_Save_WMMXD
+                0x0000000008000d10                __gnu_Unwind_Restore_WMMXC
+                0x0000000008000d24                __gnu_Unwind_Save_WMMXC
+                0x0000000008000d38                ___Unwind_RaiseException
+                0x0000000008000d38                _Unwind_RaiseException
+                0x0000000008000d5c                ___Unwind_Resume
+                0x0000000008000d5c                _Unwind_Resume
+                0x0000000008000d80                _Unwind_Resume_or_Rethrow
+                0x0000000008000d80                ___Unwind_Resume_or_Rethrow
+                0x0000000008000da4                ___Unwind_ForcedUnwind
+                0x0000000008000da4                _Unwind_ForcedUnwind
+                0x0000000008000dc8                _Unwind_Backtrace
+                0x0000000008000dc8                ___Unwind_Backtrace
+ .text          0x0000000008000dec      0x350 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+                0x0000000008000e44                __gnu_unwind_execute
+                0x00000000080010f0                __gnu_unwind_frame
+                0x000000000800111c                _Unwind_GetRegionStart
+                0x0000000008001128                _Unwind_GetLanguageSpecificData
+ *(.text*)
+ .text._getpid  0x000000000800113c        0x4 build/syscalls.o
+                0x000000000800113c                _getpid
+ .text._kill    0x0000000008001140       0x10 build/syscalls.o
+                0x0000000008001140                _kill
+ .text._exit    0x0000000008001150        0xc build/syscalls.o
+                0x0000000008001150                _exit
+ .text.Reset_Handler
+                0x000000000800115c       0x4c build/startup_stm32f429xx.o
+                0x000000000800115c                Reset_Handler
+ .text.Default_Handler
+                0x00000000080011a8        0x2 build/startup_stm32f429xx.o
+                0x00000000080011a8                RTC_Alarm_IRQHandler
+                0x00000000080011a8                HASH_RNG_IRQHandler
+                0x00000000080011a8                EXTI2_IRQHandler
+                0x00000000080011a8                TIM8_CC_IRQHandler
+                0x00000000080011a8                DebugMon_Handler
+                0x00000000080011a8                UART8_IRQHandler
+                0x00000000080011a8                SPI4_IRQHandler
+                0x00000000080011a8                TIM1_CC_IRQHandler
+                0x00000000080011a8                DMA2_Stream5_IRQHandler
+                0x00000000080011a8                HardFault_Handler
+                0x00000000080011a8                DMA1_Stream5_IRQHandler
+                0x00000000080011a8                SysTick_Handler
+                0x00000000080011a8                PVD_IRQHandler
+                0x00000000080011a8                SDIO_IRQHandler
+                0x00000000080011a8                TAMP_STAMP_IRQHandler
+                0x00000000080011a8                PendSV_Handler
+                0x00000000080011a8                NMI_Handler
+                0x00000000080011a8                CAN2_RX1_IRQHandler
+                0x00000000080011a8                EXTI3_IRQHandler
+                0x00000000080011a8                TIM8_TRG_COM_TIM14_IRQHandler
+                0x00000000080011a8                TIM1_UP_TIM10_IRQHandler
+                0x00000000080011a8                TIM8_UP_TIM13_IRQHandler
+                0x00000000080011a8                I2C3_ER_IRQHandler
+                0x00000000080011a8                EXTI0_IRQHandler
+                0x00000000080011a8                I2C2_EV_IRQHandler
+                0x00000000080011a8                DMA1_Stream2_IRQHandler
+                0x00000000080011a8                CAN1_RX0_IRQHandler
+                0x00000000080011a8                FPU_IRQHandler
+                0x00000000080011a8                OTG_HS_WKUP_IRQHandler
+                0x00000000080011a8                UsageFault_Handler
+                0x00000000080011a8                LTDC_ER_IRQHandler
+                0x00000000080011a8                CAN2_SCE_IRQHandler
+                0x00000000080011a8                DMA2_Stream2_IRQHandler
+                0x00000000080011a8                SPI1_IRQHandler
+                0x00000000080011a8                TIM6_DAC_IRQHandler
+                0x00000000080011a8                TIM1_BRK_TIM9_IRQHandler
+                0x00000000080011a8                DCMI_IRQHandler
+                0x00000000080011a8                CAN2_RX0_IRQHandler
+                0x00000000080011a8                DMA2_Stream3_IRQHandler
+                0x00000000080011a8                USART6_IRQHandler
+                0x00000000080011a8                USART3_IRQHandler
+                0x00000000080011a8                CAN1_RX1_IRQHandler
+                0x00000000080011a8                UART5_IRQHandler
+                0x00000000080011a8                DMA2_Stream0_IRQHandler
+                0x00000000080011a8                TIM4_IRQHandler
+                0x00000000080011a8                I2C1_EV_IRQHandler
+                0x00000000080011a8                DMA1_Stream6_IRQHandler
+                0x00000000080011a8                DMA1_Stream1_IRQHandler
+                0x00000000080011a8                UART4_IRQHandler
+                0x00000000080011a8                TIM3_IRQHandler
+                0x00000000080011a8                RCC_IRQHandler
+                0x00000000080011a8                TIM8_BRK_TIM12_IRQHandler
+                0x00000000080011a8                Default_Handler
+                0x00000000080011a8                EXTI15_10_IRQHandler
+                0x00000000080011a8                ADC_IRQHandler
+                0x00000000080011a8                DMA1_Stream7_IRQHandler
+                0x00000000080011a8                SPI5_IRQHandler
+                0x00000000080011a8                TIM7_IRQHandler
+                0x00000000080011a8                CAN2_TX_IRQHandler
+                0x00000000080011a8                TIM5_IRQHandler
+                0x00000000080011a8                DMA2_Stream7_IRQHandler
+                0x00000000080011a8                I2C3_EV_IRQHandler
+                0x00000000080011a8                EXTI9_5_IRQHandler
+                0x00000000080011a8                RTC_WKUP_IRQHandler
+                0x00000000080011a8                LTDC_IRQHandler
+                0x00000000080011a8                ETH_WKUP_IRQHandler
+                0x00000000080011a8                SPI2_IRQHandler
+                0x00000000080011a8                OTG_HS_EP1_IN_IRQHandler
+                0x00000000080011a8                MemManage_Handler
+                0x00000000080011a8                DMA1_Stream0_IRQHandler
+                0x00000000080011a8                CAN1_TX_IRQHandler
+                0x00000000080011a8                SVC_Handler
+                0x00000000080011a8                EXTI4_IRQHandler
+                0x00000000080011a8                ETH_IRQHandler
+                0x00000000080011a8                OTG_HS_EP1_OUT_IRQHandler
+                0x00000000080011a8                WWDG_IRQHandler
+                0x00000000080011a8                SPI6_IRQHandler
+                0x00000000080011a8                TIM2_IRQHandler
+                0x00000000080011a8                OTG_FS_WKUP_IRQHandler
+                0x00000000080011a8                TIM1_TRG_COM_TIM11_IRQHandler
+                0x00000000080011a8                OTG_HS_IRQHandler
+                0x00000000080011a8                DMA2D_IRQHandler
+                0x00000000080011a8                EXTI1_IRQHandler
+                0x00000000080011a8                UART7_IRQHandler
+                0x00000000080011a8                USART2_IRQHandler
+                0x00000000080011a8                I2C2_ER_IRQHandler
+                0x00000000080011a8                DMA2_Stream1_IRQHandler
+                0x00000000080011a8                CAN1_SCE_IRQHandler
+                0x00000000080011a8                FLASH_IRQHandler
+                0x00000000080011a8                DMA2_Stream4_IRQHandler
+                0x00000000080011a8                BusFault_Handler
+                0x00000000080011a8                USART1_IRQHandler
+                0x00000000080011a8                OTG_FS_IRQHandler
+                0x00000000080011a8                SPI3_IRQHandler
+                0x00000000080011a8                DMA1_Stream4_IRQHandler
+                0x00000000080011a8                I2C1_ER_IRQHandler
+                0x00000000080011a8                FMC_IRQHandler
+                0x00000000080011a8                DMA2_Stream6_IRQHandler
+                0x00000000080011a8                SAI1_IRQHandler
+                0x00000000080011a8                DMA1_Stream3_IRQHandler
+ *fill*         0x00000000080011aa        0x2 
+ .text.__errno  0x00000000080011ac        0xc /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-errno.o)
+                0x00000000080011ac                __errno
+ .text.__libc_init_array
+                0x00000000080011b8       0x48 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-init.o)
+                0x00000000080011b8                __libc_init_array
+ .text.abort    0x0000000008001200        0xe /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-abort.o)
+                0x0000000008001200                abort
+ .text.memcpy   0x000000000800120e       0x1c /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-memcpy-stub.o)
+                0x000000000800120e                memcpy
+ .text._raise_r
+                0x000000000800122a       0x50 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+                0x000000000800122a                _raise_r
+ *fill*         0x000000000800127a        0x2 
+ .text.raise    0x000000000800127c       0x10 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+                0x000000000800127c                raise
+ .text._kill_r  0x000000000800128c       0x24 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signalr.o)
+                0x000000000800128c                _kill_r
+ .text._getpid_r
+                0x00000000080012b0        0x4 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signalr.o)
+                0x00000000080012b0                _getpid_r
+ *(.glue_7)
+ .glue_7        0x00000000080012b4        0x0 linker stubs
+ *(.glue_7t)
+ .glue_7t       0x00000000080012b4        0x0 linker stubs
+ *(.eh_frame)
+ .eh_frame      0x00000000080012b4        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+ *(.init)
+ .init          0x00000000080012b4        0x4 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crti.o
+                0x00000000080012b4                _init
+ .init          0x00000000080012b8        0x8 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtn.o
+ *(.fini)
+ .fini          0x00000000080012c0        0x4 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crti.o
+                0x00000000080012c0                _fini
+ .fini          0x00000000080012c4        0x8 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtn.o
+                0x00000000080012cc                . = ALIGN (0x4)
+                0x00000000080012cc                _etext = .
+
+.vfp11_veneer   0x00000000080012cc        0x0
+ .vfp11_veneer  0x00000000080012cc        0x0 linker stubs
+
+.v4_bx          0x00000000080012cc        0x0
+ .v4_bx         0x00000000080012cc        0x0 linker stubs
+
+.iplt           0x00000000080012cc        0x0
+ .iplt          0x00000000080012cc        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+
+.rodata         0x00000000080012cc        0x0
+                0x00000000080012cc                . = ALIGN (0x4)
+ *(.rodata)
+ *(.rodata*)
+                0x00000000080012cc                . = ALIGN (0x4)
+
+.ARM.extab      0x00000000080012cc       0x18
+ *(.ARM.extab* .gnu.linkonce.armextab.*)
+ .ARM.extab     0x00000000080012cc       0x18 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+
+.ARM            0x00000000080012e4       0xc0
+                0x00000000080012e4                __exidx_start = .
+ *(.ARM.exidx*)
+ .ARM.exidx     0x00000000080012e4        0x8 output.o
+ .ARM.exidx     0x00000000080012ec       0x80 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+                                         0xd8 (size before relaxing)
+ .ARM.exidx     0x000000000800136c       0x38 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+                0x00000000080013a4                __exidx_end = .
+
+.rel.dyn        0x00000000080013a4        0x0
+ .rel.iplt      0x00000000080013a4        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+
+.preinit_array  0x00000000080013a4        0x0
+                0x00000000080013a4                PROVIDE (__preinit_array_start = .)
+ *(.preinit_array*)
+                0x00000000080013a4                PROVIDE (__preinit_array_end = .)
+
+.init_array     0x00000000080013a4        0x4
+                0x00000000080013a4                PROVIDE (__init_array_start = .)
+ *(SORT_BY_NAME(.init_array.*))
+ *(.init_array*)
+ .init_array    0x00000000080013a4        0x4 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+                0x00000000080013a8                PROVIDE (__init_array_end = .)
+
+.fini_array     0x00000000080013a8        0x4
+                [!provide]                        PROVIDE (__fini_array_start = .)
+ *(SORT_BY_NAME(.fini_array.*))
+ *(.fini_array*)
+ .fini_array    0x00000000080013a8        0x4 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+                [!provide]                        PROVIDE (__fini_array_end = .)
+                0x00000000080013ac                _sidata = LOADADDR (.data)
+
+.data           0x0000000020000000       0x64 load address 0x00000000080013ac
+                0x0000000020000000                . = ALIGN (0x4)
+                0x0000000020000000                _sdata = .
+ *(.data)
+ *(.data*)
+ .data._impure_ptr
+                0x0000000020000000        0x4 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-impure.o)
+                0x0000000020000000                _impure_ptr
+ .data.impure_data
+                0x0000000020000004       0x60 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-impure.o)
+                0x0000000020000064                . = ALIGN (0x4)
+                0x0000000020000064                _edata = .
+                0x0000000008001410                _siccmram = LOADADDR (.ccmram)
+
+.igot.plt       0x0000000020000064        0x0 load address 0x0000000008001410
+ .igot.plt      0x0000000020000064        0x0 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+
+.ccmram         0x0000000010000000        0x0 load address 0x0000000008001410
+                0x0000000010000000                . = ALIGN (0x4)
+                0x0000000010000000                _sccmram = .
+ *(.ccmram)
+ *(.ccmram*)
+                0x0000000010000000                . = ALIGN (0x4)
+                0x0000000010000000                _eccmram = .
+                0x0000000010000000                . = ALIGN (0x4)
+
+.bss            0x0000000020000064       0x20
+                0x0000000020000064                _sbss = .
+                0x0000000020000064                __bss_start__ = _sbss
+ *(.bss)
+ .bss           0x0000000020000064       0x1c /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+ *(.bss*)
+ .bss.errno     0x0000000020000080        0x4 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-reent.o)
+                0x0000000020000080                errno
+ *(COMMON)
+                0x0000000020000084                . = ALIGN (0x4)
+                0x0000000020000084                _ebss = .
+                0x0000000020000084                __bss_end__ = _ebss
+
+._user_heap_stack
+                0x0000000020000084      0x604
+                0x0000000020000088                . = ALIGN (0x8)
+ *fill*         0x0000000020000084        0x4 
+                [!provide]                        PROVIDE (end = .)
+                0x0000000020000088                PROVIDE (_end = .)
+                0x0000000020000288                . = (. + _Min_Heap_Size)
+ *fill*         0x0000000020000088      0x200 
+                0x0000000020000688                . = (. + _Min_Stack_Size)
+ *fill*         0x0000000020000288      0x400 
+                0x0000000020000688                . = ALIGN (0x8)
+
+/DISCARD/
+ libc.a(*)
+ libm.a(*)
+ libgcc.a(*)
+
+.ARM.attributes
+                0x0000000000000000       0x34
+ *(.ARM.attributes)
+ .ARM.attributes
+                0x0000000000000000       0x1e /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crti.o
+ .ARM.attributes
+                0x000000000000001e       0x34 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+ .ARM.attributes
+                0x0000000000000052       0x21 build/startup_stm32f429xx.o
+ .ARM.attributes
+                0x0000000000000073       0x41 output.o
+ .ARM.attributes
+                0x00000000000000b4       0x34 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-errno.o)
+ .ARM.attributes
+                0x00000000000000e8       0x34 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-impure.o)
+ .ARM.attributes
+                0x000000000000011c       0x34 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-init.o)
+ .ARM.attributes
+                0x0000000000000150       0x34 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+ .ARM.attributes
+                0x0000000000000184       0x1e /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+ .ARM.attributes
+                0x00000000000001a2       0x34 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+ .ARM.attributes
+                0x00000000000001d6       0x34 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-abort.o)
+ .ARM.attributes
+                0x000000000000020a       0x34 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-memcpy-stub.o)
+ .ARM.attributes
+                0x000000000000023e       0x34 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+ .ARM.attributes
+                0x0000000000000272       0x34 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signalr.o)
+ .ARM.attributes
+                0x00000000000002a6       0x34 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-reent.o)
+ .ARM.attributes
+                0x00000000000002da       0x1e /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtn.o
+OUTPUT(build/stm32F4xx-drivers.elf elf32-littlearm)
+LOAD linker stubs
+LOAD /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc.a
+LOAD /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libm.a
+LOAD /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a
+
+.debug_line     0x0000000000000000       0x75
+ .debug_line    0x0000000000000000       0x75 build/startup_stm32f429xx.o
+
+.debug_info     0x0000000000000000       0x22
+ .debug_info    0x0000000000000000       0x22 build/startup_stm32f429xx.o
+
+.debug_abbrev   0x0000000000000000       0x12
+ .debug_abbrev  0x0000000000000000       0x12 build/startup_stm32f429xx.o
+
+.debug_aranges  0x0000000000000000       0x28
+ .debug_aranges
+                0x0000000000000000       0x28 build/startup_stm32f429xx.o
+
+.debug_str      0x0000000000000000       0x49
+ .debug_str     0x0000000000000000       0x49 build/startup_stm32f429xx.o
+
+.debug_ranges   0x0000000000000000       0x20
+ .debug_ranges  0x0000000000000000       0x20 build/startup_stm32f429xx.o
+
+.note.GNU-stack
+                0x0000000000000000        0x0
+ .note.GNU-stack
+                0x0000000000000000        0x0 output.o
+
+.debug_frame    0x0000000000000000      0x5d8
+ .debug_frame   0x0000000000000000       0x20 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-errno.o)
+ .debug_frame   0x0000000000000020       0x2c /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-init.o)
+ .debug_frame   0x000000000000004c      0x2d4 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+ .debug_frame   0x0000000000000320      0x104 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+ .debug_frame   0x0000000000000424       0x28 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-abort.o)
+ .debug_frame   0x000000000000044c       0x28 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-memcpy-stub.o)
+ .debug_frame   0x0000000000000474       0xcc /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+ .debug_frame   0x0000000000000540       0x3c /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signalr.o)
+ .debug_frame   0x000000000000057c       0x5c /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-reent.o)
+
+Cross Reference Table
+
+Symbol                                            File
+ADC_IRQHandler                                    build/startup_stm32f429xx.o
+BusFault_Handler                                  build/startup_stm32f429xx.o
+CAN1_RX0_IRQHandler                               build/startup_stm32f429xx.o
+CAN1_RX1_IRQHandler                               build/startup_stm32f429xx.o
+CAN1_SCE_IRQHandler                               build/startup_stm32f429xx.o
+CAN1_TX_IRQHandler                                build/startup_stm32f429xx.o
+CAN2_RX0_IRQHandler                               build/startup_stm32f429xx.o
+CAN2_RX1_IRQHandler                               build/startup_stm32f429xx.o
+CAN2_SCE_IRQHandler                               build/startup_stm32f429xx.o
+CAN2_TX_IRQHandler                                build/startup_stm32f429xx.o
+DCMI_IRQHandler                                   build/startup_stm32f429xx.o
+DMA1_Stream0_IRQHandler                           build/startup_stm32f429xx.o
+DMA1_Stream1_IRQHandler                           build/startup_stm32f429xx.o
+DMA1_Stream2_IRQHandler                           build/startup_stm32f429xx.o
+DMA1_Stream3_IRQHandler                           build/startup_stm32f429xx.o
+DMA1_Stream4_IRQHandler                           build/startup_stm32f429xx.o
+DMA1_Stream5_IRQHandler                           build/startup_stm32f429xx.o
+DMA1_Stream6_IRQHandler                           build/startup_stm32f429xx.o
+DMA1_Stream7_IRQHandler                           build/startup_stm32f429xx.o
+DMA2D_IRQHandler                                  build/startup_stm32f429xx.o
+DMA2_Stream0_IRQHandler                           build/startup_stm32f429xx.o
+DMA2_Stream1_IRQHandler                           build/startup_stm32f429xx.o
+DMA2_Stream2_IRQHandler                           build/startup_stm32f429xx.o
+DMA2_Stream3_IRQHandler                           build/startup_stm32f429xx.o
+DMA2_Stream4_IRQHandler                           build/startup_stm32f429xx.o
+DMA2_Stream5_IRQHandler                           build/startup_stm32f429xx.o
+DMA2_Stream6_IRQHandler                           build/startup_stm32f429xx.o
+DMA2_Stream7_IRQHandler                           build/startup_stm32f429xx.o
+DebugMon_Handler                                  build/startup_stm32f429xx.o
+Default_Handler                                   build/startup_stm32f429xx.o
+ETH_IRQHandler                                    build/startup_stm32f429xx.o
+ETH_WKUP_IRQHandler                               build/startup_stm32f429xx.o
+EXTI0_IRQHandler                                  build/startup_stm32f429xx.o
+EXTI15_10_IRQHandler                              build/startup_stm32f429xx.o
+EXTI1_IRQHandler                                  build/startup_stm32f429xx.o
+EXTI2_IRQHandler                                  build/startup_stm32f429xx.o
+EXTI3_IRQHandler                                  build/startup_stm32f429xx.o
+EXTI4_IRQHandler                                  build/startup_stm32f429xx.o
+EXTI9_5_IRQHandler                                build/startup_stm32f429xx.o
+FLASH_IRQHandler                                  build/startup_stm32f429xx.o
+FMC_IRQHandler                                    build/startup_stm32f429xx.o
+FPU_IRQHandler                                    build/startup_stm32f429xx.o
+HASH_RNG_IRQHandler                               build/startup_stm32f429xx.o
+HardFault_Handler                                 build/startup_stm32f429xx.o
+I2C1_ER_IRQHandler                                build/startup_stm32f429xx.o
+I2C1_EV_IRQHandler                                build/startup_stm32f429xx.o
+I2C2_ER_IRQHandler                                build/startup_stm32f429xx.o
+I2C2_EV_IRQHandler                                build/startup_stm32f429xx.o
+I2C3_ER_IRQHandler                                build/startup_stm32f429xx.o
+I2C3_EV_IRQHandler                                build/startup_stm32f429xx.o
+LTDC_ER_IRQHandler                                build/startup_stm32f429xx.o
+LTDC_IRQHandler                                   build/startup_stm32f429xx.o
+MemManage_Handler                                 build/startup_stm32f429xx.o
+NMI_Handler                                       build/startup_stm32f429xx.o
+OTG_FS_IRQHandler                                 build/startup_stm32f429xx.o
+OTG_FS_WKUP_IRQHandler                            build/startup_stm32f429xx.o
+OTG_HS_EP1_IN_IRQHandler                          build/startup_stm32f429xx.o
+OTG_HS_EP1_OUT_IRQHandler                         build/startup_stm32f429xx.o
+OTG_HS_IRQHandler                                 build/startup_stm32f429xx.o
+OTG_HS_WKUP_IRQHandler                            build/startup_stm32f429xx.o
+PVD_IRQHandler                                    build/startup_stm32f429xx.o
+PendSV_Handler                                    build/startup_stm32f429xx.o
+RCC_IRQHandler                                    build/startup_stm32f429xx.o
+RTC_Alarm_IRQHandler                              build/startup_stm32f429xx.o
+RTC_WKUP_IRQHandler                               build/startup_stm32f429xx.o
+Reset_Handler                                     build/startup_stm32f429xx.o
+SAI1_IRQHandler                                   build/startup_stm32f429xx.o
+SDIO_IRQHandler                                   build/startup_stm32f429xx.o
+SPI1_IRQHandler                                   build/startup_stm32f429xx.o
+SPI2_IRQHandler                                   build/startup_stm32f429xx.o
+SPI3_IRQHandler                                   build/startup_stm32f429xx.o
+SPI4_IRQHandler                                   build/startup_stm32f429xx.o
+SPI5_IRQHandler                                   build/startup_stm32f429xx.o
+SPI6_IRQHandler                                   build/startup_stm32f429xx.o
+SVC_Handler                                       build/startup_stm32f429xx.o
+SysTick_Handler                                   build/startup_stm32f429xx.o
+TAMP_STAMP_IRQHandler                             build/startup_stm32f429xx.o
+TIM1_BRK_TIM9_IRQHandler                          build/startup_stm32f429xx.o
+TIM1_CC_IRQHandler                                build/startup_stm32f429xx.o
+TIM1_TRG_COM_TIM11_IRQHandler                     build/startup_stm32f429xx.o
+TIM1_UP_TIM10_IRQHandler                          build/startup_stm32f429xx.o
+TIM2_IRQHandler                                   build/startup_stm32f429xx.o
+TIM3_IRQHandler                                   build/startup_stm32f429xx.o
+TIM4_IRQHandler                                   build/startup_stm32f429xx.o
+TIM5_IRQHandler                                   build/startup_stm32f429xx.o
+TIM6_DAC_IRQHandler                               build/startup_stm32f429xx.o
+TIM7_IRQHandler                                   build/startup_stm32f429xx.o
+TIM8_BRK_TIM12_IRQHandler                         build/startup_stm32f429xx.o
+TIM8_CC_IRQHandler                                build/startup_stm32f429xx.o
+TIM8_TRG_COM_TIM14_IRQHandler                     build/startup_stm32f429xx.o
+TIM8_UP_TIM13_IRQHandler                          build/startup_stm32f429xx.o
+UART4_IRQHandler                                  build/startup_stm32f429xx.o
+UART5_IRQHandler                                  build/startup_stm32f429xx.o
+UART7_IRQHandler                                  build/startup_stm32f429xx.o
+UART8_IRQHandler                                  build/startup_stm32f429xx.o
+USART1_IRQHandler                                 build/startup_stm32f429xx.o
+USART2_IRQHandler                                 build/startup_stm32f429xx.o
+USART3_IRQHandler                                 build/startup_stm32f429xx.o
+USART6_IRQHandler                                 build/startup_stm32f429xx.o
+UsageFault_Handler                                build/startup_stm32f429xx.o
+WWDG_IRQHandler                                   build/startup_stm32f429xx.o
+_Min_Stack_Size                                   build/sysmem.o
+_Unwind_Backtrace                                 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+_Unwind_Complete                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+_Unwind_DeleteException                           /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+_Unwind_ForcedUnwind                              /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+_Unwind_GetCFA                                    /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+_Unwind_GetDataRelBase                            /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+_Unwind_GetLanguageSpecificData                   /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+_Unwind_GetRegionStart                            /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+_Unwind_GetTextRelBase                            /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+_Unwind_RaiseException                            /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+_Unwind_Resume                                    /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+_Unwind_Resume_or_Rethrow                         /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+_Unwind_VRS_Get                                   /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+_Unwind_VRS_Pop                                   /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+_Unwind_VRS_Set                                   /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+___Unwind_Backtrace                               /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+___Unwind_ForcedUnwind                            /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+___Unwind_RaiseException                          /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+___Unwind_Resume                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+___Unwind_Resume_or_Rethrow                       /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+__aeabi_unwind_cpp_pr0                            /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+                                                  output.o
+__aeabi_unwind_cpp_pr1                            /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+__aeabi_unwind_cpp_pr2                            /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+__bss_end__                                       /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o
+__bss_start__                                     /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o
+__call_exitprocs                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-exit.o)
+__cxa_begin_cleanup                               /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+__cxa_call_unexpected                             /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+__cxa_type_match                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+__deregister_frame_info                           /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+__dso_handle                                      /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+__env                                             build/syscalls.o
+__errno                                           /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-errno.o)
+                                                  build/sysmem.o
+                                                  build/syscalls.o
+__exidx_end                                       /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+__exidx_start                                     /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+__gnu_Unwind_Backtrace                            /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+__gnu_Unwind_Find_exidx                           /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+__gnu_Unwind_ForcedUnwind                         /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+__gnu_Unwind_RaiseException                       /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+__gnu_Unwind_Restore_VFP                          /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+__gnu_Unwind_Restore_VFP_D                        /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+__gnu_Unwind_Restore_VFP_D_16_to_31               /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+__gnu_Unwind_Restore_WMMXC                        /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+__gnu_Unwind_Restore_WMMXD                        /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+__gnu_Unwind_Resume                               /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+__gnu_Unwind_Resume_or_Rethrow                    /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+__gnu_Unwind_Save_VFP                             /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+__gnu_Unwind_Save_VFP_D                           /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+__gnu_Unwind_Save_VFP_D_16_to_31                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+__gnu_Unwind_Save_WMMXC                           /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+__gnu_Unwind_Save_WMMXD                           /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+__gnu_unwind_execute                              /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+__gnu_unwind_frame                                /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+__init_array_end                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-init.o)
+__init_array_start                                /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-init.o)
+__io_getchar                                      build/syscalls.o
+__io_putchar                                      build/syscalls.o
+__libc_fini_array                                 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o
+__libc_init_array                                 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-init.o)
+                                                  build/startup_stm32f429xx.o
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o
+__lock___arc4random_mutex                         /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+__lock___at_quick_exit_mutex                      /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+__lock___atexit_recursive_mutex                   /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+__lock___dd_hash_mutex                            /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+__lock___env_recursive_mutex                      /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+__lock___malloc_recursive_mutex                   /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-mlock.o)
+__lock___sfp_recursive_mutex                      /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+__lock___sinit_recursive_mutex                    /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+__lock___tz_mutex                                 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+__malloc_free_list                                /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-mallocr.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-freer.o)
+__malloc_lock                                     /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-mlock.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-freer.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-mallocr.o)
+__malloc_sbrk_start                               /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-mallocr.o)
+__malloc_unlock                                   /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-mlock.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-freer.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-mallocr.o)
+__preinit_array_end                               /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-init.o)
+__preinit_array_start                             /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-init.o)
+__register_frame_info                             /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+__restore_core_regs                               /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+__retarget_lock_acquire                           /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+__retarget_lock_acquire_recursive                 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-mlock.o)
+__retarget_lock_close                             /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+__retarget_lock_close_recursive                   /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+__retarget_lock_init                              /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+__retarget_lock_init_recursive                    /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+__retarget_lock_release                           /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+__retarget_lock_release_recursive                 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-mlock.o)
+__retarget_lock_try_acquire                       /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+__retarget_lock_try_acquire_recursive             /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-lock.o)
+__sf_fake_stderr                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-impure.o)
+__sf_fake_stdin                                   /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-impure.o)
+__sf_fake_stdout                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-impure.o)
+__sigtramp                                        /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+__sigtramp_r                                      /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+__stack                                           /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o
+_close                                            build/syscalls.o
+_ebss                                             build/startup_stm32f429xx.o
+_edata                                            build/startup_stm32f429xx.o
+_end                                              build/sysmem.o
+_estack                                           build/startup_stm32f429xx.o
+                                                  build/sysmem.o
+_execve                                           build/syscalls.o
+_exit                                             build/syscalls.o
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-abort.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-exit.o)
+_fini                                             /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crti.o
+_fork                                             build/syscalls.o
+_free_r                                           /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-freer.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-reent.o)
+_fstat                                            build/syscalls.o
+_getpid                                           build/syscalls.o
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signalr.o)
+_getpid_r                                         /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signalr.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+_global_impure_ptr                                /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-impure.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-exit.o)
+_impure_ptr                                       /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-impure.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-reent.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-errno.o)
+_init                                             /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/crti.o
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-init.o)
+_init_signal                                      /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+_init_signal_r                                    /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+_isatty                                           build/syscalls.o
+_kill                                             build/syscalls.o
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signalr.o)
+_kill_r                                           /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signalr.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+_link                                             build/syscalls.o
+_lseek                                            build/syscalls.o
+_mainCRTStartup                                   /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o
+_malloc_r                                         /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-mallocr.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+_open                                             build/syscalls.o
+_raise_r                                          /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+_read                                             build/syscalls.o
+_reclaim_reent                                    /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-reent.o)
+_sbrk                                             build/sysmem.o
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-sbrkr.o)
+_sbrk_r                                           /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-sbrkr.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-nano-mallocr.o)
+_sbss                                             build/startup_stm32f429xx.o
+_sdata                                            build/startup_stm32f429xx.o
+_sidata                                           build/startup_stm32f429xx.o
+_signal_r                                         /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+_stack_init                                       /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o
+_start                                            /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o
+_stat                                             build/syscalls.o
+_times                                            build/syscalls.o
+_unlink                                           build/syscalls.o
+_wait                                             build/syscalls.o
+_write                                            build/syscalls.o
+abort                                             /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-abort.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(pr-support.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+atexit                                            /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o
+cleanup_glue                                      /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-reent.o)
+environ                                           build/syscalls.o
+errno                                             /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-reent.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-sbrkr.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signalr.o)
+exit                                              /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-exit.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o
+g_pfnVectors                                      build/startup_stm32f429xx.o
+hardware_init_hook                                /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o
+initialise_monitor_handles                        build/syscalls.o
+main                                              output.o
+                                                  build/startup_stm32f429xx.o
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o
+memcpy                                            /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-memcpy-stub.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+memset                                            /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-memset.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o
+raise                                             /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-abort.o)
+restore_core_regs                                 /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(libunwind.o)
+                                                  /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard/libgcc.a(unwind-arm.o)
+signal                                            /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(lib_a-signal.o)
+software_init_hook                                /nix/store/hrdkxz2d715mla23xqmxppmah1d3w62f-gcc-arm-embedded-10.3.1/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/crt0.o

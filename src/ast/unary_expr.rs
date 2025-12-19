@@ -1,16 +1,32 @@
+use std::fmt::Display;
+
 use serde::Serialize;
 
 use crate::ast::ASTNode;
-use crate::{impl_ast_node, impl_positioned};
+use crate::resolver::ResolvedType;
+use crate::{impl_ast_node, impl_positioned, impl_typed};
 use crate::lexer::token::{PositionRange, TokenType};
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone, Copy)]
 pub enum UnaryOperator {
     Deref,
     AddressOf,
     Not,
     Negative,
-    Semicolon,
+    BitwiseNot,
+}
+
+impl Display for UnaryOperator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let op_str = match self {
+            UnaryOperator::Deref => "*",
+            UnaryOperator::AddressOf => "&",
+            UnaryOperator::Not => "!",
+            UnaryOperator::Negative => "-",
+            UnaryOperator::BitwiseNot => "~",
+        };
+        write!(f, "{}", op_str)
+    }
 }
 
 impl TryFrom<TokenType> for UnaryOperator {
@@ -22,7 +38,7 @@ impl TryFrom<TokenType> for UnaryOperator {
             TokenType::Ampersand => Ok(UnaryOperator::AddressOf),
             TokenType::Not => Ok(UnaryOperator::Not),
             TokenType::Minus => Ok(UnaryOperator::Negative),
-            TokenType::Semicolon => Ok(UnaryOperator::Semicolon),
+            TokenType::Tilda => Ok(UnaryOperator::BitwiseNot),
             _ => Err(format!("Invalid token for binary operator: {:?}", token_type)),
         }
     }
@@ -33,6 +49,7 @@ pub struct UnaryExpr {
     pub expr: Box<dyn ASTNode>,
     pub operator: UnaryOperator,
     position: PositionRange,
+    resolved_type: Option<ResolvedType>,
 }
 
 impl UnaryExpr {
@@ -41,9 +58,11 @@ impl UnaryExpr {
             expr,
             operator,
             position,
+            resolved_type: None,
         }
     }
 }    
 
 impl_positioned!(UnaryExpr);
+impl_typed!(UnaryExpr);
 impl_ast_node!(UnaryExpr, visit_unary);

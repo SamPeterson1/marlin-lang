@@ -1,0 +1,3 @@
+sudo openocd -s /usr/share/openocd/scripts -f openocd.cfg -c "program ./build/stm32F4xx-drivers.elf verify reset exit"
+llc -march=arm -mcpu=cortex-m4 -float-abi=hard -mattr=+vfp4 -filetype=obj output.ll -o output.o
+make

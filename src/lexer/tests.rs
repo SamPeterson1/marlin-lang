@@ -171,7 +171,7 @@ fn test_identifiers() {
 
 #[test]
 fn test_integer_literals() {
-    let (tokens, _) = tokenize("123 456i 0 999i");
+    let (tokens, _) = tokenize("123 456_i 0 999_i");
     
     let expected = vec![
         TokenType::IntLiteral(123),
@@ -189,7 +189,7 @@ fn test_integer_literals() {
 
 #[test]
 fn test_double_literals() {
-    let (tokens, _) = tokenize("123.45 0.5d 3.14159 42.0d");
+    let (tokens, _) = tokenize("123.45 0.5_d 3.14159 42.0_d");
     
     let expected = vec![
         TokenType::DoubleLiteral(123.45),
@@ -359,7 +359,7 @@ fn test_position_tracking_detailed() {
 
 #[test]
 fn test_decimal_literal_as_int_error() {
-    let (tokens, diagnostics) = tokenize("3.14i");
+    let (tokens, diagnostics) = tokenize("3.14_i");
     
     assert_eq!(tokens.len(), 1); // Only EOF (error prevented token creation)
     assert_eq!(diagnostics.len(), 1);
@@ -367,8 +367,8 @@ fn test_decimal_literal_as_int_error() {
     // Check error message
     assert_eq!(diagnostics[0].message, "decimal literal cannot be used as int");
     
-    // Check position covers the entire literal "3.14i"
-    assert_eq!(format!("{}", diagnostics[0].position), "1:1-1:5");
+    // Check position covers the entire literal "3.14_i"
+    assert_eq!(format!("{}", diagnostics[0].position), "1:1-1:6");
 }
 
 #[test]
@@ -474,9 +474,9 @@ fn test_string_positions() {
 
 #[test]
 fn test_numeric_literal_positions() {
-    let (tokens, diagnostics) = tokenize("123 45.67i 89.0d");
+    let (tokens, diagnostics) = tokenize("123 45.67_i 89.0_d");
     
-    assert_eq!(tokens.len(), 3); // 2 valid numbers + EOF (45.67i causes error)
+    assert_eq!(tokens.len(), 3); // 2 valid numbers + EOF (45.67_i causes error)
     assert_eq!(diagnostics.len(), 1); // 1 error for decimal literal as int
     
     // Integer 123 at 1:1-1:3
@@ -488,18 +488,18 @@ fn test_numeric_literal_positions() {
         _ => panic!("Expected int literal"),
     }
     
-    // 45.67i should cause an error, so token[1] should be the double 89.0d
+    // 45.67_i should cause an error, so token[1] should be the double 89.0_d
     match &tokens[1].value {
         TokenType::DoubleLiteral(n) => {
             assert_eq!(*n, 89.0);
-            assert_eq!(format!("{}", tokens[1].get_position()), "1:12-1:16");
+            assert_eq!(format!("{}", tokens[1].get_position()), "1:13-1:18");
         },
         _ => panic!("Expected double literal"),
     }
     
-    // Check the error for 45.67i
+    // Check the error for 45.67_i
     assert_eq!(diagnostics[0].message, "decimal literal cannot be used as int");
-    assert_eq!(format!("{}", diagnostics[0].position), "1:5-1:10");
+    assert_eq!(format!("{}", diagnostics[0].position), "1:5-1:11");
 }
 
 #[test]
@@ -587,7 +587,7 @@ fn test_complex_expression() {
 
 #[test]
 fn test_function_definition() {
-    let (tokens, _) = tokenize("fn main() -> int { return 42i; }");
+    let (tokens, _) = tokenize("fn main() -> int { return 42_i; }");
     
     let expected = vec![
         TokenType::Fn,
@@ -613,7 +613,7 @@ fn test_function_definition() {
     assert_eq!(format!("{}", tokens[0].get_position()), "1:1-1:2"); // "fn"
     assert_eq!(format!("{}", tokens[1].get_position()), "1:4-1:7"); // "main"
     assert_eq!(format!("{}", tokens[6].get_position()), "1:18-1:18"); // "{"
-    assert_eq!(format!("{}", tokens[10].get_position()), "1:32-1:32"); // "}"
+    assert_eq!(format!("{}", tokens[10].get_position()), "1:33-1:33"); // "}"
 }
 
 #[test]
@@ -640,7 +640,7 @@ fn test_only_whitespace() {
 
 #[test]
 fn test_numeric_edge_cases() {
-    let (tokens, _) = tokenize("0 0.0 123.456 999999999i 0.000001d");
+    let (tokens, _) = tokenize("0 0.0 123.456 999999999_i 0.000001_d");
     
     let expected = vec![
         TokenType::IntLiteral(0),
@@ -660,6 +660,338 @@ fn test_numeric_edge_cases() {
     assert_eq!(format!("{}", tokens[0].get_position()), "1:1-1:1"); // "0"
     assert_eq!(format!("{}", tokens[1].get_position()), "1:3-1:5"); // "0.0"
     assert_eq!(format!("{}", tokens[2].get_position()), "1:7-1:13"); // "123.456"
-    assert_eq!(format!("{}", tokens[3].get_position()), "1:15-1:24"); // "999999999i"
-    assert_eq!(format!("{}", tokens[4].get_position()), "1:26-1:34"); // "0.000001d"
+    assert_eq!(format!("{}", tokens[3].get_position()), "1:15-1:25"); // "999999999_i"
+    assert_eq!(format!("{}", tokens[4].get_position()), "1:27-1:36"); // "0.000001_d"
+}
+
+#[test]
+fn test_binary_integers() {
+    let (tokens, _) = tokenize("0b0 0b1 0b101 0b1111 0b10_i");
+    
+    let expected = vec![
+        TokenType::IntLiteral(0),      // 0b0 = 0
+        TokenType::IntLiteral(1),      // 0b1 = 1
+        TokenType::IntLiteral(5),      // 0b101 = 5
+        TokenType::IntLiteral(15),     // 0b1111 = 15
+        TokenType::IntLiteral(2),      // 0b10_i = 2
+        TokenType::EOF,
+    ];
+
+    assert_eq!(tokens.len(), expected.len());
+    for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+        assert_eq!(token.value, *expected_type);
+    }
+}
+
+#[test]
+fn test_binary_decimals() {
+    let (tokens, _) = tokenize("0b0.1 0b1.1 0b10.01 0b11.11_d");
+    
+    let expected = vec![
+        TokenType::DoubleLiteral(0.5),     // 0b0.1 = 0.5
+        TokenType::DoubleLiteral(1.5),     // 0b1.1 = 1.5
+        TokenType::DoubleLiteral(2.25),    // 0b10.01 = 2.25
+        TokenType::DoubleLiteral(3.75),    // 0b11.11_d = 3.75
+        TokenType::EOF,
+    ];
+
+    assert_eq!(tokens.len(), expected.len());
+    for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+        assert_eq!(token.value, *expected_type);
+    }
+}
+
+#[test]
+fn test_binary_edge_cases() {
+    let (tokens, _) = tokenize("0b0 0b1.0 0b0.0_d");
+    
+    let expected = vec![
+        TokenType::IntLiteral(0),          // 0b0 = 0
+        TokenType::DoubleLiteral(1.0),     // 0b1.0 = 1.0
+        TokenType::DoubleLiteral(0.0),     // 0b0.0_d = 0.0
+        TokenType::EOF,
+    ];
+
+    assert_eq!(tokens.len(), expected.len());
+    for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+        assert_eq!(token.value, *expected_type);
+    }
+}
+
+#[test]
+fn test_binary_decimal_as_int_error() {
+    let (tokens, diagnostics) = tokenize("0b10.11_i");
+    
+    assert_eq!(tokens.len(), 1); // Only EOF (error prevented token creation)
+    assert_eq!(diagnostics.len(), 1);
+    
+    assert_eq!(diagnostics[0].message, "decimal literal cannot be used as int");
+}
+
+#[test]
+fn test_octal_integers() {
+    let (tokens, _) = tokenize("0o0 0o7 0o10 0o77 0o100_i");
+    
+    let expected = vec![
+        TokenType::IntLiteral(0),      // 0o0 = 0
+        TokenType::IntLiteral(7),      // 0o7 = 7
+        TokenType::IntLiteral(8),      // 0o10 = 8
+        TokenType::IntLiteral(63),     // 0o77 = 63
+        TokenType::IntLiteral(64),     // 0o100_i = 64
+        TokenType::EOF,
+    ];
+
+    assert_eq!(tokens.len(), expected.len());
+    for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+        assert_eq!(token.value, *expected_type);
+    }
+}
+
+#[test]
+fn test_octal_decimals() {
+    let (tokens, _) = tokenize("0o0.1 0o1.24 0o7.654");
+    
+    let expected = vec![
+        TokenType::DoubleLiteral(0.125),      // 0o0.1 = 0.125 (1/8)
+        TokenType::DoubleLiteral(1.3125),     // 0o1.24 = 1.3125 (1 + 2/8 + 4/64)
+        TokenType::DoubleLiteral(7.8359375),  // 0o7.654 = 7.8359375 (7 + 6/8 + 5/64 + 4/512)
+        TokenType::EOF,
+    ];
+
+    assert_eq!(tokens.len(), expected.len());
+    for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+        assert_eq!(token.value, *expected_type);
+    }
+}
+
+#[test]
+fn test_octal_edge_cases() {
+    let (tokens, _) = tokenize("0o0 0o1.0 0o0.0_d");
+    
+    let expected = vec![
+        TokenType::IntLiteral(0),          // 0o0 = 0
+        TokenType::DoubleLiteral(1.0),     // 0o1.0 = 1.0
+        TokenType::DoubleLiteral(0.0),     // 0o0.0_d = 0.0
+        TokenType::EOF,
+    ];
+
+    assert_eq!(tokens.len(), expected.len());
+    for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+        assert_eq!(token.value, *expected_type);
+    }
+}
+
+#[test]
+fn test_octal_decimal_as_int_error() {
+    let (tokens, diagnostics) = tokenize("0o7.7_i");
+    
+    assert_eq!(tokens.len(), 1); // Only EOF (error prevented token creation)
+    assert_eq!(diagnostics.len(), 1);
+    
+    assert_eq!(diagnostics[0].message, "decimal literal cannot be used as int");
+}
+
+#[test]
+fn test_hexadecimal_integers() {
+    let (tokens, _) = tokenize("0x0 0xF 0x10 0xFF 0xABC_i");
+    
+    let expected = vec![
+        TokenType::IntLiteral(0),       // 0x0 = 0
+        TokenType::IntLiteral(15),      // 0xF = 15
+        TokenType::IntLiteral(16),      // 0x10 = 16
+        TokenType::IntLiteral(255),     // 0xFF = 255
+        TokenType::IntLiteral(2748),    // 0xABC_i = 2748
+        TokenType::EOF,
+    ];
+
+    assert_eq!(tokens.len(), expected.len());
+    for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+        assert_eq!(token.value, *expected_type);
+    }
+}
+
+#[test]
+fn test_hexadecimal_decimals() {
+    let (tokens, _) = tokenize("0x0.8 0x1.8 0xF.F 0xA.4_d");
+    
+    let expected = vec![
+        TokenType::DoubleLiteral(0.5),      // 0x0.8 = 0.5 (8/16)
+        TokenType::DoubleLiteral(1.5),      // 0x1.8 = 1.5 (1 + 8/16)
+        TokenType::DoubleLiteral(15.9375),  // 0xF.F = 15.9375 (15 + 15/16)
+        TokenType::DoubleLiteral(10.25),    // 0xA.4_d = 10.25 (10 + 4/16)
+        TokenType::EOF,
+    ];
+
+    assert_eq!(tokens.len(), expected.len());
+    for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+        assert_eq!(token.value, *expected_type);
+    }
+}
+
+#[test]
+fn test_hexadecimal_edge_cases() {
+    let (tokens, _) = tokenize("0x0 0x1.0 0x0.0_d");
+    
+    let expected = vec![
+        TokenType::IntLiteral(0),          // 0x0 = 0
+        TokenType::DoubleLiteral(1.0),     // 0x1.0 = 1.0
+        TokenType::DoubleLiteral(0.0),     // 0x0.0_d = 0.0
+        TokenType::EOF,
+    ];
+
+    assert_eq!(tokens.len(), expected.len());
+    for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+        assert_eq!(token.value, *expected_type);
+    }
+}
+
+#[test]
+fn test_hexadecimal_decimal_as_int_error() {
+    let (tokens, diagnostics) = tokenize("0xF.F_i");
+    
+    assert_eq!(tokens.len(), 1); // Only EOF (error prevented token creation)
+    assert_eq!(diagnostics.len(), 1);
+    
+    assert_eq!(diagnostics[0].message, "decimal literal cannot be used as int");
+}
+
+#[test]
+fn test_hexadecimal_case_insensitive() {
+    let (tokens, _) = tokenize("0xABCD 0xabcd 0xAbCd");
+    
+    let expected = vec![
+        TokenType::IntLiteral(43981),   // 0xABCD = 43981
+        TokenType::IntLiteral(43981),   // 0xabcd = 43981
+        TokenType::IntLiteral(43981),   // 0xAbCd = 43981
+        TokenType::EOF,
+    ];
+
+    assert_eq!(tokens.len(), expected.len());
+    for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+        assert_eq!(token.value, *expected_type);
+    }
+}
+
+#[test]
+fn test_mixed_number_systems() {
+    let (tokens, _) = tokenize("0b101 0o5 5 0x5");
+    
+    let expected = vec![
+        TokenType::IntLiteral(5),   // 0b101 = 5
+        TokenType::IntLiteral(5),   // 0o5 = 5
+        TokenType::IntLiteral(5),   // 5 = 5
+        TokenType::IntLiteral(5),   // 0x5 = 5
+        TokenType::EOF,
+    ];
+
+    assert_eq!(tokens.len(), expected.len());
+    for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+        assert_eq!(token.value, *expected_type);
+    }
+}
+
+#[test]
+fn test_number_systems_with_decimals() {
+    let (tokens, _) = tokenize("0b10.1 0o2.4 2.5 0x2.8");
+    
+    let expected = vec![
+        TokenType::DoubleLiteral(2.5),   // 0b10.1 = 2.5
+        TokenType::DoubleLiteral(2.5),   // 0o2.4 = 2.5
+        TokenType::DoubleLiteral(2.5),   // 2.5 = 2.5
+        TokenType::DoubleLiteral(2.5),   // 0x2.8 = 2.5
+        TokenType::EOF,
+    ];
+
+    assert_eq!(tokens.len(), expected.len());
+    for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+        assert_eq!(token.value, *expected_type);
+    }
+}
+
+#[test]
+fn test_number_system_positions() {
+    let (tokens, _) = tokenize("0b101 0o77 0xFF");
+    
+    assert_eq!(tokens.len(), 4); // 3 numbers + EOF
+    
+    // 0b101 at 1:1-1:5
+    assert_eq!(tokens[0].value, TokenType::IntLiteral(5));
+    assert_eq!(format!("{}", tokens[0].get_position()), "1:1-1:5");
+    
+    // 0o77 at 1:7-1:10
+    assert_eq!(tokens[1].value, TokenType::IntLiteral(63));
+    assert_eq!(format!("{}", tokens[1].get_position()), "1:7-1:10");
+    
+    // 0xFF at 1:12-1:15
+    assert_eq!(tokens[2].value, TokenType::IntLiteral(255));
+    assert_eq!(format!("{}", tokens[2].get_position()), "1:12-1:15");
+}
+
+#[test]
+fn test_zero_prefix_only() {
+    let (tokens, _) = tokenize("0 0_i 0_d 0.0");
+    
+    let expected = vec![
+        TokenType::IntLiteral(0),
+        TokenType::IntLiteral(0),
+        TokenType::DoubleLiteral(0.0),
+        TokenType::DoubleLiteral(0.0),
+        TokenType::EOF,
+    ];
+
+    assert_eq!(tokens.len(), expected.len());
+    for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+        assert_eq!(token.value, *expected_type);
+    }
+}
+
+#[test]
+fn test_binary_fractional_precision() {
+    let (tokens, _) = tokenize("0b0.101 0b1.001 0b11.111");
+    
+    let expected = vec![
+        TokenType::DoubleLiteral(0.625),   // 0b0.101 = 0.625 (0.5 + 0.125)
+        TokenType::DoubleLiteral(1.125),   // 0b1.001 = 1.125 (1 + 0.125)
+        TokenType::DoubleLiteral(3.875),   // 0b11.111 = 3.875 (3 + 0.875)
+        TokenType::EOF,
+    ];
+
+    assert_eq!(tokens.len(), expected.len());
+    for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+        assert_eq!(token.value, *expected_type);
+    }
+}
+
+#[test]
+fn test_octal_fractional_precision() {
+    let (tokens, _) = tokenize("0o0.1 0o1.24 0o7.654");
+    
+    let expected = vec![
+        TokenType::DoubleLiteral(0.125),      // 0o0.1 = 0.125 (1/8)
+        TokenType::DoubleLiteral(1.3125),     // 0o1.24 = 1.3125 (1 + 2/8 + 4/64)
+        TokenType::DoubleLiteral(7.8359375),  // 0o7.654 = 7.8359375 (7 + 6/8 + 5/64 + 4/512)
+        TokenType::EOF,
+    ];
+
+    assert_eq!(tokens.len(), expected.len());
+    for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+        assert_eq!(token.value, *expected_type);
+    }
+}
+
+#[test]
+fn test_hexadecimal_fractional_precision() {
+    let (tokens, _) = tokenize("0x0.1 0x1.4 0xF.ABC");
+    
+    let expected = vec![
+        TokenType::DoubleLiteral(0.0625),     // 0x0.1 = 0.0625 (1/16)
+        TokenType::DoubleLiteral(1.25),       // 0x1.4 = 1.25 (1 + 4/16)
+        TokenType::DoubleLiteral(15.6708984375),  // 0xF.ABC = 15.6708984375 (15 + 10/16 + 11/256 + 12/4096)
+        TokenType::EOF,
+    ];
+
+    assert_eq!(tokens.len(), expected.len());
+    for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+        assert_eq!(token.value, *expected_type);
+    }
 }

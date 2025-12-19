@@ -1,6 +1,6 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
-use crate::{ast::*, diagnostic::{Diagnostic, ErrMsg}, lexer::token::Positioned, logger::Log, resolver::{FunctionType, ResolvedBaseType, StructType, SymbolTable}};
+use crate::{ast::*, diagnostic::{Diagnostic, ErrMsg}, lexer::token::Positioned, logger::Log, resolver::{FunctionType, ResolvedType, StructType, SymbolTable}};
 
 pub struct TypeResolver<'ast> {
     symbol_table: &'ast mut SymbolTable,
@@ -31,18 +31,24 @@ impl<'ast> TypeResolver<'ast> {
             let mut valid = true;
 
             for (member_type, member_name) in &struct_item.members {
-                let base_type = &member_type.unit_type.base_type;
-                match &base_type.data {
-                    ParsedBaseType::TypeName(type_name) => {
-                        if !self.struct_declarations.contains_key(&**type_name) {
-                            self.log_error(&format!("Unknown type name: {}", type_name));
-                            self.diagnostics.push(ErrMsg::UnknownTypeName(type_name.to_string()).make_diagnostic(*base_type.get_position()));
-                            valid = false;
-
-                            continue;
+                let mut current_type = member_type;
+                
+                // Navigate through Pointer, Reference, and Array wrappers to find the base type
+                loop {
+                    match &current_type.parsed_type {
+                        ParsedTypeEnum::Pointer(inner) => current_type = inner.as_ref(),
+                        ParsedTypeEnum::Reference(inner) => current_type = inner.as_ref(),
+                        ParsedTypeEnum::Array(inner) => current_type = inner.as_ref(),
+                        ParsedTypeEnum::TypeName(type_name) => {
+                            if !self.struct_declarations.contains_key(type_name.as_str()) {
+                                self.log_error(&format!("Unknown type name '{}' for member '{}' in struct '{}'", type_name, member_name.data, struct_item.name.data));
+                                self.diagnostics.push(ErrMsg::UnknownTypeName(type_name.to_string()).make_diagnostic(*member_type.get_position()));
+                                valid = false;
+                            }
+                            break;
                         }
-                    },
-                    _ => {}
+                        _ => break, // Primitive types are always valid
+                    }
                 }
 
                 members.insert(member_name.data.to_string(), member_type.clone());
@@ -50,8 +56,8 @@ impl<'ast> TypeResolver<'ast> {
 
             if valid {
                 self.log_debug(&format!("Resolved struct {}", struct_item.name.data));
-                let struct_type = StructType { members };
-                self.symbol_table.insert_type(struct_item.name.data.to_string(), ResolvedBaseType::Struct(struct_type));
+                let struct_type = Rc::new(StructType { name: struct_item.name.data.to_string(), members });
+                self.symbol_table.insert_type(struct_item.name.data.to_string(), ResolvedType::Struct(struct_type));
             } else {
                 self.log_error(&format!("Failed to resolve struct {}", struct_item.name.data));
             }
@@ -98,11 +104,11 @@ impl<'ast> ASTVisitor<'ast, ()> for TypeResolver<'ast> {
 
 #[cfg(test)]
 mod tests {
-    use crate::ast::ParsedBaseType;
     use crate::diagnostic::Diagnostic;
     use crate::lexer::Lexer;
     use crate::parser::ExprParser;
-    use crate::resolver::{ResolvedBaseType, SymbolTable, TypeResolver};
+    use crate::resolver::{SymbolTable, TypeResolver};
+    use crate::ast::ParsedTypeEnum;
 
     fn parse_and_resolve(source: &str) -> (SymbolTable, Vec<Diagnostic>) {
         let mut diagnostics = Vec::new();
@@ -120,6 +126,24 @@ mod tests {
         (symbol_table, diagnostics)
     }
 
+    fn count_pointer_levels(parsed_type: &ParsedTypeEnum) -> usize {
+        match parsed_type {
+            ParsedTypeEnum::Pointer(inner) => 1 + count_pointer_levels(&inner.parsed_type),
+            _ => 0,
+        }
+    }
+
+    fn count_array_levels(parsed_type: &ParsedTypeEnum) -> usize {
+        match parsed_type {
+            ParsedTypeEnum::Array(inner) => 1 + count_array_levels(&inner.parsed_type),
+            _ => 0,
+        }
+    }
+
+    fn is_reference(parsed_type: &ParsedTypeEnum) -> bool {
+        matches!(parsed_type, ParsedTypeEnum::Reference(_))
+    }
+
     #[test]
     fn test_empty_struct() {
         let source = include_str!("../tests/type_resolver/valid_simple.mar");
@@ -128,10 +152,14 @@ mod tests {
         assert_eq!(diagnostics.len(), 0, "Should have no diagnostics");
         assert!(symbol_table.has_type("Empty"), "Should have Empty type");
         
-        if let Some(ResolvedBaseType::Struct(struct_type)) = symbol_table.get_type("Empty") {
-            assert_eq!(struct_type.members.len(), 0, "Empty struct should have 0 members");
+        if let Some(resolved_type) = symbol_table.get_type("Empty") {
+            if let crate::resolver::ResolvedType::Struct(struct_type) = resolved_type {
+                assert_eq!(struct_type.members.len(), 0, "Empty struct should have 0 members");
+            } else {
+                panic!("Empty should be a struct type");
+            }
         } else {
-            panic!("Empty should be a struct type");
+            panic!("Empty type not found");
         }
     }
 
@@ -143,27 +171,31 @@ mod tests {
         assert_eq!(diagnostics.len(), 0, "Should have no diagnostics");
         assert!(symbol_table.has_type("PrimitivesOnly"), "Should have PrimitivesOnly type");
         
-        if let Some(ResolvedBaseType::Struct(struct_type)) = symbol_table.get_type("PrimitivesOnly") {
-            assert_eq!(struct_type.members.len(), 4, "Should have 4 members");
-            assert!(struct_type.members.contains_key("x"), "Should have x member");
-            assert!(struct_type.members.contains_key("y"), "Should have y member");
-            assert!(struct_type.members.contains_key("flag"), "Should have flag member");
-            assert!(struct_type.members.contains_key("c"), "Should have c member");
-            
-            // Check member types
-            let x_type = &struct_type.members.get("x").unwrap().unit_type.base_type.data;
-            assert!(matches!(x_type, ParsedBaseType::Integer), "x should be Integer");
-            
-            let y_type = &struct_type.members.get("y").unwrap().unit_type.base_type.data;
-            assert!(matches!(y_type, ParsedBaseType::Double), "y should be Double");
-            
-            let flag_type = &struct_type.members.get("flag").unwrap().unit_type.base_type.data;
-            assert!(matches!(flag_type, ParsedBaseType::Boolean), "flag should be Boolean");
-            
-            let c_type = &struct_type.members.get("c").unwrap().unit_type.base_type.data;
-            assert!(matches!(c_type, ParsedBaseType::Char), "c should be Char");
+        if let Some(resolved_type) = symbol_table.get_type("PrimitivesOnly") {
+            if let crate::resolver::ResolvedType::Struct(struct_type) = resolved_type {
+                assert_eq!(struct_type.members.len(), 4, "Should have 4 members");
+                assert!(struct_type.members.contains_key("x"), "Should have x member");
+                assert!(struct_type.members.contains_key("y"), "Should have y member");
+                assert!(struct_type.members.contains_key("flag"), "Should have flag member");
+                assert!(struct_type.members.contains_key("c"), "Should have c member");
+                
+                // Check member types
+                let x_type = &struct_type.members.get("x").unwrap().parsed_type;
+                assert!(matches!(x_type, ParsedTypeEnum::Integer), "x should be Integer");
+                
+                let y_type = &struct_type.members.get("y").unwrap().parsed_type;
+                assert!(matches!(y_type, ParsedTypeEnum::Double), "y should be Double");
+                
+                let flag_type = &struct_type.members.get("flag").unwrap().parsed_type;
+                assert!(matches!(flag_type, ParsedTypeEnum::Boolean), "flag should be Boolean");
+                
+                let c_type = &struct_type.members.get("c").unwrap().parsed_type;
+                assert!(matches!(c_type, ParsedTypeEnum::Char), "c should be Char");
+            } else {
+                panic!("PrimitivesOnly should be a struct type");
+            }
         } else {
-            panic!("PrimitivesOnly should be a struct type");
+            panic!("PrimitivesOnly type not found");
         }
     }
 
@@ -175,20 +207,24 @@ mod tests {
         assert_eq!(diagnostics.len(), 0, "Should have no diagnostics");
         assert!(symbol_table.has_type("WithPointers"), "Should have WithPointers type");
         
-        if let Some(ResolvedBaseType::Struct(struct_type)) = symbol_table.get_type("WithPointers") {
-            assert_eq!(struct_type.members.len(), 3, "Should have 3 members");
-            
-            // Check pointer levels
-            let ptr = struct_type.members.get("ptr").unwrap();
-            assert_eq!(ptr.unit_type.n_pointers, 1, "ptr should have 1 level of indirection");
-            
-            let double_ptr = struct_type.members.get("double_ptr").unwrap();
-            assert_eq!(double_ptr.unit_type.n_pointers, 2, "double_ptr should have 2 levels of indirection");
-            
-            let ref_val = struct_type.members.get("ref_val").unwrap();
-            assert!(ref_val.unit_type.is_reference, "ref_val should be a reference");
+        if let Some(resolved_type) = symbol_table.get_type("WithPointers") {
+            if let crate::resolver::ResolvedType::Struct(struct_type) = resolved_type {
+                assert_eq!(struct_type.members.len(), 3, "Should have 3 members");
+                
+                // Check pointer levels
+                let ptr = &struct_type.members.get("ptr").unwrap().parsed_type;
+                assert_eq!(count_pointer_levels(ptr), 1, "ptr should have 1 level of indirection");
+                
+                let double_ptr = &struct_type.members.get("double_ptr").unwrap().parsed_type;
+                assert_eq!(count_pointer_levels(double_ptr), 2, "double_ptr should have 2 levels of indirection");
+                
+                let ref_val = &struct_type.members.get("ref_val").unwrap().parsed_type;
+                assert!(is_reference(ref_val), "ref_val should be a reference");
+            } else {
+                panic!("WithPointers should be a struct type");
+            }
         } else {
-            panic!("WithPointers should be a struct type");
+            panic!("WithPointers type not found");
         }
     }
 
@@ -200,19 +236,23 @@ mod tests {
         assert_eq!(diagnostics.len(), 0, "Should have no diagnostics");
         assert!(symbol_table.has_type("WithArrays"), "Should have WithArrays type");
         
-        if let Some(ResolvedBaseType::Struct(struct_type)) = symbol_table.get_type("WithArrays") {
-            assert_eq!(struct_type.members.len(), 3, "Should have 3 members");
-            
-            let arr = struct_type.members.get("arr").unwrap();
-            assert_eq!(arr.array_modifiers.len(), 1, "arr should have 1 array dimension");
-            
-            let matrix = struct_type.members.get("matrix").unwrap();
-            assert_eq!(matrix.array_modifiers.len(), 2, "matrix should have 2 array dimensions");
-            
-            let buffer = struct_type.members.get("buffer").unwrap();
-            assert_eq!(buffer.array_modifiers.len(), 1, "buffer should have 1 array dimension");
+        if let Some(resolved_type) = symbol_table.get_type("WithArrays") {
+            if let crate::resolver::ResolvedType::Struct(struct_type) = resolved_type {
+                assert_eq!(struct_type.members.len(), 3, "Should have 3 members");
+                
+                let arr = &struct_type.members.get("arr").unwrap().parsed_type;
+                assert_eq!(count_array_levels(arr), 1, "arr should have 1 array dimension");
+                
+                let matrix = &struct_type.members.get("matrix").unwrap().parsed_type;
+                assert_eq!(count_array_levels(matrix), 2, "matrix should have 2 array dimensions");
+                
+                let buffer = &struct_type.members.get("buffer").unwrap().parsed_type;
+                assert_eq!(count_array_levels(buffer), 1, "buffer should have 1 array dimension");
+            } else {
+                panic!("WithArrays should be a struct type");
+            }
         } else {
-            panic!("WithArrays should be a struct type");
+            panic!("WithArrays type not found");
         }
     }
 
@@ -227,11 +267,15 @@ mod tests {
         assert!(symbol_table.has_type("C"), "Should have type C");
         
         // Verify A has references to B and C
-        if let Some(ResolvedBaseType::Struct(struct_type)) = symbol_table.get_type("A") {
-            assert!(struct_type.members.contains_key("b_ptr"), "A should have b_ptr");
-            assert!(struct_type.members.contains_key("c_ref"), "A should have c_ref");
+        if let Some(resolved_type) = symbol_table.get_type("A") {
+            if let crate::resolver::ResolvedType::Struct(struct_type) = resolved_type {
+                assert!(struct_type.members.contains_key("b_ptr"), "A should have b_ptr");
+                assert!(struct_type.members.contains_key("c_ref"), "A should have c_ref");
+            } else {
+                panic!("A should be a struct type");
+            }
         } else {
-            panic!("A should be a struct type");
+            panic!("A type not found");
         }
     }
 
@@ -245,23 +289,31 @@ mod tests {
         assert!(symbol_table.has_type("BinaryTree"), "Should have BinaryTree type");
         
         // Verify LinkedList has self-reference through pointer
-        if let Some(ResolvedBaseType::Struct(struct_type)) = symbol_table.get_type("LinkedList") {
-            assert_eq!(struct_type.members.len(), 2, "LinkedList should have 2 members");
-            assert!(struct_type.members.contains_key("next"), "Should have next pointer");
-            
-            let next = struct_type.members.get("next").unwrap();
-            assert_eq!(next.unit_type.n_pointers, 1, "next should be a pointer");
+        if let Some(resolved_type) = symbol_table.get_type("LinkedList") {
+            if let crate::resolver::ResolvedType::Struct(struct_type) = resolved_type {
+                assert_eq!(struct_type.members.len(), 2, "LinkedList should have 2 members");
+                assert!(struct_type.members.contains_key("next"), "Should have next pointer");
+                
+                let next = &struct_type.members.get("next").unwrap().parsed_type;
+                assert_eq!(count_pointer_levels(next), 1, "next should be a pointer");
+            } else {
+                panic!("LinkedList should be a struct type");
+            }
         } else {
-            panic!("LinkedList should be a struct type");
+            panic!("LinkedList type not found");
         }
         
         // Verify BinaryTree has self-references
-        if let Some(ResolvedBaseType::Struct(struct_type)) = symbol_table.get_type("BinaryTree") {
-            assert_eq!(struct_type.members.len(), 3, "BinaryTree should have 3 members");
-            assert!(struct_type.members.contains_key("left"), "Should have left pointer");
-            assert!(struct_type.members.contains_key("right"), "Should have right pointer");
+        if let Some(resolved_type) = symbol_table.get_type("BinaryTree") {
+            if let crate::resolver::ResolvedType::Struct(struct_type) = resolved_type {
+                assert_eq!(struct_type.members.len(), 3, "BinaryTree should have 3 members");
+                assert!(struct_type.members.contains_key("left"), "Should have left pointer");
+                assert!(struct_type.members.contains_key("right"), "Should have right pointer");
+            } else {
+                panic!("BinaryTree should be a struct type");
+            }
         } else {
-            panic!("BinaryTree should be a struct type");
+            panic!("BinaryTree type not found");
         }
     }
 
@@ -277,18 +329,22 @@ mod tests {
         assert!(symbol_table.has_type("Scene"), "Should have Scene type");
         
         // Verify Line has Point members
-        if let Some(ResolvedBaseType::Struct(struct_type)) = symbol_table.get_type("Line") {
-            assert_eq!(struct_type.members.len(), 2, "Line should have 2 members");
-            
-            let start = struct_type.members.get("start").unwrap();
-            if let ParsedBaseType::TypeName(type_name) = &start.unit_type.base_type.data {
-                assert_eq!(&**type_name, "Point", "start should be of type Point");
-                assert_eq!(start.unit_type.n_pointers, 0, "start should be a value member");
+        if let Some(resolved_type) = symbol_table.get_type("Line") {
+            if let crate::resolver::ResolvedType::Struct(struct_type) = resolved_type {
+                assert_eq!(struct_type.members.len(), 2, "Line should have 2 members");
+                
+                let start = &struct_type.members.get("start").unwrap().parsed_type;
+                if let ParsedTypeEnum::TypeName(type_name) = start {
+                    assert_eq!(&**type_name, "Point", "start should be of type Point");
+                    assert_eq!(count_pointer_levels(start), 0, "start should be a value member");
+                } else {
+                    panic!("start should be a TypeName");
+                }
             } else {
-                panic!("start should be a TypeName");
+                panic!("Line should be a struct type");
             }
         } else {
-            panic!("Line should be a struct type");
+            panic!("Line type not found");
         }
     }
 
@@ -349,28 +405,32 @@ mod tests {
         assert!(symbol_table.has_type("AllTypes"), "Should have AllTypes type");
         
         // Verify AllTypes has all the members
-        if let Some(ResolvedBaseType::Struct(struct_type)) = symbol_table.get_type("AllTypes") {
-            assert_eq!(struct_type.members.len(), 9, "AllTypes should have 9 members");
-            assert!(struct_type.members.contains_key("int_val"), "Should have int_val");
-            assert!(struct_type.members.contains_key("double_val"), "Should have double_val");
-            assert!(struct_type.members.contains_key("bool_val"), "Should have bool_val");
-            assert!(struct_type.members.contains_key("char_val"), "Should have char_val");
-            assert!(struct_type.members.contains_key("int_ptr"), "Should have int_ptr");
-            assert!(struct_type.members.contains_key("double_ref"), "Should have double_ref");
-            assert!(struct_type.members.contains_key("int_array"), "Should have int_array");
-            assert!(struct_type.members.contains_key("node_ptr"), "Should have node_ptr");
-            assert!(struct_type.members.contains_key("container"), "Should have container");
-            
-            // Verify container is a value member of type Container
-            let container = struct_type.members.get("container").unwrap();
-            if let ParsedBaseType::TypeName(type_name) = &container.unit_type.base_type.data {
-                assert_eq!(&**type_name, "Container", "container should be of type Container");
-                assert_eq!(container.unit_type.n_pointers, 0, "container should be a value member");
+        if let Some(resolved_type) = symbol_table.get_type("AllTypes") {
+            if let crate::resolver::ResolvedType::Struct(struct_type) = resolved_type {
+                assert_eq!(struct_type.members.len(), 9, "AllTypes should have 9 members");
+                assert!(struct_type.members.contains_key("int_val"), "Should have int_val");
+                assert!(struct_type.members.contains_key("double_val"), "Should have double_val");
+                assert!(struct_type.members.contains_key("bool_val"), "Should have bool_val");
+                assert!(struct_type.members.contains_key("char_val"), "Should have char_val");
+                assert!(struct_type.members.contains_key("int_ptr"), "Should have int_ptr");
+                assert!(struct_type.members.contains_key("double_ref"), "Should have double_ref");
+                assert!(struct_type.members.contains_key("int_array"), "Should have int_array");
+                assert!(struct_type.members.contains_key("node_ptr"), "Should have node_ptr");
+                assert!(struct_type.members.contains_key("container"), "Should have container");
+                
+                // Verify container is a value member of type Container
+                let container = &struct_type.members.get("container").unwrap().parsed_type;
+                if let ParsedTypeEnum::TypeName(type_name) = container {
+                    assert_eq!(&**type_name, "Container", "container should be of type Container");
+                    assert_eq!(count_pointer_levels(container), 0, "container should be a value member");
+                } else {
+                    panic!("container should be a TypeName");
+                }
             } else {
-                panic!("container should be a TypeName");
+                panic!("AllTypes should be a struct type");
             }
         } else {
-            panic!("AllTypes should be a struct type");
+            panic!("AllTypes type not found");
         }
     }
 
@@ -403,12 +463,18 @@ mod tests {
         assert!(symbol_table.has_type("CircularB"), "CircularB should be resolved");
         
         // Verify the circular references are recorded
-        if let Some(ResolvedBaseType::Struct(struct_type)) = symbol_table.get_type("CircularA") {
-            assert!(struct_type.members.contains_key("b"), "CircularA should have member b");
-            let b_member = struct_type.members.get("b").unwrap();
-            if let ParsedBaseType::TypeName(type_name) = &b_member.unit_type.base_type.data {
-                assert_eq!(&**type_name, "CircularB", "b should be of type CircularB");
+        if let Some(resolved_type) = symbol_table.get_type("CircularA") {
+            if let crate::resolver::ResolvedType::Struct(struct_type) = resolved_type {
+                assert!(struct_type.members.contains_key("b"), "CircularA should have member b");
+                let b_member = &struct_type.members.get("b").unwrap().parsed_type;
+                if let ParsedTypeEnum::TypeName(type_name) = b_member {
+                    assert_eq!(&**type_name, "CircularB", "b should be of type CircularB");
+                }
+            } else {
+                panic!("CircularA should be a struct type");
             }
+        } else {
+            panic!("CircularA type not found");
         }
     }
 

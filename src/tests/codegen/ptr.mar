@@ -1,0 +1,34 @@
+main {
+    let int rcc_base = 0x40023800;
+    let int gpiob_base = 0x40020400;
+
+    //offset 0x30
+    let int *rcc_ahb1enr = rcc_base + 0x30;
+    let int *gpiob_moder = gpiob_base;
+    let int *gpiob_odr = gpiob_base + 0x14;
+
+    //enable GPIOB clock
+    *rcc_ahb1enr = *rcc_ahb1enr | 0x02;
+
+
+    //clear MODER7
+    *gpiob_moder = *gpiob_moder & ~49152;
+    //Set MODER7 to output (01)
+    *gpiob_moder = *gpiob_moder | 16384;
+
+    let int counter = 0;
+
+    loop {
+        if counter == 100000 {
+            //SET ODR7
+            *gpiob_odr = *gpiob_odr | 128;
+        } else if counter == 200000 {
+            //CLEAR ODR7
+            *gpiob_odr = *gpiob_odr & ~128;
+            counter = 0;
+        }
+
+        counter = counter + 1;
+    }
+}
+

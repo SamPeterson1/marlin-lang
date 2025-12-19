@@ -143,7 +143,7 @@ impl<'diag> ExprParser<'diag> {
         self.diagnostics.push(diagnostic);
     }
 
-    fn get_cursor(&self) -> ParserCursor {
+    fn get_cursor(&self) -> ParserCursor<'_> {
         ParserCursor { 
             ptr: self.ptr, 
             tokens: &self.tokens
@@ -152,6 +152,16 @@ impl<'diag> ExprParser<'diag> {
 
     fn begin_range(&mut self) {
         self.position_stack.push_front(*self.cur().get_position());
+    }
+
+    fn current_range(&self) -> PositionRange {
+        let prev_position = *self.tokens[if self.ptr == 0 { 0 } else { self.ptr - 1 }].get_position();
+
+        if let Some(start) = self.position_stack.front() {
+            PositionRange::concat(&start, &prev_position)
+        } else {
+            prev_position
+        }
     }
 
     fn end_range(&mut self) -> PositionRange {

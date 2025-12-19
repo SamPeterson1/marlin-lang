@@ -1,10 +1,13 @@
+use std::fmt::Display;
+
 use serde::Serialize;
 
 use crate::ast::ASTNode;
-use crate::{impl_ast_node, impl_positioned};
+use crate::resolver::ResolvedType;
+use crate::{impl_ast_node, impl_positioned, impl_typed};
 use crate::lexer::token::{PositionRange, TokenType};
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone, Copy)]
 pub enum BinaryOperator {
     Plus,
     Minus,
@@ -18,6 +21,30 @@ pub enum BinaryOperator {
     NotEqual,
     And,
     Or,
+    BitwiseOr,
+    BitwiseAnd,
+}
+
+impl Display for BinaryOperator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let op_str = match self {
+            BinaryOperator::Plus => "+",
+            BinaryOperator::Minus => "-",
+            BinaryOperator::Times => "*",
+            BinaryOperator::Divide => "/",
+            BinaryOperator::Greater => ">",
+            BinaryOperator::GreaterEqual => ">=",
+            BinaryOperator::Less => "<",
+            BinaryOperator::LessEqual => "<=",
+            BinaryOperator::Equal => "==",
+            BinaryOperator::NotEqual => "!=",
+            BinaryOperator::And => "&&",
+            BinaryOperator::Or => "||",
+            BinaryOperator::BitwiseOr => "|",
+            BinaryOperator::BitwiseAnd => "&",
+        };
+        write!(f, "{}", op_str)
+    }
 }
 
 impl TryFrom<TokenType> for BinaryOperator {
@@ -37,6 +64,8 @@ impl TryFrom<TokenType> for BinaryOperator {
             TokenType::NotEqual => Ok(BinaryOperator::NotEqual),
             TokenType::And => Ok(BinaryOperator::And),
             TokenType::Or => Ok(BinaryOperator::Or),
+            TokenType::Bar => Ok(BinaryOperator::BitwiseOr),
+            TokenType::Ampersand => Ok(BinaryOperator::BitwiseAnd),
             _ => Err(format!("Invalid token for binary operator: {:?}", value)),
         }
     }
@@ -48,6 +77,7 @@ pub struct BinaryExpr {
     pub right: Box<dyn ASTNode>,
     pub operator: BinaryOperator,
     position: PositionRange,
+    resolved_type: Option<ResolvedType>,
 }
 
 impl BinaryExpr {
@@ -59,9 +89,11 @@ impl BinaryExpr {
             right,
             operator,
             position,
+            resolved_type: None,
         }
     }
 }
 
 impl_positioned!(BinaryExpr);
+impl_typed!(BinaryExpr);
 impl_ast_node!(BinaryExpr, visit_binary);

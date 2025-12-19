@@ -1,6 +1,6 @@
-use std::{collections::{HashMap, VecDeque}, path::Path, process::Command, thread::current};
+use std::{collections::{HashMap, VecDeque}, path::Path, process::Command};
 
-use inkwell::{AddressSpace, basic_block::BasicBlock, builder::Builder, context::Context, llvm_sys::prelude::LLVMValueRef, module::Module, values::{AsValueRef, BasicValue, BasicValueEnum, IntValue, PointerValue}};
+use inkwell::{AddressSpace, basic_block::BasicBlock, builder::Builder, context::Context, llvm_sys::prelude::LLVMValueRef, module::Module, values::{AsValueRef, BasicValue, IntValue, PointerValue}};
 
 use crate::{ast::*, resolver::SymbolTable};
 
@@ -15,6 +15,7 @@ pub struct CodeGen<'ctx> {
     symbol_table: &'ctx SymbolTable,
     break_values: HashMap<String, Vec<(BasicBlock<'ctx>, LLVMValueRef)>>,
     loop_labels: VecDeque<String>,
+    lvalue_mode: bool,
 }
 
 impl<'ctx> CodeGen<'ctx> {
@@ -41,6 +42,7 @@ impl<'ctx> CodeGen<'ctx> {
             symbol_table,
             break_values: HashMap::new(),
             loop_labels: VecDeque::new(),
+            lvalue_mode: false,
         }
     }
 
@@ -134,27 +136,65 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
                     "lttmp",
                 ).unwrap();
                 self.value = result.as_value_ref();
-            }
+            },
+            BinaryOperator::BitwiseAnd => {
+                let left = unsafe { IntValue::new(left_value) };
+                let right = unsafe { IntValue::new(right_value) };
+                let result = self.builder.build_and(left, right, "andtmp").unwrap();
+                self.value = result.as_value_ref();
+            },
+            BinaryOperator::BitwiseOr => {
+                let left = unsafe { IntValue::new(left_value) };
+                let right = unsafe { IntValue::new(right_value) };
+                let result = self.builder.build_or(left, right, "ortmp").unwrap();
+                self.value = result.as_value_ref();
+            },
             _ => unimplemented!("Operator not implemented"),
         }
     }
 
     fn visit_unary(&mut self, node: &UnaryExpr) {
-        node.expr.accept_visitor(self);
-        let expr_value = self.value;
-
         match node.operator {
             UnaryOperator::Negative => {
-                let expr = unsafe { IntValue::new(expr_value) };
+                node.expr.accept_visitor(self);
+                let expr = unsafe { IntValue::new(self.value) };
                 let zero = self.context.i32_type().const_int(0, false);
                 let result = self.builder.build_int_sub(zero, expr, "negtmp").unwrap();
                 self.value = result.as_value_ref();
             },
             UnaryOperator::Not => {
-                let expr = unsafe { IntValue::new(expr_value) };
+                node.expr.accept_visitor(self);
+                let expr = unsafe { IntValue::new(self.value) };
                 let one = self.context.i32_type().const_int(1, false);
                 let result = self.builder.build_xor(expr, one, "nottmp").unwrap();
                 self.value = result.as_value_ref();
+            },
+            UnaryOperator::BitwiseNot => {
+                node.expr.accept_visitor(self);
+                let expr = unsafe { IntValue::new(self.value) };
+                let all_ones = self.context.i32_type().const_all_ones();
+                let result = self.builder.build_xor(expr, all_ones, "bitwisenottmp").unwrap();
+                self.value = result.as_value_ref();
+            },
+            UnaryOperator::Deref => {
+                if self.lvalue_mode {
+                    self.lvalue_mode = false;
+                    node.expr.accept_visitor(self);
+                } else {
+                    node.expr.accept_visitor(self);
+                    let ptr = unsafe { PointerValue::new(self.value) };
+                    let loaded = self.builder.build_load(
+                        self.context.i32_type(),
+                        ptr,
+                        "derefload",
+                    ).unwrap();
+                    self.value = loaded.as_value_ref();
+                }
+            },
+            UnaryOperator::AddressOf => {
+                self.lvalue_mode = true;
+                node.expr.accept_visitor(self);
+                self.lvalue_mode = false;
             },
             _ => unimplemented!("Unary operator not implemented"),
         }
@@ -209,16 +249,30 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
     }
 
     fn visit_var(&mut self, node: &VarExpr) {
-        println!("Visiting variable: {}, id: {:?}", node.identifier.data, node.id);
-
         let declaration_id = self.symbol_table.get_variable(&node.id).unwrap();
         let ptr = self.local_vars.get(declaration_id).unwrap();
+        if self.lvalue_mode {
+            self.value = ptr.as_value_ref();
+            return;
+        } else {
+            let declaration_type = self.symbol_table.get_declaration_type(declaration_id).unwrap();
+            let loaded = if let ParsedTypeEnum::Pointer(_) = declaration_type.parsed_type {
+                self.builder.build_load(
+                    self.context.ptr_type(AddressSpace::default()),
+                    *ptr,
+                    &node.identifier.data,
+                ).unwrap()
+            } else {
+                self.builder.build_load(
+                    self.context.i32_type(),
+                    *ptr,
+                    &node.identifier.data,
+                ).unwrap()
+            };
 
-        self.value = self.builder.build_load(
-            self.context.i32_type(),
-            *ptr,
-            &node.identifier.data,
-        ).unwrap().as_value_ref();
+            self.value = loaded.as_value_ref();
+            return;
+        }
     }
 
     fn visit_if(&mut self, node: &IfExpr) {
@@ -268,9 +322,10 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
     }
 
     fn visit_assignment(&mut self, node: &AssignmentExpr) {
-        let var_expr = node.assignee.as_any().downcast_ref::<MemberAccess>().unwrap().expr.as_any().downcast_ref::<VarExpr>().unwrap();
-        let declaration_id = self.symbol_table.get_variable(&var_expr.id).unwrap();
-        let ptr = *self.local_vars.get(declaration_id).unwrap();
+        self.lvalue_mode = true;
+        node.assignee.accept_visitor(self);
+        let ptr = unsafe { PointerValue::new(self.value) };
+        self.lvalue_mode = false;
 
         node.expr.accept_visitor(self);
         let expr_value = self.value;
@@ -281,13 +336,24 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
         ).unwrap();
     }
 
-    fn visit_delete(&mut self, node: &DeleteExpr) {
+    fn visit_delete(&mut self, _node: &DeleteExpr) {
         
     }
 
     fn visit_declaration(&mut self, node: &DeclarationExpr) {
         node.expr.accept_visitor(self);
-        let ptr_value = self.builder.build_alloca(self.context.i32_type(), &node.id.to_string()).unwrap();
+
+        let ptr_value = if let ParsedTypeEnum::Pointer(_) = node.declaration_type.parsed_type {
+            self.builder.build_alloca(
+                self.context.ptr_type(AddressSpace::default()),
+                &node.id.to_string(),
+            ).unwrap()
+        } else {
+            self.builder.build_alloca(
+                self.context.i32_type(),
+                &node.id.to_string(),
+            ).unwrap()
+        };
 
         self.builder.build_store(
             ptr_value,
@@ -419,27 +485,27 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
         }
     }
 
-    fn visit_constructor_call(&mut self, node: &ConstructorCallExpr) {
+    fn visit_constructor_call(&mut self, _node: &ConstructorCallExpr) {
         
     }
 
-    fn visit_new_array(&mut self, node: &NewArrayExpr) {
+    fn visit_new_array(&mut self, _node: &NewArrayExpr) {
         
     }
 
-    fn visit_impl(&mut self, node: &ImplItem) {
+    fn visit_impl(&mut self, _node: &ImplItem) {
         
     }
 
-    fn visit_function(&mut self, node: &FunctionItem) {
+    fn visit_function(&mut self, _node: &FunctionItem) {
         
     }
 
-    fn visit_struct(&mut self, node: &StructItem) {
+    fn visit_struct(&mut self, _node: &StructItem) {
         
     }
 
-    fn visit_constructor(&mut self, node: &ConstructorItem) {
+    fn visit_constructor(&mut self, _node: &ConstructorItem) {
         
     }
 

@@ -1,6 +1,8 @@
 pub mod new_array;
 pub mod arguments;
 pub mod assignment;
+pub mod bitwise_factor;
+pub mod bitwise_term;
 pub mod block;
 pub mod boolean_factor;
 pub mod exit_expr;

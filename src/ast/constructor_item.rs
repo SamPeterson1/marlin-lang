@@ -11,7 +11,6 @@ pub struct ConstructorItem {
     position: PositionRange,
 }
 
-
 impl ConstructorItem {
     pub fn new(parameters: Parameters, body: BlockExpr, position: PositionRange) -> Self {
         Self {

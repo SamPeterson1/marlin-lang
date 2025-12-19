@@ -194,7 +194,7 @@ pub enum TokenType {
     LeftCurly, RightCurly, LeftSquare, RightSquare, LeftParen, RightParen,
     Plus, Minus, Slash, Star, Ampersand,
     NotEqual, Equal, Greater, GreaterEqual, Less, LessEqual,
-    And, Or, Not,
+    And, Or, Not, Tilda, Bar,
 
     New, Let, Delete,
     If, Else, For, Fn, Main,
@@ -262,6 +262,8 @@ impl PartialEq for TokenType {
 impl fmt::Display for TokenType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let name = match self {
+            TokenType::Tilda => "~",
+            TokenType::Bar => "|",
             TokenType::Semicolon => ";",
             TokenType::Colon => ":",
             TokenType::Dot => ".",

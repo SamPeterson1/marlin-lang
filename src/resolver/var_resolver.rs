@@ -109,6 +109,7 @@ impl<'ast> ASTVisitor<'ast, ()> for VarResolver<'ast> {
             );
         } else {
             self.scopes.back_mut().unwrap().insert(&node.identifier.data, node.id);
+            self.symbol_table.insert_declaration_type(node.id, node.declaration_type.clone());
         }
     }
     
