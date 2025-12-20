@@ -23,6 +23,10 @@ pub enum BinaryOperator {
     Or,
     BitwiseOr,
     BitwiseAnd,
+    BitwiseXor,
+    Modulo,
+    LeftShift,
+    RightShift,
 }
 
 impl Display for BinaryOperator {
@@ -42,6 +46,10 @@ impl Display for BinaryOperator {
             BinaryOperator::Or => "||",
             BinaryOperator::BitwiseOr => "|",
             BinaryOperator::BitwiseAnd => "&",
+            BinaryOperator::BitwiseXor => "^",
+            BinaryOperator::Modulo => "%",
+            BinaryOperator::LeftShift => "<<",
+            BinaryOperator::RightShift => ">>",
         };
         write!(f, "{}", op_str)
     }
@@ -66,6 +74,10 @@ impl TryFrom<TokenType> for BinaryOperator {
             TokenType::Or => Ok(BinaryOperator::Or),
             TokenType::Bar => Ok(BinaryOperator::BitwiseOr),
             TokenType::Ampersand => Ok(BinaryOperator::BitwiseAnd),
+            TokenType::Carat => Ok(BinaryOperator::BitwiseXor),
+            TokenType::Percentage => Ok(BinaryOperator::Modulo),
+            TokenType::LeftShift => Ok(BinaryOperator::LeftShift),
+            TokenType::RightShift => Ok(BinaryOperator::RightShift),
             _ => Err(format!("Invalid token for binary operator: {:?}", value)),
         }
     }

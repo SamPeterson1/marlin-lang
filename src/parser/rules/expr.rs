@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::ast::ASTNode;
 use crate::parser::{ExprParser, ParseRule, ParserCursor};
-use crate::parser::rules::condition::ConditionRule;
+use crate::parser::rules::binary_expr::BinaryExprRule;
 
 pub struct ExprRule {}
 
@@ -18,6 +18,6 @@ impl ParseRule<Box<dyn ASTNode>> for ExprRule {
     }
 
     fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
-        parser.apply_rule(ConditionRule {}, "condition expression", None)
+        parser.apply_rule(BinaryExprRule {}, "binary expression", None)
     }
 }

@@ -69,6 +69,9 @@ pub enum ErrMsg {
     ArrayIndexNotInteger(ResolvedType),
     MismatchedIfBranches(ResolvedType, ResolvedType),
     IncompatibleAssignment(ResolvedType, ResolvedType),
+    FunctionArgumentCountMismatch(usize, usize),
+    FunctionArgumentTypeMismatch(usize, ResolvedType, ResolvedType),
+    CallOnNonFunctionType(ResolvedType),
 }
 
 impl ErrMsg {
@@ -121,6 +124,15 @@ impl fmt::Display for ErrMsg {
             },
             Self::IncompatibleAssignment(var_type, expr_type) => {
                 &format!("cannot assign expression of type '{:?}' to variable of type '{:?}'", expr_type, var_type)
+            },
+            Self::FunctionArgumentCountMismatch(expected, found) => {
+                &format!("function expected {} arguments, but {} were provided", expected, found)
+            },
+            Self::FunctionArgumentTypeMismatch(index, expected, found) => {
+                &format!("function argument {} expected type '{:?}', but found type '{:?}'", index, expected, found)
+            },
+            Self::CallOnNonFunctionType(ty) => {
+                &format!("cannot call expression of non-function type '{:?}'", ty)
             },
         };
 

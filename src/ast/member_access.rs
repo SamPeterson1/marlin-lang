@@ -10,7 +10,6 @@ pub enum AccessType {
     Indirect(Located<String>),
     Direct(Located<String>),
     Array(Box<dyn ASTNode>),
-    FunctionCall(Arguments)
 }
 
 #[derive(Serialize)]

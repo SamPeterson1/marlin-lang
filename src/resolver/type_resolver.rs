@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 
-use crate::{ast::*, diagnostic::{Diagnostic, ErrMsg}, lexer::token::Positioned, logger::Log, resolver::{FunctionType, ResolvedType, StructType, SymbolTable}};
+use crate::{ast::*, diagnostic::{Diagnostic, ErrMsg}, lexer::token::{PositionRange, Positioned}, logger::Log, resolver::{FunctionType, ResolvedType, StructType, SymbolTable}};
 
 pub struct TypeResolver<'ast> {
     symbol_table: &'ast mut SymbolTable,
@@ -25,6 +25,10 @@ impl<'ast> TypeResolver<'ast> {
 
     pub fn resolve(mut self, program: &'ast Program) {
         program.accept_visitor(&mut self);
+
+        //put getchar and putchar into symbol table
+        self.symbol_table.insert_function("getchar".to_string(), FunctionType { param_types: vec![], return_type: ParsedType::new(ParsedTypeEnum::Char, PositionRange::zero())});
+        self.symbol_table.insert_function("putchar".to_string(), FunctionType { param_types: vec![ParsedType::new(ParsedTypeEnum::Char, PositionRange::zero())], return_type: ParsedType::new(ParsedTypeEnum::Integer, PositionRange::zero()) });
 
         for struct_item in self.struct_declarations.values() {
             let mut members = HashMap::new();
@@ -86,7 +90,7 @@ impl<'ast> ASTVisitor<'ast, ()> for TypeResolver<'ast> {
     }
 
     fn visit_function(&mut self, node: &FunctionItem) { 
-        self.symbol_table.insert_function(self.get_fn_type(node));
+        self.symbol_table.insert_function(node.name.data.to_string(), self.get_fn_type(node));
     }
 
     fn visit_struct(&mut self, node: &'ast StructItem) {

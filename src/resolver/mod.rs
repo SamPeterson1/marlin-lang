@@ -5,9 +5,10 @@ use serde::Serialize;
 pub use type_resolver::TypeResolver;
 pub use var_resolver::VarResolver;
 
-use std::{collections::HashMap, rc::Rc};
+use std::{collections::HashMap, rc::{Rc, Weak}};
 use crate::{ast::{DeclarationId, ParsedType, VarId}, impl_positioned, lexer::token::PositionRange};
 
+#[derive(Serialize, PartialEq, Eq, Debug, Clone)]
 pub struct FunctionType {
     pub param_types: Vec<ParsedType>,
     pub return_type: ParsedType,
@@ -16,7 +17,7 @@ pub struct FunctionType {
 pub struct SymbolTable {
     types: HashMap<String, ResolvedType>,
     impls: HashMap<String, Vec<FunctionType>>,
-    functions: Vec<FunctionType>,
+    functions: HashMap<String, FunctionType>,
     variables: HashMap<VarId, DeclarationId>,
     declaration_types: HashMap<DeclarationId, ParsedType>,
 }
@@ -26,7 +27,7 @@ impl SymbolTable {
         Self {
             types: HashMap::new(),
             impls: HashMap::new(),
-            functions: Vec::new(),
+            functions: HashMap::new(),
             variables: HashMap::new(),
             declaration_types: HashMap::new(),
         }
@@ -63,8 +64,12 @@ impl SymbolTable {
         self.variables.get(var_id)
     }
 
-    pub fn insert_function(&mut self, function: FunctionType) {
-        self.functions.push(function);
+    pub fn get_function(&self, name: &str) -> Option<&FunctionType> {
+        self.functions.get(name)
+    }
+
+    pub fn insert_function(&mut self, name: String, function: FunctionType) {
+        self.functions.insert(name, function);
     }
     
     pub fn insert_impl(&mut self, impl_name: String, implementation: FunctionType) {
@@ -76,7 +81,7 @@ impl SymbolTable {
     }
 
     pub fn get_declaration_type(&self, decl_id: &DeclarationId) -> Option<&ParsedType> {
-        self.declaration_types.get(decl_id)
+        self.declaration_types.get(decl_id)git 
     }
 
     pub fn insert_type(&mut self, type_name: String, base_type: ResolvedType) {
@@ -88,17 +93,62 @@ impl SymbolTable {
     }
 }
 
-#[derive(Serialize, Clone, PartialEq, Eq, Debug)]
+/*
+
+struct A {
+    B *b;
+}
+
+A has weak reference to B
+
+struct B {
+    A *a;
+}
+
+B has weak reference to A
+
+*/
+
+#[derive(Serialize, Clone, Debug)]
 pub enum ResolvedType {
     Integer, Double, Boolean, Char, Void,
     Struct(Rc<StructType>),
+    WeakStruct(Weak<StructType>),
     Pointer(Rc<ResolvedType>),
     Reference(Rc<ResolvedType>),
     Array(Rc<ResolvedType>),
+    Function(Rc<FunctionType>),
 }
 
-#[derive(Serialize, Eq, PartialEq, Debug)]
+impl PartialEq for ResolvedType {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (ResolvedType::Integer, ResolvedType::Integer) => true,
+            (ResolvedType::Double, ResolvedType::Double) => true,
+            (ResolvedType::Boolean, ResolvedType::Boolean) => true,
+            (ResolvedType::Char, ResolvedType::Char) => true,
+            (ResolvedType::Void, ResolvedType::Void) => true,
+            (ResolvedType::Struct(a), ResolvedType::Struct(b)) => a == b,
+            (ResolvedType::WeakStruct(a), ResolvedType::WeakStruct(b)) => {
+                match (a.upgrade(), b.upgrade()) {
+                    (Some(a_rc), Some(b_rc)) => a_rc == b_rc,
+                    (None, None) => false, // Both have been dropped, consider them not equal
+                    _ => false,
+                }
+            }
+            (ResolvedType::Pointer(a), ResolvedType::Pointer(b)) => a == b,
+            (ResolvedType::Reference(a), ResolvedType::Reference(b)) => a == b,
+            (ResolvedType::Array(a), ResolvedType::Array(b)) => a == b,
+            (ResolvedType::Function(a), ResolvedType::Function(b)) => a == b,
+            _ => false,
+        }
+    }
+}
+
+impl Eq for ResolvedType {}
+
+#[derive(Serialize, Debug, PartialEq, Eq)]
 pub struct StructType {
     pub name: String,
-    pub members: HashMap<String, ParsedType>,
+    pub members: HashMap<String, ResolvedType>,
 }

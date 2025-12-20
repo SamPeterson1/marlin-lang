@@ -3,13 +3,12 @@ main {
     let int gpiob_base = 0x40020400;
 
     //offset 0x30
-    let int *rcc_ahb1enr = rcc_base + 0x30;
-    let int *gpiob_moder = gpiob_base;
-    let int *gpiob_odr = gpiob_base + 0x14;
+    let int *rcc_ahb1enr = (rcc_base + 0x30) as int*;
+    let int *gpiob_moder = gpiob_base as int*;
+    let int *gpiob_odr = (gpiob_base + 0x14) as int*;
 
     //enable GPIOB clock
     *rcc_ahb1enr = *rcc_ahb1enr | 0x02;
-
 
     //clear MODER7
     *gpiob_moder = *gpiob_moder & ~49152;

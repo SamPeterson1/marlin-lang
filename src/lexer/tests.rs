@@ -12,7 +12,7 @@ fn tokenize(code: &str) -> (Vec<Token>, Vec<Diagnostic>) {
 
 #[test]
 fn test_single_character_tokens() {
-    let (tokens, _) = tokenize("$:;,.{}()[]+-*&");
+    let (tokens, _) = tokenize("$:;,.{}()[]+-*&%^");
     
     let expected = vec![
         TokenType::DollarSign,
@@ -30,6 +30,8 @@ fn test_single_character_tokens() {
         TokenType::Minus,
         TokenType::Star,
         TokenType::Ampersand,
+        TokenType::Percentage,
+        TokenType::Carat,
         TokenType::EOF,
     ];
 
@@ -41,7 +43,7 @@ fn test_single_character_tokens() {
 
 #[test]
 fn test_paired_character_tokens() {
-    let (tokens, _) = tokenize("-> != >= <= ==");
+    let (tokens, _) = tokenize("-> != >= <= == << >>");
     
     let expected = vec![
         TokenType::Arrow,
@@ -49,6 +51,8 @@ fn test_paired_character_tokens() {
         TokenType::GreaterEqual,
         TokenType::LessEqual,
         TokenType::Equal,
+        TokenType::LeftShift,
+        TokenType::RightShift,
         TokenType::EOF,
     ];
 
@@ -60,7 +64,7 @@ fn test_paired_character_tokens() {
 
 #[test]
 fn test_single_vs_paired_tokens() {
-    let (tokens, _) = tokenize("- -> ! != > >= < <= = ==");
+    let (tokens, _) = tokenize("- -> ! != > >= < <= = == << >>");
     
     let expected = vec![
         TokenType::Minus,
@@ -73,6 +77,8 @@ fn test_single_vs_paired_tokens() {
         TokenType::LessEqual,
         TokenType::Assignment,
         TokenType::Equal,
+        TokenType::LeftShift,
+        TokenType::RightShift,
         TokenType::EOF,
     ];
 
@@ -431,7 +437,7 @@ fn test_unknown_escape_sequence_error() {
 
 #[test]
 fn test_unknown_symbol_error() {
-    let (tokens, diagnostics) = tokenize("@#%");
+    let (tokens, diagnostics) = tokenize("@#`");
     
     assert_eq!(tokens.len(), 1); // Only EOF (unknown symbols prevented token creation)
     assert_eq!(diagnostics.len(), 3); // Three unknown symbols
@@ -443,7 +449,7 @@ fn test_unknown_symbol_error() {
     assert_eq!(diagnostics[1].message, "unknown symbol #");
     assert_eq!(format!("{}", diagnostics[1].position), "1:2-1:2");
     
-    assert_eq!(diagnostics[2].message, "unknown symbol %");
+    assert_eq!(diagnostics[2].message, "unknown symbol `");
     assert_eq!(format!("{}", diagnostics[2].position), "1:3-1:3");
 }
 
@@ -994,4 +1000,163 @@ fn test_hexadecimal_fractional_precision() {
     for (token, expected_type) in tokens.iter().zip(expected.iter()) {
         assert_eq!(token.value, *expected_type);
     }
+}
+
+#[test]
+fn test_bitwise_operators() {
+    let (tokens, _) = tokenize("& | ^ ~ << >>");
+    
+    let expected = vec![
+        TokenType::Ampersand,
+        TokenType::Bar,
+        TokenType::Carat,
+        TokenType::Tilda,
+        TokenType::LeftShift,
+        TokenType::RightShift,
+        TokenType::EOF,
+    ];
+
+    assert_eq!(tokens.len(), expected.len());
+    for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+        assert_eq!(token.value, *expected_type);
+    }
+}
+
+#[test]
+fn test_arithmetic_operators() {
+    let (tokens, _) = tokenize("+ - * / %");
+    
+    let expected = vec![
+        TokenType::Plus,
+        TokenType::Minus,
+        TokenType::Star,
+        TokenType::Slash,
+        TokenType::Percentage,
+        TokenType::EOF,
+    ];
+
+    assert_eq!(tokens.len(), expected.len());
+    for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+        assert_eq!(token.value, *expected_type);
+    }
+}
+
+#[test]
+fn test_shift_operators_in_expression() {
+    let (tokens, _) = tokenize("x << 2 >> 1");
+    
+    let expected = vec![
+        TokenType::Identifier("x".to_string()),
+        TokenType::LeftShift,
+        TokenType::IntLiteral(2),
+        TokenType::RightShift,
+        TokenType::IntLiteral(1),
+        TokenType::EOF,
+    ];
+
+    assert_eq!(tokens.len(), expected.len());
+    for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+        assert_eq!(token.value, *expected_type);
+    }
+}
+
+#[test]
+fn test_modulo_in_expression() {
+    let (tokens, _) = tokenize("answer = a % b;");
+    
+    let expected = vec![
+        TokenType::Identifier("answer".to_string()),
+        TokenType::Assignment,
+        TokenType::Identifier("a".to_string()),
+        TokenType::Percentage,
+        TokenType::Identifier("b".to_string()),
+        TokenType::Semicolon,
+        TokenType::EOF,
+    ];
+
+    assert_eq!(tokens.len(), expected.len());
+    for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+        assert_eq!(token.value, *expected_type);
+    }
+}
+
+#[test]
+fn test_xor_in_expression() {
+    let (tokens, _) = tokenize("flags = a ^ b ^ c;");
+    
+    let expected = vec![
+        TokenType::Identifier("flags".to_string()),
+        TokenType::Assignment,
+        TokenType::Identifier("a".to_string()),
+        TokenType::Carat,
+        TokenType::Identifier("b".to_string()),
+        TokenType::Carat,
+        TokenType::Identifier("c".to_string()),
+        TokenType::Semicolon,
+        TokenType::EOF,
+    ];
+
+    assert_eq!(tokens.len(), expected.len());
+    for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+        assert_eq!(token.value, *expected_type);
+    }
+}
+
+#[test]
+fn test_complex_bitwise_expression() {
+    let (tokens, _) = tokenize("(a & b) | (c ^ d) << 2 >> 1");
+    
+    let expected = vec![
+        TokenType::LeftParen,
+        TokenType::Identifier("a".to_string()),
+        TokenType::Ampersand,
+        TokenType::Identifier("b".to_string()),
+        TokenType::RightParen,
+        TokenType::Bar,
+        TokenType::LeftParen,
+        TokenType::Identifier("c".to_string()),
+        TokenType::Carat,
+        TokenType::Identifier("d".to_string()),
+        TokenType::RightParen,
+        TokenType::LeftShift,
+        TokenType::IntLiteral(2),
+        TokenType::RightShift,
+        TokenType::IntLiteral(1),
+        TokenType::EOF,
+    ];
+
+    assert_eq!(tokens.len(), expected.len());
+    for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+        assert_eq!(token.value, *expected_type);
+    }
+}
+
+#[test]
+fn test_shift_operator_positions() {
+    let (tokens, _) = tokenize("<< >>");
+    
+    assert_eq!(tokens.len(), 3); // << >> EOF
+    
+    // << at 1:1-1:2
+    assert_eq!(tokens[0].value, TokenType::LeftShift);
+    assert_eq!(format!("{}", tokens[0].get_position()), "1:1-1:2");
+    
+    // >> at 1:4-1:5
+    assert_eq!(tokens[1].value, TokenType::RightShift);
+    assert_eq!(format!("{}", tokens[1].get_position()), "1:4-1:5");
+}
+
+#[test]
+fn test_modulo_and_xor_positions() {
+    let (tokens, _) = tokenize("% ^");
+    
+    assert_eq!(tokens.len(), 3); // % ^ EOF
+    
+    // % at 1:1-1:1
+    assert_eq!(tokens[0].value, TokenType::Percentage);
+    assert_eq!(format!("{}", tokens[0].get_position()), "1:1-1:1");
+    
+    // ^ at 1:3-1:3
+    assert_eq!(tokens[1].value, TokenType::Carat);
+    assert_eq!(format!("{}", tokens[1].get_position()), "1:3-1:3");
 }

@@ -2,11 +2,13 @@ mod arguments;
 mod assignment_expr;
 mod binary_expr;
 mod block_expr;
+mod cast;
 mod constructor_call;
 mod constructor_item;
 mod declaration_expr;
 mod delete_expr;
 mod exit_expr;
+mod function_call;
 mod function_item;
 mod if_expr;
 mod impl_item;
@@ -26,11 +28,13 @@ pub use arguments::Arguments;
 pub use assignment_expr::AssignmentExpr;
 pub use binary_expr::{BinaryExpr, BinaryOperator};
 pub use block_expr::BlockExpr;
+pub use cast::CastExpr;
 pub use constructor_call::ConstructorCallExpr;
 pub use constructor_item::ConstructorItem;
 pub use declaration_expr::{DeclarationExpr, DeclarationId};
 pub use delete_expr::DeleteExpr;
 pub use exit_expr::{ExitExpr, ExitType};
+pub use function_call::FunctionCall;
 pub use function_item::FunctionItem;
 pub use if_expr::IfExpr;
 pub use impl_item::ImplItem;
@@ -71,9 +75,11 @@ serialize_trait_object!(ASTNode);
 
 pub trait ASTVisitorMut<'ast, T> {
     fn visit_binary(&mut self, _node: &'ast mut BinaryExpr) -> T { unimplemented!() }
+    fn visit_cast(&mut self, _node: &'ast mut CastExpr) -> T { unimplemented!() }
     fn visit_unary(&mut self, _node: &'ast mut UnaryExpr) -> T { unimplemented!() }
     fn visit_literal(&mut self, _node: &'ast mut LiteralExpr) -> T { unimplemented!() }
     fn visit_member_access(&mut self, _node: &'ast mut MemberAccess) -> T { unimplemented!() }
+    fn visit_function_call(&mut self, _node: &'ast mut FunctionCall) -> T { unimplemented!() }
     fn visit_var(&mut self, _node: &'ast mut VarExpr) -> T { unimplemented!() }
     fn visit_if(&mut self, _node: &'ast mut IfExpr) -> T { unimplemented!() }
     fn visit_assignment(&mut self, _node: &'ast mut AssignmentExpr) -> T { unimplemented!() }
@@ -94,9 +100,11 @@ pub trait ASTVisitorMut<'ast, T> {
 
 pub trait ASTVisitor<'ast, T> {
     fn visit_binary(&mut self, _node: &'ast BinaryExpr) -> T { unimplemented!() }
+    fn visit_cast(&mut self, _node: &'ast CastExpr) -> T { unimplemented!() }
     fn visit_unary(&mut self, _node: &'ast UnaryExpr) -> T { unimplemented!() }
     fn visit_literal(&mut self, _node: &'ast LiteralExpr) -> T { unimplemented!() }
     fn visit_member_access(&mut self, _node: &'ast MemberAccess) -> T { unimplemented!() }
+    fn visit_function_call(&mut self, _node: &'ast FunctionCall) -> T { unimplemented!() }
     fn visit_var(&mut self, _node: &'ast VarExpr) -> T { unimplemented!() }
     fn visit_if(&mut self, _node: &'ast IfExpr) -> T { unimplemented!() }
     fn visit_assignment(&mut self, _node: &'ast AssignmentExpr) -> T { unimplemented!() }

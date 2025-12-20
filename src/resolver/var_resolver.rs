@@ -38,22 +38,29 @@ impl<'ast> ASTVisitor<'ast, ()> for VarResolver<'ast> {
         node.right.accept_visitor(self);
     }
 
+    fn visit_cast(&mut self, node: &'ast CastExpr) -> () {
+        node.expr.accept_visitor(self);
+    }
+
     fn visit_unary(&mut self, node: &'ast UnaryExpr) {
         node.expr.accept_visitor(self);
     }
     
     fn visit_literal(&mut self, _node: &'ast LiteralExpr) { }
     
+    fn visit_function_call(&mut self, node: &'ast FunctionCall) -> () {
+        node.expr.accept_visitor(self);
+
+        for arg in &node.arguments.args {
+            arg.accept_visitor(self);
+        }
+    }
+
     fn visit_member_access(&mut self, node: &'ast MemberAccess) {
         for member_access in &node.member_accesses {
             match member_access {
                 AccessType::Array(index_expr) => {
                     index_expr.accept_visitor(self);
-                },
-                AccessType::FunctionCall(arguments) => {
-                    for arg in &arguments.args {
-                        arg.accept_visitor(self);
-                    }
                 },
                 _ => {}
             }
@@ -63,6 +70,10 @@ impl<'ast> ASTVisitor<'ast, ()> for VarResolver<'ast> {
     }
     
     fn visit_var(&mut self, node: &'ast VarExpr) {
+        if self.symbol_table.get_function(node.identifier.data.as_str()).is_some() {
+            return;
+        }
+
         for scope in self.scopes.iter().rev() {
             if let Some(decl) = scope.get(node.identifier.data.as_str()) {
                 self.log_info(&format!("Resolved variable '{}' to declaration ID {:?}", node.identifier.data, decl));

@@ -190,11 +190,11 @@ impl Token {
 
 #[derive(Debug, Clone)]
 pub enum TokenType {
-    Semicolon, Colon, Dot, Comma, Assignment, DollarSign, Arrow,
+    Semicolon, Percentage, Carat, Colon, Dot, Comma, Assignment, DollarSign, Arrow,
     LeftCurly, RightCurly, LeftSquare, RightSquare, LeftParen, RightParen,
     Plus, Minus, Slash, Star, Ampersand,
     NotEqual, Equal, Greater, GreaterEqual, Less, LessEqual,
-    And, Or, Not, Tilda, Bar,
+    And, Or, Not, Tilda, Bar, LeftShift, RightShift, As,
 
     New, Let, Delete,
     If, Else, For, Fn, Main,
@@ -262,6 +262,10 @@ impl PartialEq for TokenType {
 impl fmt::Display for TokenType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let name = match self {
+            TokenType::LeftShift => "<<",
+            TokenType::RightShift => ">>",
+            TokenType::Carat => "^",
+            TokenType::Percentage => "%",
             TokenType::Tilda => "~",
             TokenType::Bar => "|",
             TokenType::Semicolon => ";",
@@ -310,6 +314,7 @@ impl fmt::Display for TokenType {
             TokenType::Bool => "bool",
             TokenType::Char => "char",
             TokenType::Struct => "struct",
+            TokenType::As => "as",
             TokenType::IntLiteral(_) | TokenType::AnyIntLiteral => "integer literal",
             TokenType::DoubleLiteral(_) | TokenType::AnyDoubleLiteral => "double literal",
             TokenType::BoolLiteral(_) | TokenType::AnyBoolLiteral => "boolean literal",

@@ -1,11 +1,11 @@
 main {
-    let int foo = getchar();
-    let int bar = getchar();
+    let char foo = getchar();
+    let char bar = getchar();
 
     if foo == 'a' {
-        for (let int i = foo; i < bar; i = i + 1) {
+        for (let char i = foo; i < bar; i = i + 1 as char) {
             if i != 'b' {
-                for (let int j = 0; j < 5; j = j + 1) {
+                for (let char j = 0 as char; j < 5 as char; j = j + 1 as char) {
                     putchar(i + j);
 
                     if i + j == 'z' {

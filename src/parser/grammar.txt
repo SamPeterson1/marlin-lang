@@ -28,16 +28,22 @@ elif: "else" "if" expression block
 else: "else" block
 constructor: ["new"] "$" identifier arguments
 new-array: "new" type ("[" expression "]")+
+
 condition: boolean-factor ("or" boolean-factor)*
-boolean-factor: comparison ("and" comparison)*
-comparison: bitwise-term (comparator bitwise-term)*
-comparator: "<" | "<=" | "==" | "!=" | ">" | ">="
-bitwise-term: bitwise-factor ("|" bitwise-factor)
-bitwise-factor: arithmetic-term ("&" arithmetic-term)
+boolean-factor: bitwise-term ("and" bitwise-term)*
+bitwise-term: bitwise-xor ("|" bitwise-xor)*
+bitwise-xor: bitwise-factor ("^" bitwise-factor)*
+bitwise-factor: equality ("&" equality)*
+equality: comparison (("==" | "!=") comparison)*
+comparison: bitwise-shift (("<" | "<=" | ">" | ">=") bitwise-shift)*
+bitwise-shift: arithmetic-term (("<<" | ">>") arithmetic-term)*
 arithmetic-term: arithmetic-factor (("-" | "+") arithmetic-factor)*
-arithmetic-factor: unary (("*" | "/") unary)*
-unary: ("!" | "-" | "*" | "&") unary | member-access
-member-access: primary (("->" | ".") identifier | "[" expression "]" | arguments)*
+arithmetic-factor: cast (("*" | "/" | "%") cast)*
+cast: unary ["as" type]
+
+unary: ("!" | "-" | "*" | "&")* function-call
+function-call: member-access [arguments]
+member-access: primary (("->" | ".") identifier | "[" expression "]")*
 arguments: "(" [expression ("," expression)*] ")"
 primary: new-array | constructor | loop | if | block | for | while | "(" expression ")" | literal | identifier
 

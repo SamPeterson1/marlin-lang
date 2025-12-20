@@ -111,6 +111,8 @@ impl<'ch, 'diag> Lexer<'ch, 'diag> {
         self.begin_token(self.next_position);
         
         match *self.peek()? {
+            '^' => Some(self.end_token_consume(TokenType::Carat)),
+            '%' => Some(self.end_token_consume(TokenType::Percentage)),
             '~' => Some(self.end_token_consume(TokenType::Tilda)),
             '|' => Some(self.end_token_consume(TokenType::Bar)),
             ':' => Some(self.end_token_consume(TokenType::Colon)),
@@ -127,11 +129,11 @@ impl<'ch, 'diag> Lexer<'ch, 'diag> {
             '+' => Some(self.end_token_consume(TokenType::Plus)),
             '*' => Some(self.end_token_consume(TokenType::Star)),
             '&' => Some(self.end_token_consume(TokenType::Ampersand)),
-            '-' => Some(self.parse_pair('>', TokenType::Minus, TokenType::Arrow)),
-            '!' => Some(self.parse_pair('=', TokenType::Not, TokenType::NotEqual)),
-            '>' => Some(self.parse_pair('=', TokenType::Greater, TokenType::GreaterEqual)),
-            '<' => Some(self.parse_pair('=', TokenType::Less, TokenType::LessEqual)),
-            '=' => Some(self.parse_pair('=', TokenType::Assignment, TokenType::Equal)),
+            '-' => Some(self.parse_pair(&[('>', TokenType::Arrow)], TokenType::Minus)),
+            '!' => Some(self.parse_pair(&[('=', TokenType::NotEqual)], TokenType::Not)),
+            '>' => Some(self.parse_pair(&[('=', TokenType::GreaterEqual), ('>', TokenType::RightShift)], TokenType::Greater)),
+            '<' => Some(self.parse_pair(&[('=', TokenType::LessEqual), ('<', TokenType::LeftShift)], TokenType::Less)),
+            '=' => Some(self.parse_pair(&[('=', TokenType::Equal)], TokenType::Assignment)),
             '/' => self.parse_slash(),
             '\"' => self.parse_string(),
             '\'' => self.parse_char(),
@@ -153,18 +155,18 @@ impl<'ch, 'diag> Lexer<'ch, 'diag> {
     }
 
     // Parses either a single character token or a paired character token
-    fn parse_pair(&mut self, second_char: char, single: TokenType, paired: TokenType) -> Token {
+    fn parse_pair(&mut self, pairs: &[(char, TokenType)], single: TokenType) -> Token {
         self.next(); // Consume first character
 
         let peek = self.peek();
         
         if let Some(&peek) = peek {
-            if peek == second_char {
-                self.next();
-                self.end_token(paired)
-            } else {
-                self.end_token(single)
+            for (second_char, paired) in pairs {
+                if peek == *second_char {
+                    return self.end_token_consume(paired.clone());
+                }
             }
+            self.end_token(single)
         } else {
             self.end_token(single)
         }
@@ -387,6 +389,7 @@ impl<'ch, 'diag> Lexer<'ch, 'diag> {
             "let" => self.end_token(TokenType::Let),
             "struct" => self.end_token(TokenType::Struct),
             "new" => self.end_token(TokenType::New),
+            "as" => self.end_token(TokenType::As),
             _ => self.end_token(TokenType::Identifier(word)),
         }
     }

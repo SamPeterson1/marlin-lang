@@ -153,6 +153,10 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
         }
     }
 
+    fn visit_cast(&mut self, node: &CastExpr) {
+        node.expr.accept_visitor(self);
+    }
+
     fn visit_unary(&mut self, node: &UnaryExpr) {
         match node.operator {
             UnaryOperator::Negative => {
@@ -216,35 +220,27 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
         }
     }
 
-    fn visit_member_access(&mut self, node: &MemberAccess) {
-        if let Some(AccessType::FunctionCall(arguments)) = node.member_accesses.get(0) {
-            if let Some(var_expr) = node.expr.as_any().downcast_ref::<VarExpr>() {
-                let function_name = &var_expr.identifier.data;
-                if function_name == "putchar" && arguments.args.len() == 1 {
-                    arguments.args[0].accept_visitor(self);
-                    let arg_value = unsafe {IntValue::new(self.value) };
+    fn visit_function_call(&mut self, node: &FunctionCall) -> () {
+        if let Some(var_expr) = node.expr.as_any().downcast_ref::<VarExpr>() {
+            let function_name = &var_expr.identifier.data;
+            let function = self.module.get_function(function_name).unwrap();
 
-                    // call print with arg_value
-                    self.builder.build_call(
-                        self.module.get_function("putchar").unwrap(),
-                        &[arg_value.into()],
-                        "putchar",
-                    ).unwrap();
-                    return;
-                } else if function_name == "getchar" && arguments.args.is_empty() {
-                    // call getchar
-                    let call_site = self.builder.build_call(
-                        self.module.get_function("getchar").unwrap(),
-                        &[],
-                        "getchar",
-                    ).unwrap();
-                    let ret_value = call_site.try_as_basic_value().basic().unwrap();
-                    self.value = ret_value.as_value_ref();
-                    return;
-                }
+            let mut arg_values = Vec::new();
+            for arg in &node.arguments.args {
+                arg.accept_visitor(self);
+                let arg_value = unsafe { IntValue::new(self.value) };
+                arg_values.push(arg_value.into());
             }
-        }
 
+            let call_site = self.builder.build_call(function, &arg_values, "calltmp").unwrap();
+            self.value = call_site.as_value_ref();
+        } else {
+            println!("Function call expr: {}", serde_json::to_string_pretty(&node.expr).unwrap());
+            unimplemented!("Function call expression not implemented");
+        }
+    }
+
+    fn visit_member_access(&mut self, node: &MemberAccess) {
         node.expr.accept_visitor(self);
     }
 

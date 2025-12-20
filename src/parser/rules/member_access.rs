@@ -28,7 +28,7 @@ impl ParseRule<Box<dyn ASTNode>> for MemberAccessRule {
 
         parser.log_debug(&format!("Parsing member access for expression at token {:?}", parser.cur()));
 
-        while let Some(token) = parser.try_match(&[TokenType::Dot, TokenType::Arrow, TokenType::LeftSquare, TokenType::LeftParen]) {
+        while let Some(token) = parser.try_match(&[TokenType::Dot, TokenType::Arrow, TokenType::LeftSquare]) {
             
             if token.value == TokenType::Dot {
                 parser.next();
@@ -49,14 +49,16 @@ impl ParseRule<Box<dyn ASTNode>> for MemberAccessRule {
                 parser.consume_or_diagnostic(TokenType::RightSquare);
 
                 member_accesses.push(AccessType::Array(index_expr));
-            } else if token.value == TokenType::LeftParen {
-                let args = parser.apply_rule(ArgumentsRule {}, "function call arguments", Some(ErrMsg::ExpectedArguments))?;
-
-                member_accesses.push(AccessType::FunctionCall(args));
             }
         }
         
-        Some(Box::new(MemberAccess::new(expr, member_accesses, parser.end_range())))
+        let position = parser.end_range();
+
+        if member_accesses.is_empty() {
+            Some(expr)
+        } else {
+            Some(Box::new(MemberAccess::new(expr, member_accesses, position)))
+        }
     }
 }
 
@@ -154,27 +156,6 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_function_call() {
-        let rule = MemberAccessRule {};
-        let tokens = vec![
-            create_token(TokenType::Identifier("func".to_string())),
-            create_token(TokenType::LeftParen),
-            create_token(TokenType::IntLiteral(42)),
-            create_token(TokenType::Comma),
-            create_token(TokenType::StringLiteral("test".to_string())),
-            create_token(TokenType::RightParen),
-            create_token(TokenType::EOF),
-        ];
-        let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
-        
-        let result = rule.parse(&mut parser);
-        
-        assert!(result.is_some());
-        assert!(diagnostics.is_empty(), "Expected no diagnostics for function call");
-    }
-
-    #[test]
     fn test_parse_chained_member_access() {
         let rule = MemberAccessRule {};
         let tokens = vec![
@@ -215,54 +196,6 @@ mod tests {
         
         assert!(result.is_some());
         assert!(diagnostics.is_empty(), "Expected no diagnostics for mixed access types");
-    }
-
-    #[test]
-    fn test_parse_method_call_chaining() {
-        let rule = MemberAccessRule {};
-        let tokens = vec![
-            create_token(TokenType::Identifier("obj".to_string())),
-            create_token(TokenType::Dot),
-            create_token(TokenType::Identifier("method1".to_string())),
-            create_token(TokenType::LeftParen),
-            create_token(TokenType::RightParen),
-            create_token(TokenType::Dot),
-            create_token(TokenType::Identifier("method2".to_string())),
-            create_token(TokenType::LeftParen),
-            create_token(TokenType::IntLiteral(42)),
-            create_token(TokenType::RightParen),
-            create_token(TokenType::EOF),
-        ];
-        let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
-        
-        let result = rule.parse(&mut parser);
-        
-        assert!(result.is_some());
-        assert!(diagnostics.is_empty(), "Expected no diagnostics for method call chaining");
-    }
-
-    #[test]
-    fn test_parse_array_of_objects() {
-        let rule = MemberAccessRule {};
-        let tokens = vec![
-            create_token(TokenType::Identifier("objects".to_string())),
-            create_token(TokenType::LeftSquare),
-            create_token(TokenType::IntLiteral(2)),
-            create_token(TokenType::RightSquare),
-            create_token(TokenType::Dot),
-            create_token(TokenType::Identifier("getName".to_string())),
-            create_token(TokenType::LeftParen),
-            create_token(TokenType::RightParen),
-            create_token(TokenType::EOF),
-        ];
-        let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
-        
-        let result = rule.parse(&mut parser);
-        
-        assert!(result.is_some());
-        assert!(diagnostics.is_empty(), "Expected no diagnostics for array of objects access");
     }
 
     #[test]
@@ -328,27 +261,6 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_function_call_with_member_access_args() {
-        let rule = MemberAccessRule {};
-        let tokens = vec![
-            create_token(TokenType::Identifier("func".to_string())),
-            create_token(TokenType::LeftParen),
-            create_token(TokenType::Identifier("obj".to_string())),
-            create_token(TokenType::Dot),
-            create_token(TokenType::Identifier("value".to_string())),
-            create_token(TokenType::RightParen),
-            create_token(TokenType::EOF),
-        ];
-        let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
-        
-        let result = rule.parse(&mut parser);
-        
-        assert!(result.is_some());
-        assert!(diagnostics.is_empty(), "Expected no diagnostics for function call with member access args");
-    }
-
-    #[test]
     fn test_parse_complex_chaining() {
         let rule = MemberAccessRule {};
         let tokens = vec![
@@ -360,11 +272,6 @@ mod tests {
             create_token(TokenType::RightSquare),
             create_token(TokenType::Dot),
             create_token(TokenType::Identifier("inventory".to_string())),
-            create_token(TokenType::Dot),
-            create_token(TokenType::Identifier("getItem".to_string())),
-            create_token(TokenType::LeftParen),
-            create_token(TokenType::StringLiteral("sword".to_string())),
-            create_token(TokenType::RightParen),
             create_token(TokenType::Arrow),
             create_token(TokenType::Identifier("damage".to_string())),
             create_token(TokenType::EOF),
@@ -476,37 +383,12 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_malformed_function_arguments() {
-        let rule = MemberAccessRule {};
-        let tokens = vec![
-            create_token(TokenType::Identifier("func".to_string())),
-            create_token(TokenType::LeftParen),
-            create_token(TokenType::IntLiteral(42)),
-            create_token(TokenType::Comma),
-            // Missing second argument after comma
-            create_token(TokenType::RightParen),
-            create_token(TokenType::EOF),
-        ];
-        let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
-        
-        let result = rule.parse(&mut parser);
-        
-        // Should fail because function arguments parsing fails
-        assert!(result.is_none());
-        assert!(!diagnostics.is_empty(), "Expected diagnostic for malformed function arguments");
-        assert!(diagnostics.iter().any(|d| d.message.contains("expected expression")));
-    }
-
-    #[test]
     fn test_parse_literal_with_member_access() {
         let rule = MemberAccessRule {};
         let tokens = vec![
             create_token(TokenType::IntLiteral(42)),
             create_token(TokenType::Dot),
-            create_token(TokenType::Identifier("toString".to_string())),
-            create_token(TokenType::LeftParen),
-            create_token(TokenType::RightParen),
+            create_token(TokenType::Identifier("field".to_string())),
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
@@ -523,9 +405,9 @@ mod tests {
         let rule = MemberAccessRule {};
         let tokens = vec![
             create_token(TokenType::LeftParen),
-            create_token(TokenType::Identifier("getValue".to_string())),
-            create_token(TokenType::LeftParen),
-            create_token(TokenType::RightParen),
+            create_token(TokenType::Identifier("x".to_string())),
+            create_token(TokenType::Plus),
+            create_token(TokenType::Identifier("y".to_string())),
             create_token(TokenType::RightParen),
             create_token(TokenType::Dot),
             create_token(TokenType::Identifier("field".to_string())),
@@ -538,51 +420,6 @@ mod tests {
         
         assert!(result.is_some());
         assert!(diagnostics.is_empty(), "Expected no diagnostics for parenthesized expression with access");
-    }
-
-    #[test]
-    fn test_parse_constructor_call_with_member_access() {
-        let rule = MemberAccessRule {};
-        let tokens = vec![
-            create_token(TokenType::DollarSign),
-            create_token(TokenType::Identifier("Person".to_string())),
-            create_token(TokenType::LeftParen),
-            create_token(TokenType::StringLiteral("John".to_string())),
-            create_token(TokenType::RightParen),
-            create_token(TokenType::Dot),
-            create_token(TokenType::Identifier("getName".to_string())),
-            create_token(TokenType::LeftParen),
-            create_token(TokenType::RightParen),
-            create_token(TokenType::EOF),
-        ];
-        let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
-        
-        let result = rule.parse(&mut parser);
-        
-        assert!(result.is_some());
-        assert!(diagnostics.is_empty(), "Expected no diagnostics for constructor call with member access");
-    }
-
-    #[test]
-    fn test_parse_array_access_with_function_call_index() {
-        let rule = MemberAccessRule {};
-        let tokens = vec![
-            create_token(TokenType::Identifier("arr".to_string())),
-            create_token(TokenType::LeftSquare),
-            create_token(TokenType::Identifier("getIndex".to_string())),
-            create_token(TokenType::LeftParen),
-            create_token(TokenType::RightParen),
-            create_token(TokenType::RightSquare),
-            create_token(TokenType::EOF),
-        ];
-        let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
-        
-        let result = rule.parse(&mut parser);
-        
-        assert!(result.is_some());
-        assert!(diagnostics.is_empty(), "Expected no diagnostics for array access with function call index");
     }
 
     #[test]

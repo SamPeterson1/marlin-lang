@@ -59,13 +59,14 @@ impl ASTVisitorMut<'_, Option<ResolvedType>> for TypeChecker<'_> {
                     node.set_type(left_type.clone());
                 }
             },
-            BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOr => {
+            BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOr | BinaryOperator::BitwiseXor
+            | BinaryOperator::LeftShift | BinaryOperator::RightShift | BinaryOperator::Modulo => {
                 if left_type != right_type || left_type != ResolvedType::Integer {
                     valid = false;
                 } else {
                     node.set_type(left_type.clone());
                 }
-            },                
+            },
         }
 
         if !valid {
@@ -78,6 +79,11 @@ impl ASTVisitorMut<'_, Option<ResolvedType>> for TypeChecker<'_> {
         }
 
         Some(node.get_type().clone().unwrap())
+    }
+
+    fn visit_cast(&mut self, node: &mut CastExpr) -> Option<ResolvedType> {
+        node.expr.accept_visitor_mut(self);
+        self.symbol_table.resolve_type(&node.cast_type)
     }
 
     fn visit_unary(&mut self, node: &mut UnaryExpr) -> Option<ResolvedType> { 
@@ -154,6 +160,47 @@ impl ASTVisitorMut<'_, Option<ResolvedType>> for TypeChecker<'_> {
         }
 
         Some(node.get_type().clone().unwrap())
+    }
+
+    fn visit_function_call(&mut self, node: &mut FunctionCall) -> Option<ResolvedType> {
+        let func_type = node.expr.accept_visitor_mut(self)?;
+
+        match func_type {
+            ResolvedType::Function(func_sig) => {
+                if func_sig.param_types.len() != node.arguments.args.len() {
+                    self.diagnostics.push(
+                        ErrMsg::FunctionArgumentCountMismatch(func_sig.param_types.len(), node.arguments.args.len())
+                        .make_diagnostic(*node.get_position())
+                    );
+                    return None;
+                }
+
+                for (i, arg) in node.arguments.args.iter_mut().enumerate() {
+                    let arg_type = arg.accept_visitor_mut(self)?;
+                    let resolved_param = self.symbol_table.resolve_type(&func_sig.param_types[i]).unwrap();
+
+                    if arg_type != resolved_param {
+                        self.diagnostics.push(
+                            ErrMsg::FunctionArgumentTypeMismatch(i, resolved_param, arg_type)
+                            .make_diagnostic(*arg.get_position())
+                        );
+                        return None;
+                    }
+                }
+
+                let resolved_return = self.symbol_table.resolve_type(&func_sig.return_type).unwrap();
+
+                node.set_type(resolved_return.clone());
+                Some(resolved_return.clone())
+            },
+            _ => {
+                self.diagnostics.push(
+                    ErrMsg::CallOnNonFunctionType(func_type.clone())
+                    .make_diagnostic(*node.get_position())
+                );
+                None
+            }
+        }
     }
 
     fn visit_member_access(&mut self, node: &mut MemberAccess) -> Option<ResolvedType> {
@@ -240,9 +287,6 @@ impl ASTVisitorMut<'_, Option<ResolvedType>> for TypeChecker<'_> {
                         }
                     }
                 },
-                AccessType::FunctionCall(_args) => {
-                    unimplemented!()
-                },
             }
         }
 
@@ -251,12 +295,20 @@ impl ASTVisitorMut<'_, Option<ResolvedType>> for TypeChecker<'_> {
     }
 
     fn visit_var(&mut self, node: &mut VarExpr) -> Option<ResolvedType> {
-        let decl_id = self.symbol_table.get_variable(&node.id).unwrap();
-        let decl_type = self.symbol_table.get_declaration_type(decl_id).unwrap();
-        let resolved_type = self.symbol_table.resolve_type(decl_type).unwrap();
+        if let Some(decl_id) = self.symbol_table.get_variable(&node.id) {
+            let decl_type = self.symbol_table.get_declaration_type(decl_id).unwrap();
+            let resolved_type = self.symbol_table.resolve_type(decl_type).unwrap();
 
-        node.set_type(resolved_type.clone());
-        Some(resolved_type)
+            node.set_type(resolved_type.clone());
+            return Some(resolved_type);
+        } else if let Some(function_type) = self.symbol_table.get_function(&node.identifier.data) {
+            let resolved_function = ResolvedType::Function(Rc::new(function_type.clone()));
+
+            node.set_type(resolved_function.clone());
+            return Some(resolved_function);
+        } else {
+            unreachable!("variable or function '{}' not found in symbol table", node.identifier.data);
+        }
     }
 
     fn visit_if(&mut self, node: &mut IfExpr) -> Option<ResolvedType> { 
@@ -343,8 +395,12 @@ impl ASTVisitorMut<'_, Option<ResolvedType>> for TypeChecker<'_> {
         None
     }
 
-    fn visit_exit(&mut self, _node: &mut ExitExpr) -> Option<ResolvedType> {
-        unimplemented!()
+    fn visit_exit(&mut self, node: &mut ExitExpr) -> Option<ResolvedType> {
+        if let Some(expr) = &mut node.expr {
+            expr.accept_visitor_mut(self)
+        } else {
+            Some(ResolvedType::Void)
+        }
     }
 
     fn visit_constructor_call(&mut self, node: &mut ConstructorCallExpr) -> Option<ResolvedType> {
