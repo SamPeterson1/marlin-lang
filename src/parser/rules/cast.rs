@@ -1,11 +1,10 @@
 use std::fmt;
 
-use crate::ast::{ASTNode, AssignmentExpr, CastExpr};
+use crate::ast::{ASTNode, CastExpr};
 use crate::diagnostic::ErrMsg;
 use crate::parser::rules::parsed_type::ParsedTypeRule;
 use crate::parser::rules::unary::UnaryRule;
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
-use crate::parser::rules::expr::ExprRule;
 use crate::lexer::token::TokenType;
 
 pub struct CastRule {}

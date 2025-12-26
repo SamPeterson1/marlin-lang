@@ -1,0 +1,14 @@
+// Unknown type in struct field
+struct BadStruct {
+    UnknownType field;
+}
+
+// Unknown type with pointer
+struct BadPointer {
+    NonExistent* ptr;
+}
+
+// Unknown type with reference
+struct BadReference {
+    MissingType& ref;
+}

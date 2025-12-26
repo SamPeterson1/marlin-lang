@@ -1,0 +1,9 @@
+struct Valid {
+    int x;
+    InvalidType y;
+}
+
+struct AlsoValid {
+    Valid v;
+    int z;
+}

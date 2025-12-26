@@ -44,7 +44,7 @@ impl fmt::Display for Diagnostic {
     }
 }
 
-pub enum ErrMsg {
+pub enum ErrMsg<'ctx> {
     UnknownSymbol(char),
     UnterminatedString,
     DecimalLiteralAsInt,
@@ -62,19 +62,20 @@ pub enum ErrMsg {
     UnknownTypeName(String),
     UnknownVariable(String),
     DuplicateVariable(String),
-    IncompatibleBinaryTypes(ResolvedType, ResolvedType, BinaryOperator),
-    IncompatibleUnaryType(ResolvedType, UnaryOperator),
+    IncompatibleBinaryTypes(&'ctx ResolvedType, &'ctx ResolvedType, BinaryOperator),
+    IncompatibleUnaryType(&'ctx ResolvedType, UnaryOperator),
     FieldNotFound(String),
-    IncompatibleMemberAccessType(ResolvedType),
-    ArrayIndexNotInteger(ResolvedType),
-    MismatchedIfBranches(ResolvedType, ResolvedType),
-    IncompatibleAssignment(ResolvedType, ResolvedType),
+    IncompatibleMemberAccessType(&'ctx ResolvedType),
+    ArrayIndexNotInteger(&'ctx ResolvedType),
+    MismatchedIfBranches(&'ctx ResolvedType, &'ctx ResolvedType),
+    IncompatibleAssignment(&'ctx ResolvedType, &'ctx ResolvedType),
     FunctionArgumentCountMismatch(usize, usize),
-    FunctionArgumentTypeMismatch(usize, ResolvedType, ResolvedType),
-    CallOnNonFunctionType(ResolvedType),
+    FunctionArgumentTypeMismatch(usize, &'ctx ResolvedType, &'ctx ResolvedType),
+    CallOnNonFunctionType(&'ctx ResolvedType),
+    ConstructorNotFound(&'ctx ResolvedType)
 }
 
-impl ErrMsg {
+impl ErrMsg<'_> {
     pub fn make_diagnostic(self, position: PositionRange) -> Diagnostic {
         Diagnostic {
             severity: DiagnosticSeverity::Error,
@@ -84,7 +85,7 @@ impl ErrMsg {
     }
 }
 
-impl fmt::Display for ErrMsg {
+impl fmt::Display for ErrMsg<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let msg = match self {
             Self::UnknownSymbol(x) => &format!("unknown symbol {}", x),
@@ -134,6 +135,9 @@ impl fmt::Display for ErrMsg {
             Self::CallOnNonFunctionType(ty) => {
                 &format!("cannot call expression of non-function type '{:?}'", ty)
             },
+            Self::ConstructorNotFound(ty) => {
+                &format!("constructor not found for type '{:?}'", ty)
+            }
         };
 
         write!(f, "{}", msg)

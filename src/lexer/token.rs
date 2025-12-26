@@ -190,7 +190,7 @@ impl Token {
 
 #[derive(Debug, Clone)]
 pub enum TokenType {
-    Semicolon, Percentage, Carat, Colon, Dot, Comma, Assignment, DollarSign, Arrow,
+    Semicolon, Void, Percentage, Carat, Colon, Dot, Comma, Assignment, DollarSign, Arrow,
     LeftCurly, RightCurly, LeftSquare, RightSquare, LeftParen, RightParen,
     Plus, Minus, Slash, Star, Ampersand,
     NotEqual, Equal, Greater, GreaterEqual, Less, LessEqual,
@@ -262,6 +262,7 @@ impl PartialEq for TokenType {
 impl fmt::Display for TokenType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let name = match self {
+            TokenType::Void => "void",
             TokenType::LeftShift => "<<",
             TokenType::RightShift => ">>",
             TokenType::Carat => "^",

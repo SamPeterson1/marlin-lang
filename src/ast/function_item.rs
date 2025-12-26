@@ -1,26 +1,29 @@
 use serde::Serialize;
 
-use crate::ast::{block_expr::BlockExpr, parameters::Parameters, parsed_type::ParsedType};
-use crate::{impl_ast_node, impl_positioned};
+use crate::ast::DeclarationExpr;
+use crate::ast::{block_expr::BlockExpr, parsed_type::ParsedType, AstId};
+use crate::{impl_ast_node, impl_positioned, new_ast_id};
 use crate::lexer::token::{Located, PositionRange};
 
 #[derive(Serialize)]
 pub struct FunctionItem {
     pub name: Located<String>,
-    pub parameters: Parameters,
+    pub parameters: Vec<DeclarationExpr>,
     pub return_type: ParsedType,
     pub body: BlockExpr,
     position: PositionRange,
+    id: AstId,
 }
 
 impl FunctionItem {
-    pub fn new(name: Located<String>, parameters: Parameters, return_type: ParsedType, body: BlockExpr, position: PositionRange) -> Self {
+    pub fn new(name: Located<String>, parameters: Vec<DeclarationExpr>, return_type: ParsedType, body: BlockExpr, position: PositionRange) -> Self {
         Self {
             name,
             parameters,
             return_type,
             body,
             position,
+            id: new_ast_id!(),
         }
     }
 }

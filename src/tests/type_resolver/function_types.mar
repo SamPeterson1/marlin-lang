@@ -1,0 +1,40 @@
+struct Data {
+    int value;
+}
+
+// Function with struct parameter
+fn process(Data d) -> int {
+    return d.value;
+}
+
+// Function with struct pointer parameter
+fn processPtr(Data* d) -> int {
+    return d.value;
+}
+
+// Function with struct reference parameter
+fn processRef(Data& d) -> int {
+    return d.value;
+}
+
+// Function returning struct
+fn createData() -> Data {
+    let Data d = $Data();
+    return d;
+}
+
+// Function returning struct pointer
+fn createDataPtr() -> Data* {
+    let Data* d = 0;
+    return d;
+}
+
+// Function with unknown type (should error)
+fn badParam(UnknownType u) -> int {
+    return 0;
+}
+
+// Function returning unknown type (should error)
+fn badReturn() -> NonExistent {
+    return 0;
+}

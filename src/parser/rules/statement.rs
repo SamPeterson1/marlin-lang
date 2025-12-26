@@ -48,8 +48,9 @@ impl ParseRule<Box<dyn ASTNode>> for StatementRule {
             return parser.apply_rule_boxed(DeleteRule {}, "statement delete", None);
         }
 
-        if (DeclarationRule {}).check_match(parser.get_cursor()) {
-            return parser.apply_rule_boxed(DeclarationRule {}, "statement declaration", None);
+        let decl_rule = DeclarationRule { use_let: true };
+        if decl_rule.check_match(parser.get_cursor()) {
+            return parser.apply_rule_boxed(decl_rule, "statement declaration", None);
         }
 
         if (AssignmentRule {}).check_match(parser.get_cursor()) {

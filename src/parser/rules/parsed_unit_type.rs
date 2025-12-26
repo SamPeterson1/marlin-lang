@@ -20,6 +20,7 @@ impl ParseRule<ParsedType> for ParsedUnitTypeRule {
             TokenType::Double,
             TokenType::Bool,
             TokenType::Char,
+            TokenType::Void,
             TokenType::AnyIdentifier,
         ]).is_some()
     }
@@ -33,8 +34,9 @@ impl ParseRule<ParsedType> for ParsedUnitTypeRule {
             TokenType::Double => ParsedType::new(ParsedTypeEnum::Double, *cur.get_position()),
             TokenType::Bool => ParsedType::new(ParsedTypeEnum::Boolean, *cur.get_position()),
             TokenType::Char => ParsedType::new(ParsedTypeEnum::Char, *cur.get_position()),
+            TokenType::Void => ParsedType::new(ParsedTypeEnum::Void, *cur.get_position()),
             TokenType::Identifier(ref type_name) => {
-                ParsedType::new(ParsedTypeEnum::TypeName(Rc::new(type_name.to_string())), *cur.get_position())
+                ParsedType::new(ParsedTypeEnum::TypeName(type_name.to_string()), *cur.get_position())
             }
             _ => {
                 return None;
@@ -42,11 +44,11 @@ impl ParseRule<ParsedType> for ParsedUnitTypeRule {
         };
 
         while parser.try_consume(TokenType::Star).is_some() {
-            base_type = ParsedType::new(ParsedTypeEnum::Pointer(Rc::new(base_type)), parser.current_range())
+            base_type = ParsedType::new(ParsedTypeEnum::Pointer(Box::new(base_type)), parser.current_range())
         }
 
         if parser.try_consume(TokenType::Ampersand).is_some() {
-            base_type = ParsedType::new(ParsedTypeEnum::Reference(Rc::new(base_type)), parser.current_range())
+            base_type = ParsedType::new(ParsedTypeEnum::Reference(Box::new(base_type)), parser.current_range())
         }
 
         parser.end_range();

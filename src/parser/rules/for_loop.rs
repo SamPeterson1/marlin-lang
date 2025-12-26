@@ -30,7 +30,7 @@ impl ParseRule<LoopExpr> for ForLoopRule {
 
         parser.consume_or_diagnostic(TokenType::LeftParen);
 
-        let initial = parser.apply_rule(DeclarationRule {}, "for initial declaration", Some(ErrMsg::ExpectedDeclaration))?;
+        let initial = parser.apply_rule(DeclarationRule { use_let: true }, "for initial declaration", Some(ErrMsg::ExpectedDeclaration))?;
 
         let condition = parser.apply_rule(ExprRule {}, "for condition expression", Some(ErrMsg::ExpectedExpression))?;
 

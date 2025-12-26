@@ -9,7 +9,7 @@ use crate::resolver::SymbolTable;
 pub struct VarResolver<'ast> {
     symbol_table: &'ast mut SymbolTable,
     diagnostics: &'ast mut Vec<Diagnostic>,
-    scopes: VecDeque<HashMap<&'ast str, DeclarationId>>,
+    scopes: VecDeque<HashMap<&'ast str, AstId>>,
 }
 
 impl Log for VarResolver<'_> {
@@ -48,20 +48,17 @@ impl<'ast> ASTVisitor<'ast, ()> for VarResolver<'ast> {
     
     fn visit_literal(&mut self, _node: &'ast LiteralExpr) { }
     
-    fn visit_function_call(&mut self, node: &'ast FunctionCall) -> () {
-        node.expr.accept_visitor(self);
-
-        for arg in &node.arguments.args {
-            arg.accept_visitor(self);
-        }
-    }
-
     fn visit_member_access(&mut self, node: &'ast MemberAccess) {
         for member_access in &node.member_accesses {
             match member_access {
                 AccessType::Array(index_expr) => {
                     index_expr.accept_visitor(self);
                 },
+                AccessType::Function(arguments) => {
+                    for arg in &arguments.args {
+                        arg.accept_visitor(self);
+                    }
+                }
                 _ => {}
             }
         }
@@ -70,14 +67,15 @@ impl<'ast> ASTVisitor<'ast, ()> for VarResolver<'ast> {
     }
     
     fn visit_var(&mut self, node: &'ast VarExpr) {
-        if self.symbol_table.get_function(node.identifier.data.as_str()).is_some() {
+        // Do not attempt to resolve function calls
+        if self.symbol_table.functions.contains_key(node.identifier.data.as_str()) {
             return;
         }
 
         for scope in self.scopes.iter().rev() {
             if let Some(decl) = scope.get(node.identifier.data.as_str()) {
                 self.log_info(&format!("Resolved variable '{}' to declaration ID {:?}", node.identifier.data, decl));
-                self.symbol_table.resolve_var(node.id, *decl);
+                self.symbol_table.variables.insert(node.get_id(), *decl);
                 return;
             }
         }
@@ -108,8 +106,15 @@ impl<'ast> ASTVisitor<'ast, ()> for VarResolver<'ast> {
     }
     
     fn visit_declaration(&mut self, node: &'ast DeclarationExpr) {
-        node.expr.accept_visitor(self);
+        if let Some(expr) = &node.expr {
+            expr.accept_visitor(self);
+        }
+
         let scope = self.scopes.back_mut().unwrap();
+
+        let resolved_type_id = self.symbol_table.resolve_type(&node.declaration_type);
+
+        self.symbol_table.declaration_types.insert(node.get_id(), resolved_type_id.unwrap());
 
         if scope.contains_key(&node.identifier.data.as_str()) {
             self.log_error(&format!("Duplicate variable declaration: '{}'", node.identifier.data));
@@ -119,8 +124,7 @@ impl<'ast> ASTVisitor<'ast, ()> for VarResolver<'ast> {
                     .make_diagnostic(*node.get_position())
             );
         } else {
-            self.scopes.back_mut().unwrap().insert(&node.identifier.data, node.id);
-            self.symbol_table.insert_declaration_type(node.id, node.declaration_type.clone());
+            self.scopes.back_mut().unwrap().insert(&node.identifier.data, node.get_id());
         }
     }
     
@@ -175,7 +179,14 @@ impl<'ast> ASTVisitor<'ast, ()> for VarResolver<'ast> {
     }
     
     fn visit_function(&mut self, node: &'ast FunctionItem) {
+        self.scopes.push_back(HashMap::new());
+
+        for parameter in &node.parameters {
+            parameter.accept_visitor(self);
+        }
+        
         node.body.accept_visitor(self);
+        self.scopes.pop_back();
     }
     
     fn visit_struct(&mut self, node: &'ast StructItem) {

@@ -1,7 +1,7 @@
 use serde::Serialize;
 
-use crate::ast::{constructor_item::ConstructorItem, parsed_type::ParsedType};
-use crate::{impl_ast_node, impl_positioned};
+use crate::ast::{constructor_item::ConstructorItem, parsed_type::ParsedType, AstId};
+use crate::{impl_ast_node, impl_positioned, new_ast_id};
 use crate::lexer::token::{Located, PositionRange};
 
 #[derive(Serialize)]
@@ -10,6 +10,7 @@ pub struct StructItem {
     pub members: Vec<(ParsedType, Located<String>)>,
     pub constructors: Vec<ConstructorItem>,
     position: PositionRange,
+    id: AstId,
 }
 
 impl StructItem {
@@ -24,6 +25,7 @@ impl StructItem {
             members,
             constructors,
             position,
+            id: new_ast_id!(),
         }
     }
 }

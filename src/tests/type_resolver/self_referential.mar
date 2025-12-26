@@ -1,0 +1,11 @@
+// Self-referential struct with pointer
+struct Node {
+    int value;
+    Node* next;
+}
+
+// Self-referential struct with reference
+struct LinkedNode {
+    int data;
+    LinkedNode& parent;
+}

@@ -1,0 +1,57 @@
+fn print_int(int num) {
+    if num == 0 {
+        putchar('0');
+        return;
+    }
+
+    let int *digits = new int[10];
+    let int n_digits = 0;
+
+    while num != 0 {
+        let int digit = num % 10;
+        num = num / 10;
+
+        digits[n_digits] = digit;
+        n_digits = n_digits + 1;
+    }
+
+    for (let int i = n_digits - 1; i >= 0; i = i - 1) {
+        let char digit_char = digits[i] as char + '0';
+        putchar(digit_char);
+    }
+}
+
+fn read_int() -> int {
+    let int num = 0;
+    let char c = ' ';
+
+    loop {
+        c = getchar();
+
+        if c == '\n' {
+            break;
+        }
+
+        num = 10 * num + (c - '0') as int;
+    }
+
+    return num;
+}
+
+fn fib(int i) -> int {
+    if i == 0 or i == 1 {
+        return i;
+    }
+
+    return fib(i - 1) + fib(i - 2);
+}
+
+main {
+    let char *foo = "Hello, World!\n";
+
+    for (let int i = 0; i < 14; i = i + 1) {
+        putchar(foo[i]);
+    }
+
+    print_int(fib(read_int()));
+}

@@ -9,13 +9,13 @@ struct-member: type identifier ";"
 struct-constructor: "$" parameters block-expression
 
 impl: "impl" type "{" function* "}"
-function: "fn" identifier parameters "->" type block-expression
+function: "fn" identifier parameters ["->" type] block-expression
 parameters: "(" [type identifier ("," type identifier)*] ")"
 
 statement: loop | if | block | for | while | exit | delete | declaration | assignment ";"
 expression: condition
 block: "{" statement* "}"
-declaration: "let" type identifier "=" expression ";"
+declaration: "let" type identifier ["=" expression] ";"
 assignment: expression "=" expression | expression
 for: "for" [":" identifier] "(" declaration expression ";" assignment ")" block
 while: "while" [":" identifier] expression block
@@ -41,9 +41,8 @@ arithmetic-term: arithmetic-factor (("-" | "+") arithmetic-factor)*
 arithmetic-factor: cast (("*" | "/" | "%") cast)*
 cast: unary ["as" type]
 
-unary: ("!" | "-" | "*" | "&")* function-call
-function-call: member-access [arguments]
-member-access: primary (("->" | ".") identifier | "[" expression "]")*
+unary: ("!" | "-" | "*" | "&")* member-access
+member-access: primary (("->" | ".") identifier | "[" expression "]" | arguments)*
 arguments: "(" [expression ("," expression)*] ")"
 primary: new-array | constructor | loop | if | block | for | while | "(" expression ")" | literal | identifier
 

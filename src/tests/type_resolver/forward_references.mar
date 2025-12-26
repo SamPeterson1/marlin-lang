@@ -1,0 +1,14 @@
+// Forward reference: A uses B before B is defined
+struct A {
+    int value;
+    B* next;
+}
+
+struct B {
+    int data;
+    A* prev;
+}
+
+struct C {
+    int x;
+}

@@ -9,7 +9,6 @@ pub mod declaration;
 pub mod delete_expr;
 pub mod expr;
 pub mod for_loop;
-pub mod function_call;
 pub mod function_item;
 pub mod if_block;
 pub mod main_item;

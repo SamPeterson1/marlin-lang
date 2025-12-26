@@ -1,0 +1,37 @@
+// Complex circular: A -> B -> C -> A
+// Also: A -> C (direct)
+struct A {
+    int a_val;
+    B* b_ptr;
+    C* c_ptr;
+}
+
+struct B {
+    int b_val;
+    C* c_ptr;
+    A& a_ref;
+}
+
+struct C {
+    int c_val;
+    A* a_ptr;
+    B& b_ref;
+}
+
+// Diamond pattern: D -> E, D -> F, E -> G, F -> G
+struct D {
+    E* e;
+    F* f;
+}
+
+struct E {
+    G* g;
+}
+
+struct F {
+    G* g;
+}
+
+struct G {
+    int value;
+}

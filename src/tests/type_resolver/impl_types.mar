@@ -1,0 +1,44 @@
+struct Point {
+    int x;
+    int y;
+}
+
+struct Line {
+    Point start;
+    Point end;
+}
+
+impl Point {
+    fn getX() -> int {
+        return x;
+    }
+    
+    fn setPoint(int a, int b) -> int {
+        x = a;
+        y = b;
+        return 0;
+    }
+}
+
+impl Line {
+    fn length() -> int {
+        return 0;
+    }
+    
+    // Method with unknown type parameter (should error)
+    fn badMethod(UnknownType u) -> int {
+        return 0;
+    }
+    
+    // Method returning unknown type (should error)
+    fn badReturn() -> MissingType {
+        return 0;
+    }
+}
+
+// Impl for unknown type (should error)
+impl NonExistentStruct {
+    fn foo() -> int {
+        return 0;
+    }
+}

@@ -2,9 +2,8 @@ use std::fmt::Display;
 
 use serde::Serialize;
 
-use crate::ast::ASTNode;
-use crate::resolver::ResolvedType;
-use crate::{impl_ast_node, impl_positioned, impl_typed};
+use crate::ast::{ASTNode, AstId};
+use crate::{impl_ast_node, impl_positioned, new_ast_id};
 use crate::lexer::token::{PositionRange, TokenType};
 
 #[derive(Serialize, Clone, Copy)]
@@ -49,7 +48,7 @@ pub struct UnaryExpr {
     pub expr: Box<dyn ASTNode>,
     pub operator: UnaryOperator,
     position: PositionRange,
-    resolved_type: Option<ResolvedType>,
+    id: AstId,
 }
 
 impl UnaryExpr {
@@ -58,11 +57,10 @@ impl UnaryExpr {
             expr,
             operator,
             position,
-            resolved_type: None,
+            id: new_ast_id!(),
         }
     }
 }    
 
 impl_positioned!(UnaryExpr);
-impl_typed!(UnaryExpr);
 impl_ast_node!(UnaryExpr, visit_unary);

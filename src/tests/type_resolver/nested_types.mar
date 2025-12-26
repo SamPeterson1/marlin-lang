@@ -1,0 +1,4 @@
+// Deeply nested pointer types
+struct Container {
+    int value;
+}

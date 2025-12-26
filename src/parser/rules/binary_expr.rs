@@ -1,7 +1,6 @@
 use std::fmt;
 
 use crate::ast::{ASTNode, BinaryExpr, BinaryOperator};
-use crate::diagnostic::ErrMsg;
 use crate::parser::rules::cast::CastRule;
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
 use crate::lexer::token::TokenType;

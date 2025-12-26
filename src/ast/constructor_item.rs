@@ -1,22 +1,24 @@
 use serde::Serialize;
 
-use crate::ast::{block_expr::BlockExpr, parameters::Parameters};
-use crate::{impl_ast_node, impl_positioned};
+use crate::ast::{AstId, BlockExpr, DeclarationExpr};
+use crate::{impl_ast_node, impl_positioned, new_ast_id};
 use crate::lexer::token::PositionRange;
 
 #[derive(Serialize)]
 pub struct ConstructorItem {
-    pub parameters: Parameters,
+    pub parameters: Vec<DeclarationExpr>,
     pub body: BlockExpr,
     position: PositionRange,
+    id: AstId,
 }
 
 impl ConstructorItem {
-    pub fn new(parameters: Parameters, body: BlockExpr, position: PositionRange) -> Self {
+    pub fn new(parameters: Vec<DeclarationExpr>, body: BlockExpr, position: PositionRange) -> Self {
         Self {
             parameters,
             body,
             position,
+            id: new_ast_id!(),
         }
     }
 }

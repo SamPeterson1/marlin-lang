@@ -2,9 +2,8 @@ use std::fmt::Display;
 
 use serde::Serialize;
 
-use crate::ast::ASTNode;
-use crate::resolver::ResolvedType;
-use crate::{impl_ast_node, impl_positioned, impl_typed};
+use crate::ast::{ASTNode, AstId};
+use crate::{impl_ast_node, impl_positioned, new_ast_id};
 use crate::lexer::token::{PositionRange, TokenType};
 
 #[derive(Serialize, Clone, Copy)]
@@ -89,7 +88,7 @@ pub struct BinaryExpr {
     pub right: Box<dyn ASTNode>,
     pub operator: BinaryOperator,
     position: PositionRange,
-    resolved_type: Option<ResolvedType>,
+    id: AstId,
 }
 
 impl BinaryExpr {
@@ -101,11 +100,10 @@ impl BinaryExpr {
             right,
             operator,
             position,
-            resolved_type: None,
+            id: new_ast_id!(),
         }
     }
 }
 
 impl_positioned!(BinaryExpr);
-impl_typed!(BinaryExpr);
 impl_ast_node!(BinaryExpr, visit_binary);

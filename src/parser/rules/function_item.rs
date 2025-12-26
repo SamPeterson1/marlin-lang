@@ -1,10 +1,10 @@
 use std::fmt;
 
-use crate::ast::FunctionItem;
+use crate::ast::{FunctionItem, ParsedType, ParsedTypeEnum};
 use crate::diagnostic::ErrMsg;
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
 use crate::parser::rules::{block::BlockRule, parameters::ParametersRule, parsed_type::ParsedTypeRule};
-use crate::lexer::token::TokenType;
+use crate::lexer::token::{PositionRange, TokenType};
 
 pub struct FunctionRule;
 
@@ -27,9 +27,11 @@ impl ParseRule<FunctionItem> for FunctionRule {
 
         let parameters = parser.apply_rule(ParametersRule {}, "function parameters", Some(ErrMsg::ExpectedParameters))?;
 
-        parser.consume_or_diagnostic(TokenType::Arrow);
-
-        let ret_type = parser.apply_rule(ParsedTypeRule {}, "return type", None)?;
+        let ret_type = if parser.try_consume(TokenType::Arrow).is_some() {
+            parser.apply_rule(ParsedTypeRule {}, "return type", Some(ErrMsg::ExpectedType))?
+        } else {
+            ParsedType::new(ParsedTypeEnum::Void, PositionRange::zero())
+        };
 
         let block = parser.apply_rule(BlockRule {}, "function body", Some(ErrMsg::ExpectedBlock))?;
 

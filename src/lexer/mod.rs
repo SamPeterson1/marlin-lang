@@ -367,6 +367,7 @@ impl<'ch, 'diag> Lexer<'ch, 'diag> {
     
         match word.as_str() {
             "main" => self.end_token(TokenType::Main),
+            "void" => self.end_token(TokenType::Void),
             "delete" => self.end_token(TokenType::Delete),
             "result" => self.end_token(TokenType::Result),
             "impl" => self.end_token(TokenType::Impl),

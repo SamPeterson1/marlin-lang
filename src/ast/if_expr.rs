@@ -1,8 +1,7 @@
 use serde::Serialize;
 
-use crate::ast::ASTNode;
-use crate::resolver::ResolvedType;
-use crate::{impl_ast_node, impl_positioned, impl_typed};
+use crate::ast::{ASTNode, AstId};
+use crate::{impl_ast_node, impl_positioned, new_ast_id};
 use crate::lexer::token::PositionRange;
 
 #[derive(Serialize)]
@@ -11,7 +10,7 @@ pub struct IfExpr {
     pub success: Box<dyn ASTNode>,
     pub fail: Option<Box<dyn ASTNode>>,
     position: PositionRange,
-    resolved_type: Option<ResolvedType>,
+    id: AstId,
 }
 
 impl IfExpr {
@@ -21,11 +20,10 @@ impl IfExpr {
             success,
             fail,
             position,
-            resolved_type: None,
+            id: new_ast_id!(),
         }
     }
 }
 
 impl_positioned!(IfExpr);
-impl_typed!(IfExpr);
 impl_ast_node!(IfExpr, visit_if);

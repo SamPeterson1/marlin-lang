@@ -1,0 +1,14 @@
+// Empty struct
+struct Empty {
+}
+
+// Single field struct
+struct Single {
+    int x;
+}
+
+// Struct with only pointers to other structs
+struct OnlyPointers {
+    Empty* e;
+    Single* s;
+}

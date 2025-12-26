@@ -1,0 +1,6 @@
+main {
+    let char *arr_test = new char[1];
+    
+    arr_test[0] = 'r';
+    putchar(arr_test[0]);
+}

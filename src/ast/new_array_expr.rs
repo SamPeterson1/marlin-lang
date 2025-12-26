@@ -1,8 +1,7 @@
 use serde::Serialize;
 
-use crate::ast::{ASTNode, ParsedType};
-use crate::resolver::ResolvedType;
-use crate::{impl_ast_node, impl_positioned, impl_typed};
+use crate::ast::{ASTNode, ParsedType, AstId};
+use crate::{impl_ast_node, impl_positioned, new_ast_id};
 use crate::lexer::token::PositionRange;
 
 #[derive(Serialize)]
@@ -11,7 +10,7 @@ pub struct NewArrayExpr {
     pub sizes: Vec<Box<dyn ASTNode>>,
     pub array_type: ParsedType,
     position: PositionRange,
-    resolved_type: Option<ResolvedType>,
+    id: AstId,
 }
 
 impl NewArrayExpr {
@@ -21,11 +20,10 @@ impl NewArrayExpr {
             sizes,
             array_type,
             position,
-            resolved_type: None,
+            id: new_ast_id!(),
         }
     }
 }
 
 impl_positioned!(NewArrayExpr);
-impl_typed!(NewArrayExpr);
 impl_ast_node!(NewArrayExpr, visit_new_array);

@@ -1,9 +1,8 @@
 use std::fmt;
 
 use crate::ast::{ASTNode, UnaryExpr, UnaryOperator};
-use crate::parser::rules::function_call::FunctionCallRule;
-use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
 use crate::parser::rules::member_access::MemberAccessRule;
+use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
 use crate::lexer::token::TokenType;
 
 pub struct UnaryRule {}
@@ -27,7 +26,7 @@ impl ParseRule<Box<dyn ASTNode>> for UnaryRule {
             let unary = parser.apply_rule(UnaryRule {}, "unary expression", None)?;
             Some(Box::new(UnaryExpr::new(unary, unary_operator, parser.end_range())))
         } else {
-            parser.apply_rule(FunctionCallRule {}, "function call expression", None)
+            parser.apply_rule(MemberAccessRule {}, "member access expression", None)
         }
     }
 }

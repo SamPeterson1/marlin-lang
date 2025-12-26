@@ -1,23 +1,23 @@
-// Valid at type resolution stage: circular dependencies through value members
-// Note: These types will resolve successfully, but should fail at a later stage
-// (e.g., during struct layout or size calculation) since they create infinite-sized types
-
-struct CircularA {
-    CircularB b;
+// Circular dependency: A -> B -> A
+struct A {
+    int value;
+    B* b_ptr;
 }
 
-struct CircularB {
-    CircularA a;
+struct B {
+    int data;
+    A* a_ptr;
 }
 
-struct IndirectCircular1 {
-    IndirectCircular2 field;
+// Three-way circular: X -> Y -> Z -> X
+struct X {
+    Y* y;
 }
 
-struct IndirectCircular2 {
-    IndirectCircular3 field;
+struct Y {
+    Z* z;
 }
 
-struct IndirectCircular3 {
-    IndirectCircular1 field;
+struct Z {
+    X* x;
 }

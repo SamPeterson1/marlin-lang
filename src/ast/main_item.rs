@@ -1,13 +1,14 @@
 use serde::Serialize;
 
-use crate::ast::block_expr::BlockExpr;
-use crate::{impl_ast_node, impl_positioned};
+use crate::ast::{block_expr::BlockExpr, AstId};
+use crate::{impl_ast_node, impl_positioned, new_ast_id};
 use crate::lexer::token::PositionRange;
 
 #[derive(Serialize)]
 pub struct MainItem {
     pub body: BlockExpr,
     position: PositionRange,
+    id: AstId,
 }
 
 impl MainItem {
@@ -15,6 +16,7 @@ impl MainItem {
         Self {
             body,
             position,
+            id: new_ast_id!(),
         }
     }
 }

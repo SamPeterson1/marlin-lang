@@ -1,0 +1,13 @@
+struct A {
+    B[] foo;
+    C boo;
+}
+
+struct B {
+    C *moo;
+}
+
+struct C {
+    int i;
+}
+

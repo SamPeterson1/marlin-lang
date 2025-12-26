@@ -1,0 +1,15 @@
+struct Foo {
+    char a;
+    char b;
+}
+
+main {
+    let Foo foo;
+    let Foo *foo_ptr = &foo;
+
+    foo.a = 'a';
+    foo_ptr->b = 'b';
+
+    putchar(foo.a);
+    putchar(foo_ptr->b);
+}

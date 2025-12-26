@@ -1,33 +1,20 @@
-use std::sync::Mutex;
-
 use serde::Serialize;
 
-use crate::resolver::ResolvedType;
-use crate::{impl_ast_node, impl_typed};
+use crate::ast::AstId;
+use crate::{impl_ast_node, new_ast_id};
 use crate::lexer::token::{Located, PositionRange, Positioned};
-
-static VAR_ID_COUNTER: Mutex<u64> = Mutex::new(0);
-
-#[derive(Clone, Copy, Serialize, PartialEq, Eq, Hash, Debug)]
-pub struct VarId(u64);
 
 #[derive(Serialize)]
 pub struct VarExpr {
     pub identifier: Located<String>,
-    pub id: VarId,
-    resolved_type: Option<ResolvedType>,
+    id: AstId,
 }
 
 impl VarExpr {
     pub fn new(identifier: Located<String>) -> Self {
-        let mut id = VAR_ID_COUNTER.lock().unwrap();
-        let current_id = *id;
-        *id = *id + 1;
-
         Self {
             identifier,
-            id: VarId(current_id),
-            resolved_type: None,
+            id: new_ast_id!(),
         }
     }
 }
@@ -38,5 +25,4 @@ impl Positioned for VarExpr {
     }
 }
 
-impl_typed!(VarExpr);
 impl_ast_node!(VarExpr, visit_var);

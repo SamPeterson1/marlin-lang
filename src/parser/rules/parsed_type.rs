@@ -29,13 +29,13 @@ impl ParseRule<ParsedType> for ParsedTypeRule {
             parser.consume_or_diagnostic(TokenType::RightSquare);
 
             unit_type = ParsedType::new(
-                ParsedTypeEnum::Array(Rc::new(unit_type)),
+                ParsedTypeEnum::Array(Box::new(unit_type)),
                 parser.current_range(),
             );
 
             if parser.try_consume(TokenType::Ampersand).is_some() {
                 unit_type = ParsedType::new(
-                    ParsedTypeEnum::Reference(Rc::new(unit_type)),
+                    ParsedTypeEnum::Reference(Box::new(unit_type)),
                     parser.current_range(),
                 );
             }

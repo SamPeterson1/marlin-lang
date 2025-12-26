@@ -1,8 +1,7 @@
 use serde::Serialize;
 
-use crate::ast::ASTNode;
-use crate::resolver::ResolvedType;
-use crate::{impl_ast_node, impl_positioned, impl_typed};
+use crate::ast::{ASTNode, AstId};
+use crate::{impl_ast_node, impl_positioned, new_ast_id};
 use crate::lexer::token::{Located, PositionRange};
 
 #[derive(Serialize, Clone, PartialEq, Eq)]
@@ -18,7 +17,7 @@ pub struct ExitExpr {
     pub expr: Option<Box<dyn ASTNode>>,
     pub label: Option<Located<String>>,
     position: PositionRange,
-    resolved_type: Option<ResolvedType>,
+    id: AstId,
 }
 
 impl ExitExpr {
@@ -28,11 +27,10 @@ impl ExitExpr {
             expr,
             label,
             position,
-            resolved_type: None,
+            id: new_ast_id!(),
         }
     }
 }
 
 impl_positioned!(ExitExpr);
-impl_typed!(ExitExpr);
 impl_ast_node!(ExitExpr, visit_exit);

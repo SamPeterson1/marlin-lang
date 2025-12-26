@@ -1,50 +1,29 @@
-use std::sync::Mutex;
-
 use serde::Serialize;
 
-use crate::ast::{ASTNode, parsed_type::ParsedType};
-use crate::resolver::ResolvedType;
-use crate::{impl_ast_node, impl_positioned, impl_typed};
+use crate::ast::{ASTNode, parsed_type::ParsedType, AstId};
+use crate::{impl_ast_node, impl_positioned, new_ast_id};
 use crate::lexer::token::{Located, PositionRange};
-
-static DECLARATION_ID_COUNTER: Mutex<u64> = Mutex::new(0);
-
-#[derive(Clone, Copy, Serialize, PartialEq, Eq, Hash, Debug)]
-pub struct DeclarationId(u64);
-
-impl ToString for DeclarationId {
-    fn to_string(&self) -> String {
-        format!("decl_{}", self.0)
-    }
-}
 
 #[derive(Serialize)]
 pub struct DeclarationExpr {
     pub identifier: Located<String>,
     pub declaration_type: ParsedType,
-    pub expr: Box<dyn ASTNode>,
-    pub id: DeclarationId,
+    pub expr: Option<Box<dyn ASTNode>>,
     position: PositionRange,
-    resolved_type: Option<ResolvedType>,
+    id: AstId,
 }
 
 impl DeclarationExpr {
-    pub fn new(identifier: Located<String>, declaration_type: ParsedType, expr: Box<dyn ASTNode>, position: PositionRange) -> Self {
-        let mut id = DECLARATION_ID_COUNTER.lock().unwrap();
-        let current_id = *id;
-        *id = *id + 1;
-
+    pub fn new(identifier: Located<String>, declaration_type: ParsedType, expr: Option<Box<dyn ASTNode>>, position: PositionRange) -> Self {
         Self {
             identifier,
             declaration_type,
             expr,
-            id: DeclarationId(current_id),
             position,
-            resolved_type: None,
+            id: new_ast_id!(),
         }
     }
 }
 
 impl_positioned!(DeclarationExpr);
-impl_typed!(DeclarationExpr);
 impl_ast_node!(DeclarationExpr, visit_declaration);
