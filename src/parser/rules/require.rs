@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::ast::Require;
+use crate::ast::{Path, Require};
 use crate::parser::rules::path::PathRule;
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
 use crate::lexer::token::{Located, TokenType};
@@ -14,11 +14,11 @@ impl fmt::Display for RequireRule {
 }
 
 impl RequireRule {
-    fn parse_path_alias(&self, prefix: Option<Vec<Located<String>>>, parser: &mut ExprParser) -> Option<(Vec<Located<String>>, Option<Located<String>>)> {
+    fn parse_path_alias(&self, prefix: Option<Path>, parser: &mut ExprParser) -> Option<(Path, Option<Located<String>>)> {
         let path = parser.apply_rule(PathRule {}, "require path", None)?;
         
         let path = if let Some(mut prefix) = prefix {
-            prefix.extend(path);
+            prefix.extend(&path);
             prefix
         } else {
             path

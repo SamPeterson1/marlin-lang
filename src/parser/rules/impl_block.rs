@@ -38,7 +38,7 @@ impl ParseRule<ImplItem> for ImplBlockRule {
     }
 }
 
-use crate::logger::DYN_CONSOLE_LOGGER;
+use crate::logger::CONSOLE_LOGGER;
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -90,7 +90,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&CONSOLE_LOGGER, tokens, &mut diagnostics);
         let result = rule.parse(&mut parser);
         
         assert!(result.is_some());
@@ -120,7 +120,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&CONSOLE_LOGGER, tokens, &mut diagnostics);
         let result = rule.parse(&mut parser);
         
         assert!(result.is_some());
@@ -178,7 +178,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&CONSOLE_LOGGER, tokens, &mut diagnostics);
         let result = rule.parse(&mut parser);
         
         assert!(result.is_some());
@@ -198,7 +198,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&CONSOLE_LOGGER, tokens, &mut diagnostics);
         let result = rule.parse(&mut parser);
         
         // Should fail to parse due to missing type
@@ -225,7 +225,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&CONSOLE_LOGGER, tokens, &mut diagnostics);
         let result = rule.parse(&mut parser);
         
         // Should still parse the impl part but generate diagnostic for missing brace
@@ -253,7 +253,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&CONSOLE_LOGGER, tokens, &mut diagnostics);
         let result = rule.parse(&mut parser);
         
         // Should parse but generate diagnostic for missing closing brace
@@ -274,7 +274,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&CONSOLE_LOGGER, tokens, &mut diagnostics);
         let result = rule.parse(&mut parser);
         
         // Should parse the impl block structure but have errors from the malformed function
@@ -298,7 +298,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&CONSOLE_LOGGER, tokens, &mut diagnostics);
         let result = rule.parse(&mut parser);
         
         // May succeed or fail depending on how generic types are handled
@@ -313,7 +313,7 @@ mod tests {
         let rule = ImplBlockRule {};
         let tokens = vec![create_token(TokenType::EOF)];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&CONSOLE_LOGGER, tokens, &mut diagnostics);
         let result = rule.parse(&mut parser);
         
         assert!(result.is_none());

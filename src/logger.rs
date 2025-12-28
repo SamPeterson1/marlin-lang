@@ -48,38 +48,34 @@ impl LogLevel {
 pub trait Log {
     fn get_source(&self) -> String;
 
-    fn log(&self, level: LogLevel, targets: &[&dyn LogTarget], message: &str) {
+    fn log(&self, level: LogLevel, target: &dyn LogTarget, message: &str) {
         let source = self.get_source();
-        
-        for target in targets {
-            target.log(level, &source, message);
-        }
+        target.log(level, &source, message);
     }
     
-    fn log_error(&self, targets: &[&dyn LogTarget], message: &str) {
-        self.log(LogLevel::Error, targets, message);
+    fn log_error(&self, target: &dyn LogTarget, message: &str) {
+        self.log(LogLevel::Error, target, message);
     }
 
-    fn log_warning(&self, targets: &[&dyn LogTarget], message: &str) {
-        self.log(LogLevel::Warning, targets, message);
+    fn log_warning(&self, target: &dyn LogTarget, message: &str) {
+        self.log(LogLevel::Warning, target, message);
     }
 
-    fn log_info(&self, targets: &[&dyn LogTarget], message: &str) {
-        self.log(LogLevel::Info, targets, message);
+    fn log_info(&self, target: &dyn LogTarget, message: &str) {
+        self.log(LogLevel::Info, target, message);
     }
 
-    fn log_debug(&self, targets: &[&dyn LogTarget], message: &str) {
-        self.log(LogLevel::Debug, targets, message);
+    fn log_debug(&self, target: &dyn LogTarget, message: &str) {
+        self.log(LogLevel::Debug, target, message);
     }
 }
 
+// LogTarget stays dyn safe by not having any generic methods
 pub trait LogTarget: Send + Sync {
     fn log(&self, level: LogLevel, source: &str, message: &str);
 }
 
 pub static CONSOLE_LOGGER: ConsoleLogger = ConsoleLogger::new();
-pub static DYN_CONSOLE_LOGGER: &dyn LogTarget = &CONSOLE_LOGGER;
-pub static REF_DYN_CONSOLE_LOGGER: &&dyn LogTarget = &DYN_CONSOLE_LOGGER;
 
 pub struct ConsoleLogger {
     console_mutex: Mutex<()>,
@@ -118,6 +114,11 @@ impl FileLogger {
         
         println!("Logging to file: {}", log_file_path.display());
 
+        // Create parent directories if they don't exist
+        if let Some(parent) = log_file_path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+
         OpenOptions::new()
             .create(true)
             .write(true)
@@ -143,7 +144,7 @@ impl FileLogger {
 impl LogTarget for FileLogger {
     fn log(&self, level: LogLevel, source: &str, message: &str) {
         if let Some(Ok(mut log_file_handle)) = self.log_file_handle.as_ref().map(|f| f.lock()) {
-            writeln!(log_file_handle, "[{} - {}] {}", source, level, message);
+            let _ = writeln!(log_file_handle, "[{} - {}] {}", source, level, message);
         }
     }
 }

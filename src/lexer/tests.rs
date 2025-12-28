@@ -2,11 +2,11 @@ use crate::diagnostic::Diagnostic;
 use crate::lexer::token::{Token, TokenType};
 use crate::lexer::token::Positioned;
 use crate::lexer::Lexer;
-use crate::logger::DYN_CONSOLE_LOGGER;
+use crate::logger::CONSOLE_LOGGER;
 
 fn tokenize(code: &str) -> (Vec<Token>, Vec<Diagnostic>) {
     let mut diagnostics = Vec::new();
-    let lexer = Lexer::new(&DYN_CONSOLE_LOGGER, code, &mut diagnostics);
+    let lexer = Lexer::new(&CONSOLE_LOGGER, code, &mut diagnostics);
     let tokens = lexer.parse();
     (tokens, diagnostics)
 }

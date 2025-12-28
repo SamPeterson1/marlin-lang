@@ -17,6 +17,7 @@ mod main_item;
 mod member_access;
 mod new_array_expr;
 mod parsed_type;
+mod path;
 mod program;
 mod require;
 mod scope;
@@ -43,6 +44,7 @@ pub use main_item::MainItem;
 pub use member_access::{AccessType, MemberAccess};
 pub use new_array_expr::NewArrayExpr;
 pub use parsed_type::{ParsedType, ParsedTypeEnum};
+pub use path::Path;
 pub use program::Program;
 pub use require::Require;
 use serde::Serialize;
@@ -56,6 +58,7 @@ use crate::resolver::TypeId;
 
 use erased_serde::serialize_trait_object;
 use std::any::Any;
+use std::sync::Mutex;
 
 #[derive(Serialize, Clone, Copy, Hash, PartialEq, Eq, Debug)]
 pub struct AstId(usize);
@@ -66,7 +69,7 @@ impl ToString for AstId {
     }
 }
 
-static mut AST_ID_COUNTER: AstId = AstId(0);
+static AST_ID_COUNTER: Mutex<AstId> = Mutex::new(AstId(0));
 
 pub trait ASTVisitable: AcceptsASTVisitor<()> + AcceptsASTVisitor<Option<TypeId>> {}
 
@@ -109,10 +112,10 @@ pub trait ASTVisitor<'ast, T> {
 #[macro_export]
 macro_rules! new_ast_id {
     () => {
-        unsafe {
-            let ast_id = crate::ast::AST_ID_COUNTER;
-            crate::ast::AST_ID_COUNTER.0 += 1;
-            ast_id
+        {
+            let mut ast_id = crate::ast::AST_ID_COUNTER.lock().unwrap();
+            ast_id.0 += 1;
+            ast_id.clone()
         }
     };
 }

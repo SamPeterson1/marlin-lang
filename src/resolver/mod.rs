@@ -5,11 +5,15 @@ use serde::Serialize;
 pub use type_resolver::TypeResolver;
 pub use var_resolver::VarResolver;
 
-use std::{array, collections::{HashMap, HashSet}, hash::Hash};
+use std::{array, collections::{HashMap, HashSet}, hash::Hash, sync::{Condvar, Mutex, RwLock}};
 use crate::ast::{AstId, ParsedType, ParsedTypeEnum};
 
+pub struct GlobalSymbolTable {
+    scopes: HashMap<Vec<String>, Mutex<SymbolTable>>,
+    type_arena: Mutex<TypeArena>,
+}
+
 pub struct SymbolTable {
-    pub type_arena: TypeArena,
     pub types: HashMap<String, TypeId>,
     pub functions: HashMap<String, TypeId>,
     pub ast_types: HashMap<AstId, TypeId>,
@@ -20,7 +24,6 @@ pub struct SymbolTable {
 impl SymbolTable {
     pub fn new() -> Self {        
         Self {
-            type_arena: TypeArena::new(),
             types: HashMap::new(),
             functions: HashMap::new(),
             ast_types: HashMap::new(),
@@ -29,30 +32,34 @@ impl SymbolTable {
         }
     }
 
-    pub fn resolve_type(&mut self, parsed_type: &ParsedType) -> Option<TypeId> {
+    pub fn resolve_type(&mut self, type_arena: &mut TypeArena, parsed_type: &ParsedType) -> Option<TypeId> {
         Some(match parsed_type.parsed_type {
-            ParsedTypeEnum::Void => self.type_arena.void(),
-            ParsedTypeEnum::Boolean => self.type_arena.bool(),
-            ParsedTypeEnum::Char => self.type_arena.char(),
-            ParsedTypeEnum::Integer => self.type_arena.int(),
-            ParsedTypeEnum::Double => self.type_arena.double(),
+            ParsedTypeEnum::Void =>type_arena.void(),
+            ParsedTypeEnum::Boolean => type_arena.bool(),
+            ParsedTypeEnum::Char => type_arena.char(),
+            ParsedTypeEnum::Integer => type_arena.int(),
+            ParsedTypeEnum::Double => type_arena.double(),
             ParsedTypeEnum::Array(ref array_type) => {
-                let array_type_id = self.resolve_type(array_type)?;
-                self.type_arena.make_array(array_type_id)
+                let array_type_id = self.resolve_type(type_arena, array_type)?;
+                type_arena.make_array(array_type_id)
             },
             ParsedTypeEnum::Pointer(ref ptr_type) => {
-                let ptr_type_id = self.resolve_type(ptr_type)?;
-                self.type_arena.make_ptr(ptr_type_id)
+                let ptr_type_id = self.resolve_type(type_arena, ptr_type)?;
+                type_arena.make_ptr(ptr_type_id)
             },
             ParsedTypeEnum::Reference(ref ref_type) => {
-                let ref_type_id = self.resolve_type(ref_type)?;
-                self.type_arena.make_ref(ref_type_id)
+                let ref_type_id = self.resolve_type(type_arena, ref_type)?;
+                type_arena.make_ref(ref_type_id)
             },
             ParsedTypeEnum::TypeName(ref type_name) => {
                 *self.types.get(type_name)?
             }
         })
     }
+}
+
+pub struct GlobalTypeArena {
+    partial_arenas: Vec<TypeArena>
 }
 
 pub struct TypeArena {

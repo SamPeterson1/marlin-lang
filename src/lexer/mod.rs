@@ -11,7 +11,7 @@ use crate::lexer::token::{Position, PositionRange};
 use crate::lexer::token::{Token, TokenType};
 
 pub struct Lexer<'ctx> {
-    log_targets: &'ctx [&'ctx dyn LogTarget],
+    log_target: &'ctx dyn LogTarget,
     diagnostics: &'ctx mut Vec<Diagnostic>,
     chars: Peekable<Chars<'ctx>>,
     next_position: Position, // Position of the next character to be read
@@ -25,12 +25,12 @@ impl Log for Lexer<'_> {
 }
 
 impl<'ctx> Lexer<'ctx> {
-    pub fn new(log_target: &'ctx &'ctx dyn LogTarget, code: &'ctx str, diagnostics: &'ctx mut Vec<Diagnostic>) -> Lexer<'ctx> {
+    pub fn new(log_target: &'ctx dyn LogTarget, code: &'ctx str, diagnostics: &'ctx mut Vec<Diagnostic>) -> Lexer<'ctx> {
         let chars = code.chars().peekable();
         let next_position = Position::new(1, 1);
         
         Lexer {
-            log_targets: std::slice::from_ref(log_target),
+            log_target,
             diagnostics,
             chars,
             next_position,
@@ -45,7 +45,7 @@ impl<'ctx> Lexer<'ctx> {
 
         while self.peek().is_some() {
             if let Some(token) = self.next_token() {
-                self.log_debug(self.log_targets, &format!("Parsed token: {:?}", token));
+                self.log_debug(self.log_target, &format!("Parsed token: {:?}", token));
                 tokens.push(token);
             }
         }
@@ -55,7 +55,8 @@ impl<'ctx> Lexer<'ctx> {
             PositionRange::new(self.next_position),
         ));
 
-        self.log_info(self.log_targets, &format!("Parsed {} tokens", tokens.len()));
+        self.log_debug(self.log_target, "Reached end of file");
+        self.log_info(self.log_target, &format!("Parsed {} tokens", tokens.len()));
 
         tokens
     }
@@ -182,10 +183,10 @@ impl<'ctx> Lexer<'ctx> {
         match self.peek() {
             Some('/') => {
                 // It's a comment, consume until end of line
-                self.log_debug(self.log_targets, "Parsing comment");
+                self.log_debug(self.log_target, "Parsing comment");
                 while let Some(c) = self.next_char() {
                     if c == '\n' { 
-                        self.log_debug(self.log_targets, &format!("End of comment reached {}", c));
+                        self.log_debug(self.log_target, &format!("End of comment reached {}", c));
                         break;
                     }
                 }
