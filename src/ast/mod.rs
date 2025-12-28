@@ -18,6 +18,8 @@ mod member_access;
 mod new_array_expr;
 mod parsed_type;
 mod program;
+mod require;
+mod scope;
 mod struct_item;
 mod unary_expr;
 mod var_expr;
@@ -42,8 +44,10 @@ pub use member_access::{AccessType, MemberAccess};
 pub use new_array_expr::NewArrayExpr;
 pub use parsed_type::{ParsedType, ParsedTypeEnum};
 pub use program::Program;
+pub use require::Require;
 use serde::Serialize;
 pub use struct_item::StructItem;
+pub use scope::Scope;
 pub use unary_expr::{UnaryExpr, UnaryOperator};
 pub use var_expr::VarExpr;
 
@@ -98,6 +102,7 @@ pub trait ASTVisitor<'ast, T> {
     fn visit_struct(&mut self, _node: &'ast StructItem) -> T { unimplemented!() }
     fn visit_constructor(&mut self, _node: &'ast ConstructorItem) -> T { unimplemented!() }
     fn visit_main(&mut self, _node: &'ast MainItem) -> T { unimplemented!() }
+    fn visit_scope(&mut self, _node: &'ast Scope) -> T { unimplemented!() }
     fn visit_program(&mut self, _node: &'ast Program) -> T { unimplemented!() }
 }
 

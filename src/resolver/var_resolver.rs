@@ -3,13 +3,14 @@ use std::collections::{HashMap, VecDeque};
 use crate::ast::*;
 use crate::diagnostic::{Diagnostic, ErrMsg};
 use crate::lexer::token::Positioned;
-use crate::logger::Log;
+use crate::logger::{Log, LogTarget};
 use crate::resolver::SymbolTable;
 
-pub struct VarResolver<'ast> {
-    symbol_table: &'ast mut SymbolTable,
-    diagnostics: &'ast mut Vec<Diagnostic>,
-    scopes: VecDeque<HashMap<&'ast str, AstId>>,
+pub struct VarResolver<'ctx> {
+    log_targets: &'ctx [&'ctx dyn LogTarget],
+    symbol_table: &'ctx mut SymbolTable,
+    diagnostics: &'ctx mut Vec<Diagnostic>,
+    scopes: VecDeque<HashMap<&'ctx str, AstId>>,
 }
 
 impl Log for VarResolver<'_> {
@@ -18,16 +19,17 @@ impl Log for VarResolver<'_> {
     }
 }
 
-impl<'ast> VarResolver<'ast> {
-    pub fn new(symbol_table: &'ast mut SymbolTable, diagnostics: &'ast mut Vec<Diagnostic>) -> Self {
+impl<'ctx> VarResolver<'ctx> {
+    pub fn new(log_target: &'ctx &'ctx dyn LogTarget, symbol_table: &'ctx mut SymbolTable, diagnostics: &'ctx mut Vec<Diagnostic>) -> Self {
         Self {
+            log_targets: std::slice::from_ref(log_target),
             symbol_table,
             diagnostics,
             scopes: vec![HashMap::new()].into()
         }
     }
 
-    pub fn resolve_vars(mut self, program: &'ast Program) {
+    pub fn resolve_vars(mut self, program: &'ctx Program) {
         program.accept_visitor(&mut self);
     }
 }
@@ -74,13 +76,13 @@ impl<'ast> ASTVisitor<'ast, ()> for VarResolver<'ast> {
 
         for scope in self.scopes.iter().rev() {
             if let Some(decl) = scope.get(node.identifier.data.as_str()) {
-                self.log_info(&format!("Resolved variable '{}' to declaration ID {:?}", node.identifier.data, decl));
+                self.log_info(self.log_targets, &format!("Resolved variable '{}' to declaration ID {:?}", node.identifier.data, decl));
                 self.symbol_table.variables.insert(node.get_id(), *decl);
                 return;
             }
         }
 
-        self.log_error(&format!("Unknown variable: '{}'", node.identifier.data));
+        self.log_error(self.log_targets, &format!("Unknown variable: '{}'", node.identifier.data));
 
         self.diagnostics.push(
             crate::diagnostic::ErrMsg::UnknownVariable(node.identifier.data.clone())
@@ -117,7 +119,7 @@ impl<'ast> ASTVisitor<'ast, ()> for VarResolver<'ast> {
         self.symbol_table.declaration_types.insert(node.get_id(), resolved_type_id.unwrap());
 
         if scope.contains_key(&node.identifier.data.as_str()) {
-            self.log_error(&format!("Duplicate variable declaration: '{}'", node.identifier.data));
+            self.log_error(self.log_targets, &format!("Duplicate variable declaration: '{}'", node.identifier.data));
 
             self.diagnostics.push(
                 ErrMsg::DuplicateVariable(node.identifier.data.clone())
@@ -214,23 +216,24 @@ impl<'ast> ASTVisitor<'ast, ()> for VarResolver<'ast> {
 mod tests {
     use crate::diagnostic::Diagnostic;
     use crate::lexer::Lexer;
+    use crate::logger::DYN_CONSOLE_LOGGER;
     use crate::parser::ExprParser;
     use crate::resolver::{SymbolTable, VarResolver};
 
     fn parse_and_resolve_vars(source: &str) -> (SymbolTable, Vec<Diagnostic>) {
         let mut diagnostics = Vec::new();
         
-        let lexer = Lexer::new(source, &mut diagnostics);
+        let lexer = Lexer::new(&DYN_CONSOLE_LOGGER, source, &mut diagnostics);
         let tokens = lexer.parse();
         
-        let parser = ExprParser::new(tokens, &mut diagnostics);
+        let parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
         let program = parser.parse();
         
         // Clear parsing diagnostics for variable resolution tests
         diagnostics.clear();
         
         let mut symbol_table = SymbolTable::new();
-        let var_resolver = VarResolver::new(&mut symbol_table, &mut diagnostics);
+        let var_resolver = VarResolver::new(&DYN_CONSOLE_LOGGER, &mut symbol_table, &mut diagnostics);
         var_resolver.resolve_vars(&program);
         
         (symbol_table, diagnostics)

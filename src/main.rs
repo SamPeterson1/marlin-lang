@@ -2,7 +2,7 @@ use dotenv::dotenv;
 use std::env;
 use std::process;
 
-use crate::logger::Logger;
+use crate::run::Runner;
 
 mod ast;
 mod codegen;
@@ -17,19 +17,15 @@ mod type_checker;
 fn main() {
     dotenv().unwrap();
 
-    Logger::open();
-
     let mut args: Vec<String> = env::args().collect();
     args.remove(0);
     
     let len = args.len();
 
-    if len > 1 {
+    if len < 1 {
         println!("Usage: untitled [script]");
         process::exit(1);
     } else if len == 1 {
-        run::run_file(&args[0]);
+        Runner::new().run_files(args.as_slice());
     }
-
-    Logger::close();
 }

@@ -32,8 +32,6 @@ impl ParseRule<Vec<DeclarationExpr>> for ParametersRule {
             parameters.push(declaration_expr);
         }
 
-        parser.log_debug(&format!("Current token after first parameter parse: {:?}", parser.cur()));
-
         while let Some(_) = parser.try_consume(TokenType::Comma) {
             let declaration_expr = parser.apply_rule(DeclarationRule { use_let: false }, "parameter declaration", None)?;
             parameters.push(declaration_expr);

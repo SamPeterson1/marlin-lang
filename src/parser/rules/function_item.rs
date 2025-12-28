@@ -39,6 +39,7 @@ impl ParseRule<FunctionItem> for FunctionRule {
     }
 }
 
+use crate::logger::DYN_CONSOLE_LOGGER;
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -51,7 +52,7 @@ mod tests {
             .into_iter()
             .map(|token_type| Token::new(token_type, PositionRange::zero()))
             .collect();
-        ExprParser::new(tokens, diagnostics)
+        ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, diagnostics)
     }
 
     #[test]

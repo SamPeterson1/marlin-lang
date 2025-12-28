@@ -1,6 +1,7 @@
 use std::fmt;
 
 use crate::ast::Program;
+use crate::parser::rules::require::RequireRule;
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
 use crate::parser::rules::item::ItemRule;
 
@@ -19,19 +20,18 @@ impl ParseRule<Program> for ProgramRule {
 
     fn parse(&self, parser: &mut ExprParser) -> Option<Program> {
         parser.begin_range();
-        let mut items = Vec::new();
+        let mut requires = Vec::new();
 
-        while !parser.is_at_end() {
-            if let Some(item) = parser.apply_rule(ItemRule {}, "item", None) {
-                items.push(item);
-            }
-
-            if !((ItemRule {})).check_match(parser.get_cursor()) {
-                // Skip invalid tokens to avoid infinite loops
-                parser.next();
-            }
+        while let Some(require) = parser.apply_rule(RequireRule {}, "require", None) {
+            requires.extend(require);
         }
 
-        Some(Program::new(items, parser.end_range()))
+        let mut items = Vec::new();
+
+        while let Some(item) = parser.apply_rule(ItemRule {}, "item", None) {
+            items.push(item);
+        }
+
+        Some(Program::new(requires, items, parser.end_range()))
     }
 }

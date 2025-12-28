@@ -1,8 +1,9 @@
 use std::{collections::{HashMap, HashSet}, hash::Hash};
 
-use crate::{ast::*, diagnostic::{Diagnostic, ErrMsg}, lexer::token::{Located, PositionRange, Positioned}, logger::Log, resolver::{FunctionType, ResolvedType, StructType, SymbolTable, TypeId}};
+use crate::{ast::*, diagnostic::{Diagnostic, ErrMsg}, lexer::token::{Located, PositionRange, Positioned}, logger::{Log, LogTarget}, resolver::{FunctionType, ResolvedType, StructType, SymbolTable, TypeId}};
 
 pub struct TypeResolver<'ctx> {
+    log_targets: &'ctx [&'ctx dyn LogTarget],
     symbol_table: &'ctx mut SymbolTable,
     diagnostics: &'ctx mut Vec<Diagnostic>,
     unresolved_types: HashMap<String, (TypeId, PositionRange)>,
@@ -17,8 +18,9 @@ impl Log for TypeResolver<'_> {
 }
 
 impl<'ctx> TypeResolver<'ctx> {
-    pub fn new(symbol_table: &'ctx mut SymbolTable, diagnostics: &'ctx mut Vec<Diagnostic>) -> Self {
+    pub fn new(log_target: &'ctx &'ctx dyn LogTarget, symbol_table: &'ctx mut SymbolTable, diagnostics: &'ctx mut Vec<Diagnostic>) -> Self {
         Self { 
+            log_targets: std::slice::from_ref(log_target),
             symbol_table,
             diagnostics,
             unresolved_types: HashMap::new(),
@@ -176,20 +178,21 @@ impl<'ast> ASTVisitor<'ast, ()> for TypeResolver<'ast> {
 mod tests {
     use crate::diagnostic::Diagnostic;
     use crate::lexer::Lexer;
+    use crate::logger::DYN_CONSOLE_LOGGER;
     use crate::parser::ExprParser;
     use crate::resolver::{SymbolTable, TypeResolver};
 
     fn parse_and_resolve(source: &str) -> (SymbolTable, Vec<Diagnostic>) {
         let mut diagnostics = Vec::new();
-        let lexer = Lexer::new(source, &mut diagnostics);
+        let lexer = Lexer::new(&DYN_CONSOLE_LOGGER, source, &mut diagnostics);
         let tokens = lexer.parse();
         
-        let parser = ExprParser::new(tokens, &mut diagnostics);
+        let parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
         let program = parser.parse();
         
         let mut symbol_table = SymbolTable::new();
         
-        let resolver = TypeResolver::new(&mut symbol_table, &mut diagnostics);
+        let resolver = TypeResolver::new(&DYN_CONSOLE_LOGGER, &mut symbol_table, &mut diagnostics);
         resolver.resolve(&program);
         
         (symbol_table, diagnostics)

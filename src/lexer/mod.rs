@@ -5,30 +5,32 @@ pub mod tests;
 
 use std::{iter::Peekable, str::Chars};
 
-use crate::logger::Log;
+use crate::logger::{Log, LogTarget};
 use crate::diagnostic::{Diagnostic, ErrMsg};
 use crate::lexer::token::{Position, PositionRange};
 use crate::lexer::token::{Token, TokenType};
 
-pub struct Lexer<'ch, 'diag> {
-    diagnostics: &'diag mut Vec<Diagnostic>,
-    chars: Peekable<Chars<'ch>>,
+pub struct Lexer<'ctx> {
+    log_targets: &'ctx [&'ctx dyn LogTarget],
+    diagnostics: &'ctx mut Vec<Diagnostic>,
+    chars: Peekable<Chars<'ctx>>,
     next_position: Position, // Position of the next character to be read
     token_range: PositionRange, // Range of the current token being parsed
 }
 
-impl Log for Lexer<'_, '_> {
+impl Log for Lexer<'_> {
     fn get_source(&self) -> String {
-        "Lexer".to_string()
+        format!("Lexer")
     }
 }
 
-impl<'ch, 'diag> Lexer<'ch, 'diag> {
-    pub fn new(code: &'ch str, diagnostics: &'diag mut Vec<Diagnostic>) -> Lexer<'ch, 'diag> {
+impl<'ctx> Lexer<'ctx> {
+    pub fn new(log_target: &'ctx &'ctx dyn LogTarget, code: &'ctx str, diagnostics: &'ctx mut Vec<Diagnostic>) -> Lexer<'ctx> {
         let chars = code.chars().peekable();
         let next_position = Position::new(1, 1);
         
         Lexer {
+            log_targets: std::slice::from_ref(log_target),
             diagnostics,
             chars,
             next_position,
@@ -43,7 +45,7 @@ impl<'ch, 'diag> Lexer<'ch, 'diag> {
 
         while self.peek().is_some() {
             if let Some(token) = self.next_token() {
-                self.log_debug(&format!("Parsed token: {:?}", token));
+                self.log_debug(self.log_targets, &format!("Parsed token: {:?}", token));
                 tokens.push(token);
             }
         }
@@ -53,7 +55,7 @@ impl<'ch, 'diag> Lexer<'ch, 'diag> {
             PositionRange::new(self.next_position),
         ));
 
-        self.log_info(&format!("Parsed {} tokens", tokens.len()));
+        self.log_info(self.log_targets, &format!("Parsed {} tokens", tokens.len()));
 
         tokens
     }
@@ -115,7 +117,6 @@ impl<'ch, 'diag> Lexer<'ch, 'diag> {
             '%' => Some(self.end_token_consume(TokenType::Percentage)),
             '~' => Some(self.end_token_consume(TokenType::Tilda)),
             '|' => Some(self.end_token_consume(TokenType::Bar)),
-            ':' => Some(self.end_token_consume(TokenType::Colon)),
             '$' => Some(self.end_token_consume(TokenType::DollarSign)),
             ';' => Some(self.end_token_consume(TokenType::Semicolon)),
             ',' => Some(self.end_token_consume(TokenType::Comma)),
@@ -129,6 +130,7 @@ impl<'ch, 'diag> Lexer<'ch, 'diag> {
             '+' => Some(self.end_token_consume(TokenType::Plus)),
             '*' => Some(self.end_token_consume(TokenType::Star)),
             '&' => Some(self.end_token_consume(TokenType::Ampersand)),
+            ':' => Some(self.parse_pair(&[(':', TokenType::DoubleColon)], TokenType::Colon)),
             '-' => Some(self.parse_pair(&[('>', TokenType::Arrow)], TokenType::Minus)),
             '!' => Some(self.parse_pair(&[('=', TokenType::NotEqual)], TokenType::Not)),
             '>' => Some(self.parse_pair(&[('=', TokenType::GreaterEqual), ('>', TokenType::RightShift)], TokenType::Greater)),
@@ -180,10 +182,10 @@ impl<'ch, 'diag> Lexer<'ch, 'diag> {
         match self.peek() {
             Some('/') => {
                 // It's a comment, consume until end of line
-                self.log_debug("Parsing comment");
+                self.log_debug(self.log_targets, "Parsing comment");
                 while let Some(c) = self.next_char() {
                     if c == '\n' { 
-                        self.log_debug(&format!("End of comment reached {}", c));
+                        self.log_debug(self.log_targets, &format!("End of comment reached {}", c));
                         break;
                     }
                 }
@@ -366,6 +368,9 @@ impl<'ch, 'diag> Lexer<'ch, 'diag> {
         }
     
         match word.as_str() {
+            "scope" => self.end_token(TokenType::Scope),
+            "from" => self.end_token(TokenType::From),
+            "require" => self.end_token(TokenType::Require),
             "main" => self.end_token(TokenType::Main),
             "void" => self.end_token(TokenType::Void),
             "delete" => self.end_token(TokenType::Delete),

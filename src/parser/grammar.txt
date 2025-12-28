@@ -1,6 +1,11 @@
-program: item*
-item: main | struct | impl | function
+program: require* item*
+item: struct | impl | function | scope
 
+require: ["from" path] "require" path-alias ("," path-alias)* ";"
+path-alias: path ["as" identifier]
+path: "identifier" ("::" identifier)*
+
+scope: "scope" path "{" program "}"
 main: "main" block-expression
 
 struct: "struct" identifier "{" struct-body "}"

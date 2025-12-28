@@ -27,8 +27,6 @@ impl ParseRule<Box<dyn ASTNode>> for MemberAccessRule {
 
         let mut member_accesses = Vec::new();
 
-        parser.log_debug(&format!("Parsing member access for expression at token {:?}", parser.cur()));
-
         while let Some(token) = parser.try_match(&[TokenType::Dot, TokenType::Arrow, TokenType::LeftSquare, TokenType::LeftParen]) {
             
             if token.value == TokenType::Dot {
@@ -70,6 +68,7 @@ impl ParseRule<Box<dyn ASTNode>> for MemberAccessRule {
 mod tests {
     use super::*;
     use crate::lexer::token::{Token, TokenType, PositionRange};
+    use crate::logger::DYN_CONSOLE_LOGGER;
 
     fn create_token(token_type: TokenType) -> Token {
         Token::new(token_type, PositionRange::zero())
@@ -96,7 +95,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
         
         let result = rule.parse(&mut parser);
         
@@ -114,7 +113,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
         
         let result = rule.parse(&mut parser);
         
@@ -132,7 +131,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
         
         let result = rule.parse(&mut parser);
         
@@ -151,7 +150,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
         
         let result = rule.parse(&mut parser);
         
@@ -171,7 +170,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
         
         let result = rule.parse(&mut parser);
         
@@ -194,7 +193,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
         
         let result = rule.parse(&mut parser);
         
@@ -216,7 +215,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
         
         let result = rule.parse(&mut parser);
         
@@ -235,7 +234,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
         
         let result = rule.parse(&mut parser);
         
@@ -256,7 +255,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
         
         let result = rule.parse(&mut parser);
         
@@ -281,7 +280,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
         
         let result = rule.parse(&mut parser);
         
@@ -298,7 +297,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
         
         let result = rule.parse(&mut parser);
         
@@ -316,7 +315,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
         
         let result = rule.parse(&mut parser);
         
@@ -335,7 +334,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
         
         let result = rule.parse(&mut parser);
         
@@ -355,7 +354,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
         
         let result = rule.parse(&mut parser);
         
@@ -376,7 +375,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
         
         let result = rule.parse(&mut parser);
         
@@ -396,7 +395,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
         
         let result = rule.parse(&mut parser);
         
@@ -418,7 +417,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
         
         let result = rule.parse(&mut parser);
         
@@ -437,7 +436,7 @@ mod tests {
             create_token(TokenType::EOF),
         ];
         let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(tokens, &mut diagnostics);
+        let mut parser = ExprParser::new(&DYN_CONSOLE_LOGGER, tokens, &mut diagnostics);
         
         let result = rule.parse(&mut parser);
         

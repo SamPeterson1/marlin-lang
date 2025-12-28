@@ -9,14 +9,16 @@ use crate::ast::ASTNode;
 use crate::ast::Program;
 use crate::logger::Log;
 use crate::diagnostic::{Diagnostic, ErrMsg};
+use crate::logger::LogTarget;
 use crate::parser::rules::program::ProgramRule;
 use crate::lexer::token::{PositionRange, Positioned};
 use crate::lexer::token::{Token, TokenType};
 
-pub struct ExprParser<'diag> {
+pub struct ExprParser<'ctx> {
+    log_targets: &'ctx [&'ctx dyn LogTarget],
+    diagnostics: &'ctx mut Vec<Diagnostic>,
     ptr: usize,
     tokens: Vec<Token>,
-    diagnostics: &'diag mut Vec<Diagnostic>,
     rule_stack: VecDeque<String>,
     position_stack: VecDeque<PositionRange>,
 }
@@ -113,12 +115,13 @@ impl Log for ExprParser<'_> {
     }
 }
 
-impl<'diag> ExprParser<'diag> {
-    pub fn new(tokens: Vec<Token>, diagnostics: &'diag mut Vec<Diagnostic>) -> ExprParser<'diag> {
+impl<'ctx> ExprParser<'ctx> {
+    pub fn new(log_target: &'ctx &'ctx dyn LogTarget, tokens: Vec<Token>, diagnostics: &'ctx mut Vec<Diagnostic>) -> ExprParser<'ctx> {
         ExprParser {
+            log_targets: std::slice::from_ref(log_target),
+            diagnostics,
             ptr: 0, 
             tokens, 
-            diagnostics,
             rule_stack: VecDeque::new(),
             position_stack: VecDeque::new(),
         }
@@ -139,7 +142,7 @@ impl<'diag> ExprParser<'diag> {
     fn push_diagnostic(&mut self, diagnostic: Diagnostic) {
         let log_severity = diagnostic.severity.into();
 
-        self.log(log_severity, &format!("Pushing diagnostic: {}", diagnostic));
+        self.log(log_severity, self.log_targets, &format!("Pushing diagnostic: {}", diagnostic));
         self.diagnostics.push(diagnostic);
     }
 
@@ -180,24 +183,24 @@ impl<'diag> ExprParser<'diag> {
 
     fn apply_rule<T: Serialize>(&mut self, rule: impl ParseRule<T>, purpose: &str, err_msg: Option<ErrMsg>) -> Option<T> {
         self.position_stack.push_front(*self.cur().get_position());
-        self.log_debug(&format!("Entering rule {} for {}. Current token {:?}", rule, purpose, self.cur()));
+        self.log_debug(self.log_targets, &format!("Entering rule {} for {}. Current token {:?}", rule, purpose, self.cur()));
 
         if rule.check_match(self.get_cursor()) {
-            self.log_debug(&format!("Initial match satisfied for {}", purpose));
+            self.log_debug(self.log_targets, &format!("Initial match satisfied for {}", purpose));
             
             self.rule_stack.push_front(format!("{}", rule));
             let result = rule.parse(self);
             self.rule_stack.pop_front();
 
             match &result {
-                Some(result) => self.log_debug(&format!("Match succeeded for {}, result {}", purpose, serde_json::to_string(&result).unwrap())),
-                _ => self.log_error(&format!("Match failed for {}", purpose))
+                Some(result) => self.log_debug(self.log_targets, &format!("Match succeeded for {}, result {}", purpose, serde_json::to_string(&result).unwrap())),
+                _ => self.log_error(self.log_targets, &format!("Match failed for {}", purpose))
             }
 
 
             result
         } else {
-            self.log_debug(&format!("Initial match not satisfied for {}", purpose));
+            self.log_debug(self.log_targets, &format!("Initial match not satisfied for {}", purpose));
 
             self.rule_stack.pop_front();
 
@@ -210,11 +213,11 @@ impl<'diag> ExprParser<'diag> {
     }
 
     pub fn parse(mut self) -> Program {
-        self.log_info("Beginning parser");
+        self.log_info(self.log_targets, "Beginning parser");
 
         let program: Program = self.apply_rule(ProgramRule {}, "program", None).unwrap();
 
-        self.log_info("Parser finished");
+        self.log_info(self.log_targets, "Parser finished");
 
         program
     }
