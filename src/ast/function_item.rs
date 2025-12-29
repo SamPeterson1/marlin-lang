@@ -10,13 +10,13 @@ pub struct FunctionItem {
     pub name: Located<String>,
     pub parameters: Vec<DeclarationExpr>,
     pub return_type: ParsedType,
-    pub body: BlockExpr,
+    pub body: Option<BlockExpr>,
     position: PositionRange,
     id: AstId,
 }
 
 impl FunctionItem {
-    pub fn new(name: Located<String>, parameters: Vec<DeclarationExpr>, return_type: ParsedType, body: BlockExpr, position: PositionRange) -> Self {
+    pub fn new(name: Located<String>, parameters: Vec<DeclarationExpr>, return_type: ParsedType, body: Option<BlockExpr>, position: PositionRange) -> Self {
         Self {
             name,
             parameters,

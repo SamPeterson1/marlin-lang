@@ -5,16 +5,36 @@ use serde::Serialize;
 pub use type_resolver::TypeResolver;
 pub use var_resolver::VarResolver;
 
-use std::{array, collections::{HashMap, HashSet}, hash::Hash, sync::{Condvar, Mutex, RwLock}};
-use crate::ast::{AstId, ParsedType, ParsedTypeEnum};
+use std::{array, collections::{HashMap, HashSet}, hash::Hash, sync::{Condvar, Mutex, MutexGuard, RwLock}};
+use crate::ast::{AstId, ParsedType, ParsedTypeEnum, Scope};
 
 pub struct GlobalSymbolTable {
     scopes: HashMap<Vec<String>, Mutex<SymbolTable>>,
     type_arena: Mutex<TypeArena>,
 }
 
+impl GlobalSymbolTable {
+    pub fn new() -> Self {
+        Self {
+            scopes: HashMap::new(),
+            type_arena: Mutex::new(TypeArena::new()),
+        }
+    }
+
+    pub fn get_symbol_table(&self, scope: &Scope) -> Option<MutexGuard<'_, SymbolTable>> {
+        let path_string: Vec<String> = scope.path.segments.iter().map(|s| s.data.clone()).collect::<Vec<_>>();
+        self.scopes.get(&path_string).map(|mutex| mutex.lock().unwrap())
+    }
+
+    pub fn add_scope(&mut self, scope: &Scope) {
+        let path_string: Vec<String> = scope.path.segments.iter().map(|s| s.data.clone()).collect::<Vec<_>>();
+        self.scopes.insert(path_string, Mutex::new(SymbolTable::new()));
+    }
+}
+
 pub struct SymbolTable {
     pub types: HashMap<String, TypeId>,
+    pub function_names: HashSet<String>,
     pub functions: HashMap<String, TypeId>,
     pub ast_types: HashMap<AstId, TypeId>,
     pub declaration_types: HashMap<AstId, TypeId>,
@@ -25,6 +45,7 @@ impl SymbolTable {
     pub fn new() -> Self {        
         Self {
             types: HashMap::new(),
+            function_names: HashSet::new(),
             functions: HashMap::new(),
             ast_types: HashMap::new(),
             declaration_types: HashMap::new(),

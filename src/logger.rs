@@ -112,8 +112,6 @@ impl FileLogger {
             .join(Path::new(&*CURRENT_TIME))
             .join(Path::new(file_name)).with_extension("log");
         
-        println!("Logging to file: {}", log_file_path.display());
-
         // Create parent directories if they don't exist
         if let Some(parent) = log_file_path.parent() {
             std::fs::create_dir_all(parent)?;
@@ -130,7 +128,11 @@ impl FileLogger {
         let log_file_handle = match Self::new_log_file_handle(file_name) {
             Ok(log_file_handle) => Some(Mutex::new(log_file_handle)),
             Err(e) => {
-                println!("Failed to open log file: {} - {}", file_name.display(), e);
+                CONSOLE_LOGGER.log(
+                    LogLevel::Error,
+                    "FileLogger",
+                    &format!("Failed to create log file '{}': {}", file_name.display(), e)
+                );
                 None
             }
         };

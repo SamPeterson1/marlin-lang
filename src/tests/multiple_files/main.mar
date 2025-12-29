@@ -1,0 +1,31 @@
+scope Main {
+    fn main() {
+        let int add = Main::SubScope::add(2, 3);
+        let int subtract = subtract(4, 5);
+
+        let int multiply = Secondary::multiply(add, subtract);
+
+        //25 + 16 + 9 + 4 + 1 = 41 + 14 = 55
+        let int sum_squares = Math::sum_squares(5);
+
+        CharUtil::println_int(multiply);
+        CharUtil::println_int(sum_squares);
+        CharUtil::println("DONE!!", 6);
+    }
+
+    fn subtract(int a, int b) -> int {
+        return a - b;
+    }
+
+    scope SubScope {
+        fn add(int a, int b) -> int {
+            return a + b;
+        }
+    }
+}
+
+scope Secondary {
+    fn multiply(int a, int b) -> int {
+        return a * b;
+    }
+}

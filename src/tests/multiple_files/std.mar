@@ -1,0 +1,4 @@
+scope std {
+    extern fn putchar(char c) -> int;
+    extern fn getchar() -> char;
+}

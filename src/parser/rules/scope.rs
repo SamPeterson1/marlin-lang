@@ -4,8 +4,9 @@ use crate::ast::{DeclarationExpr, Scope};
 use crate::diagnostic::ErrMsg;
 use crate::logger::Log;
 use crate::parser::rules::declaration::DeclarationRule;
+use crate::parser::rules::item::ItemRule;
 use crate::parser::rules::path::PathRule;
-use crate::parser::rules::program::ProgramRule;
+use crate::parser::rules::require::RequireRule;
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
 use crate::parser::rules::parsed_type::ParsedTypeRule;
 use crate::lexer::token::{Located, TokenType};
@@ -31,9 +32,32 @@ impl ParseRule<Scope> for ScopeRule {
         let path = parser.apply_rule(PathRule {}, "scope path", None)?;
         parser.consume_or_diagnostic(TokenType::LeftCurly)?;
 
-        let program = parser.apply_rule(ProgramRule {}, "scope program", None)?;
-        
-        Some(Scope::new(path, program, parser.end_range()))
+        let mut requires = Vec::new();
+
+        while let Some(require) = parser.apply_rule(RequireRule {}, "require", None) {
+            requires.extend(require);
+        }
+
+        let mut items = Vec::new();
+        let mut child_scopes = Vec::new();
+
+        loop {
+            if let Some(item) = parser.apply_rule(ItemRule {}, "item", None) {
+                items.push(item);
+                continue;
+            }
+
+            if let Some(scope) = parser.apply_rule(ScopeRule {}, "child scope", None) {
+                child_scopes.push(scope);
+                continue;
+            }
+
+            break;
+        }
+
+        parser.consume_or_diagnostic(TokenType::RightCurly)?;
+
+        Some(Scope::new(path, requires, child_scopes, items, parser.end_range()))
     }
 }
 

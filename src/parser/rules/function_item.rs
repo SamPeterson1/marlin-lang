@@ -17,10 +17,14 @@ impl fmt::Display for FunctionRule {
 impl ParseRule<FunctionItem> for FunctionRule {
     fn check_match(&self, mut cursor: ParserCursor) -> bool {
         cursor.try_consume(TokenType::Fn).is_some()
+         || cursor.try_consume(TokenType::Extern).is_some()
     }
 
     fn parse(&self, parser: &mut ExprParser) -> Option<FunctionItem> {
         parser.begin_range();
+
+        let is_extern = parser.try_consume(TokenType::Extern).is_some();
+
         parser.try_consume(TokenType::Fn)?;
 
         let name = parser.consume_or_diagnostic(TokenType::AnyIdentifier)?.unwrap_identifier();
@@ -33,7 +37,13 @@ impl ParseRule<FunctionItem> for FunctionRule {
             ParsedType::new(ParsedTypeEnum::Void, PositionRange::zero())
         };
 
-        let block = parser.apply_rule(BlockRule {}, "function body", Some(ErrMsg::ExpectedBlock))?;
+        let block = if !is_extern {
+            let block = parser.apply_rule(BlockRule {}, "function body", Some(ErrMsg::ExpectedBlock))?;
+            Some(block)
+        } else {
+            parser.consume_or_diagnostic(TokenType::Semicolon);
+            None
+        };
 
         Some(FunctionItem::new(name, parameters, ret_type, block, parser.end_range()))
     }

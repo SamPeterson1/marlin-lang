@@ -1,4 +1,5 @@
 use std::collections::{HashMap, VecDeque};
+use std::sync::Arc;
 
 use crate::ast::*;
 use crate::diagnostic::{Diagnostic, ErrMsg};
@@ -22,7 +23,7 @@ impl Log for VarResolver<'_> {
 }
 
 impl<'ctx> VarResolver<'ctx> {
-    pub fn new(log_target: &'ctx dyn LogTarget, global_table: &'ctx mut GlobalSymbolTable, symbol_table: &'ctx mut SymbolTable, diagnostics: &'ctx mut Vec<Diagnostic>) -> Self {
+    pub fn new(log_target: &'ctx dyn LogTarget, global_table: &'ctx GlobalSymbolTable, symbol_table: &'ctx mut SymbolTable, diagnostics: &'ctx mut Vec<Diagnostic>) -> Self {
         Self {
             log_target,
             global_table,
@@ -33,15 +34,32 @@ impl<'ctx> VarResolver<'ctx> {
         }
     }
 
-    pub fn resolve_vars(&mut self, program: &'ctx Program) {
-        program.accept_visitor(self);
+    pub fn resolve_vars(&mut self, scope: &'ctx Scope) {
+        scope.accept_visitor(self);
     }
 
     pub fn finish_resolving(self) {
+        self.log_debug(self.log_target, &format!("Global scope list: {:?}", self.global_table.scopes.keys().collect::<Vec<_>>()));
+
         for path in &self.unknown_variables {
-            let symbol_table = self.global_table.scopes.get(&path.segments.iter().map(|s| s.data.clone()).collect::<Vec<_>>()).unwrap().lock().unwrap();
-            
-            if !symbol_table.functions.contains_key(&path.to_string()) && !symbol_table.types.contains_key(&path.to_string()) {
+            let is_known = if path.segments.len() == 1 {
+                self.symbol_table.function_names.contains(&path.to_string())
+            } else {
+                let parent_scope = &path.segments[0..path.segments.len() - 1];
+                let scope_vec = parent_scope.iter().map(|s| s.data.clone()).collect::<Vec<_>>();
+
+                self.log_debug(self.log_target, &format!("Checking for function '{}' in scope '{:?}'", path.to_string(), &scope_vec));
+
+                if let Some(symbol_table) = self.global_table.scopes.get(&scope_vec) {
+                    self.log_debug(self.log_target, &format!("Found scope '{:?} with functions: {:?}'", &scope_vec, symbol_table.lock().unwrap().function_names.iter().collect::<Vec<_>>()));
+                    symbol_table.lock().unwrap().function_names.contains(&path.segments.last().unwrap().data)
+                } else {
+                    self.log_debug(self.log_target, &format!("Scope '{:?}' not found", &scope_vec));
+                    false
+                }
+            };
+
+            if !is_known {
                 self.log_error(self.log_target, &format!("Unknown variable '{}'", path.to_string()));
 
                 self.diagnostics.push(
@@ -194,14 +212,18 @@ impl<'ast> ASTVisitor<'ast, ()> for VarResolver<'ast> {
     }
     
     fn visit_function(&mut self, node: &'ast FunctionItem) {
-        self.scopes.push_back(HashMap::new());
+        self.symbol_table.function_names.insert(node.name.data.to_string());
 
-        for parameter in &node.parameters {
-            parameter.accept_visitor(self);
+        if let Some(body) = &node.body {
+            self.scopes.push_back(HashMap::new());
+
+            for parameter in &node.parameters {
+                parameter.accept_visitor(self);
+            }
+            
+            body.accept_visitor(self);
+            self.scopes.pop_back();
         }
-        
-        node.body.accept_visitor(self);
-        self.scopes.pop_back();
     }
     
     fn visit_struct(&mut self, node: &'ast StructItem) {
@@ -213,12 +235,8 @@ impl<'ast> ASTVisitor<'ast, ()> for VarResolver<'ast> {
     fn visit_constructor(&mut self, node: &'ast ConstructorItem) {
         node.body.accept_visitor(self);
     }
-    
-    fn visit_main(&mut self, node: &'ast MainItem) {
-        node.body.accept_visitor(self);
-    }
-    
-    fn visit_program(&mut self, node: &'ast Program) {
+
+    fn visit_scope(&mut self, node: &'ast Scope) {
         for item in &node.items {
             item.accept_visitor(self);
         }

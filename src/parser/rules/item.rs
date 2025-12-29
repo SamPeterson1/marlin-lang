@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::ast::ASTNode;
 use crate::parser::{ExprParser, ParseRule, ParserCursor};
-use crate::parser::rules::{impl_block::ImplBlockRule, main_item::MainItemRule};
+use crate::parser::rules::{impl_block::ImplBlockRule};
 
 use super::{function_item::FunctionRule, struct_item::StructRule};
 
@@ -46,18 +46,6 @@ mod tests {
 
     fn create_token(token_type: TokenType) -> Token {
         Token::new(token_type, PositionRange::zero())
-    }
-
-    #[test]
-    fn test_item_rule_check_match_main() {
-        let rule = ItemRule {};
-        let tokens = vec![
-            create_token(TokenType::Main),
-            create_token(TokenType::EOF),
-        ];
-        let cursor = ParserCursor { ptr: 0, tokens: &tokens };
-        
-        assert!(rule.check_match(cursor));
     }
 
     #[test]
@@ -106,24 +94,6 @@ mod tests {
         let cursor = ParserCursor { ptr: 0, tokens: &tokens };
         
         assert!(!rule.check_match(cursor));
-    }
-
-    #[test]
-    fn test_parse_main_item() {
-        let rule = ItemRule {};
-        let tokens = vec![
-            create_token(TokenType::Main),
-            create_token(TokenType::LeftCurly),
-            create_token(TokenType::RightCurly),
-            create_token(TokenType::EOF),
-        ];
-        let mut diagnostics = Vec::new();
-        let mut parser = ExprParser::new(&CONSOLE_LOGGER, tokens, &mut diagnostics);
-        
-        let result = rule.parse(&mut parser);
-        
-        assert!(result.is_some());
-        assert!(diagnostics.is_empty(), "Expected no diagnostics for valid main item");
     }
 
     #[test]

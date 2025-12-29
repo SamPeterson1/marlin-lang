@@ -194,10 +194,10 @@ pub enum TokenType {
     LeftCurly, RightCurly, LeftSquare, RightSquare, LeftParen, RightParen, From, Require, Scope,
     Plus, Minus, Slash, Star, Ampersand,
     NotEqual, Equal, Greater, GreaterEqual, Less, LessEqual,
-    And, Or, Not, Tilda, Bar, LeftShift, RightShift, As,
+    And, Or, Not, Tilda, Bar, LeftShift, RightShift, As, Extern,
 
     New, Let, Delete,
-    If, Else, For, Fn, Main,
+    If, Else, For, Fn,
     While, Loop, Break, Result, Return, Impl,
 
     Int, Double, Bool, Char,
@@ -262,6 +262,7 @@ impl PartialEq for TokenType {
 impl fmt::Display for TokenType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let name = match self {
+            TokenType::Extern => "extern",
             TokenType::Scope => "scope",
             TokenType::From => "from",
             TokenType::Require => "require",
@@ -306,7 +307,6 @@ impl fmt::Display for TokenType {
             TokenType::Else => "else",
             TokenType::For => "for",
             TokenType::Fn => "fn",
-            TokenType::Main => "main",
             TokenType::Delete => "delete",
             TokenType::While => "while",
             TokenType::Loop => "loop",

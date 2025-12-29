@@ -91,10 +91,9 @@ fn test_single_vs_paired_tokens() {
 
 #[test]
 fn test_keywords() {
-    let (tokens, _) = tokenize("main delete result impl if else for return fn while break loop let struct new");
+    let (tokens, _) = tokenize("delete result impl if else for return fn while break loop let struct new");
     
     let expected = vec![
-        TokenType::Main,
         TokenType::Delete,
         TokenType::Result,
         TokenType::Impl,
@@ -539,7 +538,7 @@ fn test_multiline_positions() {
     assert_eq!(format!("{}", tokens[0].get_position()), "1:1-1:2");
     
     // main at 2:1-2:4
-    assert_eq!(tokens[1].value, TokenType::Main);
+    assert_eq!(tokens[1].value, TokenType::Identifier("main".to_string()));
     assert_eq!(format!("{}", tokens[1].get_position()), "2:1-2:4");
     
     // ( at 3:1-3:1
@@ -598,7 +597,7 @@ fn test_function_definition() {
     
     let expected = vec![
         TokenType::Fn,
-        TokenType::Main,
+        TokenType::Identifier("main".to_string()),
         TokenType::LeftParen,
         TokenType::RightParen,
         TokenType::Arrow,

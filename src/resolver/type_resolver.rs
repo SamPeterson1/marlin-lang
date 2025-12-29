@@ -31,8 +31,8 @@ impl<'ctx> TypeResolver<'ctx> {
         }
     }
 
-    pub fn resolve(mut self, program: &'ctx Program) {
-        program.accept_visitor(&mut self);
+    pub fn resolve(mut self, scope: &'ctx Scope) {
+        scope.accept_visitor(&mut self);
  
         let partial_structs = std::mem::take(&mut self.partial_structs);
         let mut type_arena = self.global_table.type_arena.lock().unwrap();
@@ -52,23 +52,7 @@ impl<'ctx> TypeResolver<'ctx> {
             self.unresolved_types.remove(&struct_name);
             self.symbol_table.types.insert(struct_name, struct_type_id);
         }
-
-        let getchar_type = FunctionType {
-            param_types: vec![],
-            return_type: type_arena.char(),
-        };
-        let getchar_type_id = type_arena.make_function(getchar_type);
-
-        self.symbol_table.functions.insert("getchar".to_string(), getchar_type_id);
-
-        let putchar_type = FunctionType {
-            param_types: vec![type_arena.char()],
-            return_type: type_arena.int(),
-        };
-        let putchar_type_id = type_arena.make_function(putchar_type);
-
-        self.symbol_table.functions.insert("putchar".to_string(), putchar_type_id);
-
+        
         for (type_name, (_, position)) in self.unresolved_types {
             self.diagnostics.push(ErrMsg::UnknownTypeName(type_name).make_diagnostic(position));
         }
@@ -171,14 +155,6 @@ impl<'ast> ASTVisitor<'ast, ()> for TypeResolver<'ast> {
         };
 
         self.partial_structs.insert(node.name.data.clone(), (struct_type, struct_type_id));
-    }
-
-    fn visit_main(&mut self, _node: &MainItem) { }
-
-    fn visit_program(&mut self, node: &'ast Program) -> () {
-        for item in &node.items {
-            item.accept_visitor(self);
-        }
     }
 }
 

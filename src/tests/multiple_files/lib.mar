@@ -1,0 +1,11 @@
+scope Math {
+    fn sum_squares(int n) {
+        let int sum = 0;
+
+        for (let int i = 1; i <= n; i = i + 1) {
+            sum = sum + i * i;
+        }
+
+        return sum;
+    }
+}

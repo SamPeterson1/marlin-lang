@@ -1,0 +1,57 @@
+scope CharUtil {
+    fn print_int(int num) {
+        if num == 0 {
+            std::putchar('0');
+            return;
+        }
+
+        let int *digits = new int[10];
+        let int n_digits = 0;
+
+        while num != 0 {
+            let int digit = num % 10;
+            num = num / 10;
+
+            digits[n_digits] = digit;
+            n_digits = n_digits + 1;
+        }
+
+        for (let int i = n_digits - 1; i >= 0; i = i - 1) {
+            let char digit_char = digits[i] as char + '0';
+            std::putchar(digit_char);
+        }
+    }
+
+    fn println_int(int num) {
+        print_int(num);
+        std::putchar('\n');
+    }
+
+    fn read_int() -> int {
+        let int num = 0;
+        let char c = ' ';
+
+        loop {
+            c = std::getchar();
+
+            if c == '\n' {
+                break;
+            }
+
+            num = 10 * num + (c - '0') as int;
+        }
+
+        return num;
+    }
+
+    fn print(char *str, int len) {
+        for (let int i = 0; i < len; i = i + 1) {
+            std::putchar(str[i]);
+        }
+    }
+
+    fn println(char *str, int len) {
+        print(str, len);
+        std::putchar('\n');
+    }
+}

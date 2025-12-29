@@ -369,10 +369,10 @@ impl<'ctx> Lexer<'ctx> {
         }
     
         match word.as_str() {
+            "extern" => self.end_token(TokenType::Extern),
             "scope" => self.end_token(TokenType::Scope),
             "from" => self.end_token(TokenType::From),
             "require" => self.end_token(TokenType::Require),
-            "main" => self.end_token(TokenType::Main),
             "void" => self.end_token(TokenType::Void),
             "delete" => self.end_token(TokenType::Delete),
             "result" => self.end_token(TokenType::Result),

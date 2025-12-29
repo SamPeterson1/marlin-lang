@@ -13,12 +13,10 @@ mod if_expr;
 mod impl_item;
 mod literal_expr;
 mod loop_expr;
-mod main_item;
 mod member_access;
 mod new_array_expr;
 mod parsed_type;
 mod path;
-mod program;
 mod require;
 mod scope;
 mod struct_item;
@@ -40,12 +38,10 @@ pub use if_expr::IfExpr;
 pub use impl_item::ImplItem;
 pub use literal_expr::{Literal, LiteralExpr};
 pub use loop_expr::LoopExpr;
-pub use main_item::MainItem;
 pub use member_access::{AccessType, MemberAccess};
 pub use new_array_expr::NewArrayExpr;
 pub use parsed_type::{ParsedType, ParsedTypeEnum};
 pub use path::Path;
-pub use program::Program;
 pub use require::Require;
 use serde::Serialize;
 pub use struct_item::StructItem;
@@ -77,7 +73,7 @@ pub trait AcceptsASTVisitor<T> {
     fn accept_visitor<'ast>(&'ast self, visitor: &mut dyn ASTVisitor<'ast, T>) -> T;
 }
 
-pub trait ASTNode: ASTVisitable + Positioned + erased_serde::Serialize {
+pub trait ASTNode: ASTVisitable + Positioned + erased_serde::Serialize + Send + Sync {
     fn as_any(&self) -> &dyn Any;
     fn get_id(&self) -> AstId;
 }
@@ -104,9 +100,7 @@ pub trait ASTVisitor<'ast, T> {
     fn visit_function(&mut self, _node: &'ast FunctionItem) -> T { unimplemented!() }
     fn visit_struct(&mut self, _node: &'ast StructItem) -> T { unimplemented!() }
     fn visit_constructor(&mut self, _node: &'ast ConstructorItem) -> T { unimplemented!() }
-    fn visit_main(&mut self, _node: &'ast MainItem) -> T { unimplemented!() }
     fn visit_scope(&mut self, _node: &'ast Scope) -> T { unimplemented!() }
-    fn visit_program(&mut self, _node: &'ast Program) -> T { unimplemented!() }
 }
 
 #[macro_export]

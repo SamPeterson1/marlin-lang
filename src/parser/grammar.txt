@@ -1,11 +1,10 @@
+scope: "scope" path "{" program "}"
 program: require* item*
 item: struct | impl | function | scope
 
 require: ["from" path] "require" path-alias ("," path-alias)* ";"
 path-alias: path ["as" identifier]
 path: "identifier" ("::" identifier)*
-
-scope: "scope" path "{" program "}"
 main: "main" block-expression
 
 struct: "struct" identifier "{" struct-body "}"
@@ -14,7 +13,7 @@ struct-member: type identifier ";"
 struct-constructor: "$" parameters block-expression
 
 impl: "impl" type "{" function* "}"
-function: "fn" identifier parameters ["->" type] block-expression
+function: ("fn" identifier parameters ["->" type] block-expression) | ("extern" "fn" identifier parameters ["->" type] ";")
 parameters: "(" [type identifier ("," type identifier)*] ")"
 
 statement: loop | if | block | for | while | exit | delete | declaration | assignment ";"
@@ -49,7 +48,7 @@ cast: unary ["as" type]
 unary: ("!" | "-" | "*" | "&")* member-access
 member-access: primary (("->" | ".") identifier | "[" expression "]" | arguments)*
 arguments: "(" [expression ("," expression)*] ")"
-primary: new-array | constructor | loop | if | block | for | while | "(" expression ")" | literal | identifier
+primary: new-array | constructor | loop | if | block | for | while | "(" expression ")" | literal | path
 
 
 type: unit-type ("[]" ["&"])*

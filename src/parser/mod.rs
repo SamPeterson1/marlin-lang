@@ -4,15 +4,14 @@ use std::collections::VecDeque;
 
 use serde::Serialize;
 
-use crate::ast::ASTNode;
+use crate::ast::{ASTNode, Scope};
 
-use crate::ast::Program;
 use crate::logger::Log;
 use crate::diagnostic::{Diagnostic, ErrMsg};
 use crate::logger::LogTarget;
-use crate::parser::rules::program::ProgramRule;
 use crate::lexer::token::{PositionRange, Positioned};
 use crate::lexer::token::{Token, TokenType};
+use crate::parser::rules::scope::ScopeRule;
 
 pub struct ExprParser<'ctx> {
     log_target: &'ctx dyn LogTarget,
@@ -212,13 +211,17 @@ impl<'ctx> ExprParser<'ctx> {
         } 
     }
 
-    pub fn parse(mut self) -> Program {
+    pub fn parse(mut self) -> Vec<Scope> {
         self.log_info(self.log_target, "Beginning parser");
 
-        let program: Program = self.apply_rule(ProgramRule {}, "program", None).unwrap();
+        let mut scopes = Vec::new();
+
+        while let Some(scope) = self.apply_rule(ScopeRule {}, "top-level scope", None) {
+            scopes.push(scope);
+        }
 
         self.log_info(self.log_target, "Parser finished");
 
-        program
+        scopes
     }
 }
