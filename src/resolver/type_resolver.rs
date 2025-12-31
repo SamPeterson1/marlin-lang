@@ -1,6 +1,6 @@
-use std::collections::{HashMap, HashSet};
+use std::{collections::{HashMap, HashSet}, sync::MutexGuard};
 
-use crate::{ast::*, diagnostic::{Diagnostic, ErrMsg}, lexer::token::{Located, PositionRange, Positioned}, logger::{Log, LogTarget}, resolver::{FunctionType, GlobalSymbolTable, ResolvedType, StructType, SymbolTable, TypeId}};
+use crate::{ast::*, diagnostic::{Diagnostic, ErrMsg}, lexer::token::{Located, PositionRange, Positioned}, logger::{Log, LogTarget}, resolver::{FunctionType, GlobalSymbolTable, ResolvedType, StructType, SymbolTable, TypeArena, TypeId}};
 
 pub struct TypeResolver<'ctx> {
     log_target: &'ctx dyn LogTarget,
@@ -27,7 +27,7 @@ impl<'ctx> TypeResolver<'ctx> {
             diagnostics,
             unresolved_types: HashMap::new(),
             impl_blocks: HashMap::new(),
-            partial_structs: HashMap::new()
+            partial_structs: HashMap::new(),
         }
     }
 
@@ -35,20 +35,20 @@ impl<'ctx> TypeResolver<'ctx> {
         scope.accept_visitor(&mut self);
  
         let partial_structs = std::mem::take(&mut self.partial_structs);
-        let mut type_arena = self.global_table.type_arena.lock().unwrap();
+        
 
         for (struct_name, (mut struct_type, struct_type_id)) in partial_structs {
             if let Some(impl_blocks) = self.impl_blocks.remove(&struct_name) {
                 for impl_block in impl_blocks {
                     for function in &impl_block.functions {
                         let function_type = self.get_fn_type(function);
-                        let function_type_id = type_arena.make_function(function_type);
+                        let function_type_id = self.global_table.type_arena.make_function(function_type);
                         struct_type.members.insert(function.name.data.clone(), function_type_id);
                     }
                 }
             }
 
-            type_arena.set_type(&struct_type_id, ResolvedType::Struct(struct_type));
+            self.global_table.type_arena.set_type(&struct_type_id, ResolvedType::Struct(struct_type));
             self.unresolved_types.remove(&struct_name);
             self.symbol_table.types.insert(struct_name, struct_type_id);
         }
@@ -59,34 +59,34 @@ impl<'ctx> TypeResolver<'ctx> {
     }
 
     pub fn resolve_type(&mut self, parsed_type: &ParsedType) -> TypeId {
-        let mut type_arena = self.global_table.type_arena.lock().unwrap();
+        
 
         match &parsed_type.parsed_type {
-            ParsedTypeEnum::Void => type_arena.void(),
-            ParsedTypeEnum::Integer => type_arena.int(),
-            ParsedTypeEnum::Double => type_arena.double(),
-            ParsedTypeEnum::Boolean => type_arena.bool(),
-            ParsedTypeEnum::Char => type_arena.char(),
+            ParsedTypeEnum::Void => self.global_table.type_arena.void(),
+            ParsedTypeEnum::Integer => self.global_table.type_arena.int(),
+            ParsedTypeEnum::Double => self.global_table.type_arena.double(),
+            ParsedTypeEnum::Boolean => self.global_table.type_arena.bool(),
+            ParsedTypeEnum::Char => self.global_table.type_arena.char(),
             ParsedTypeEnum::TypeName(name) => {
                 match self.symbol_table.types.get(name) {
                     Some(type_id) => *type_id,
                     None => {
                         self.unresolved_types.entry(name.clone())
-                            .or_insert_with(|| (type_arena.reserve(), *parsed_type.get_position())).0
+                            .or_insert_with(|| (self.global_table.type_arena.reserve(), *parsed_type.get_position())).0
                     }
                 }
             }
             ParsedTypeEnum::Pointer(inner) => {
                 let base_type = self.resolve_type(inner.as_ref());
-                type_arena.make_ptr(base_type)
+                self.global_table.type_arena.make_ptr(base_type)
             }
             ParsedTypeEnum::Reference(inner) => {
                 let base_type = self.resolve_type(inner.as_ref());
-                type_arena.make_ref(base_type)
+                self.global_table.type_arena.make_ref(base_type)
             }
             ParsedTypeEnum::Array(inner) => {
                 let base_type = self.resolve_type(inner.as_ref());
-                type_arena.make_array(base_type)
+                self.global_table.type_arena.make_array(base_type)
             }
         }
     }
@@ -113,15 +113,15 @@ impl<'ast> ASTVisitor<'ast, ()> for TypeResolver<'ast> {
     }
 
     fn visit_function(&mut self, node: &FunctionItem) { 
-        let mut type_arena = self.global_table.type_arena.lock().unwrap();
+        
 
         let fn_type = self.get_fn_type(node);
-        let fn_type_id = type_arena.make_function(fn_type);
+        let fn_type_id = self.global_table.type_arena.make_function(fn_type);
         self.symbol_table.functions.insert(node.name.data.to_string(), fn_type_id);
     }
 
     fn visit_struct(&mut self, node: &'ast StructItem) {
-        let mut type_arena = self.global_table.type_arena.lock().unwrap();
+        
         let mut members = HashMap::new();
 
         for (member_type, Located {data: member_name, ..} ) in &node.members {
@@ -130,7 +130,7 @@ impl<'ast> ASTVisitor<'ast, ()> for TypeResolver<'ast> {
         }
 
         let mut constructors = HashSet::new();
-        let struct_type_id = type_arena.reserve();
+        let struct_type_id = self.global_table.type_arena.reserve();
 
         for constructor in &node.constructors {
             let mut param_types = Vec::new();
@@ -144,7 +144,7 @@ impl<'ast> ASTVisitor<'ast, ()> for TypeResolver<'ast> {
                 return_type: struct_type_id,
             };
 
-            let constructor_type_id = type_arena.make_function(constructor_type);
+            let constructor_type_id = self.global_table.type_arena.make_function(constructor_type);
             constructors.insert(constructor_type_id);
         }
 
@@ -155,6 +155,12 @@ impl<'ast> ASTVisitor<'ast, ()> for TypeResolver<'ast> {
         };
 
         self.partial_structs.insert(node.name.data.clone(), (struct_type, struct_type_id));
+    }
+
+    fn visit_scope(&mut self, node: &'ast Scope) -> () {
+        for item in &node.items {
+            item.accept_visitor(self);
+        }
     }
 }
 

@@ -1,23 +1,24 @@
 mod type_resolver;
 mod var_resolver;
 
+use dashmap::DashMap;
 use serde::Serialize;
 pub use type_resolver::TypeResolver;
 pub use var_resolver::VarResolver;
 
-use std::{array, collections::{HashMap, HashSet}, hash::Hash, sync::{Condvar, Mutex, MutexGuard, RwLock}};
+use std::{collections::{HashMap, HashSet}, hash::Hash, sync::{Mutex, MutexGuard, RwLock, RwLockReadGuard, MappedRwLockReadGuard}};
 use crate::ast::{AstId, ParsedType, ParsedTypeEnum, Scope};
 
 pub struct GlobalSymbolTable {
-    scopes: HashMap<Vec<String>, Mutex<SymbolTable>>,
-    type_arena: Mutex<TypeArena>,
+    pub scopes: HashMap<Vec<String>, Mutex<SymbolTable>>,
+    pub type_arena: TypeArena,
 }
 
 impl GlobalSymbolTable {
     pub fn new() -> Self {
         Self {
             scopes: HashMap::new(),
-            type_arena: Mutex::new(TypeArena::new()),
+            type_arena: TypeArena::new(),
         }
     }
 
@@ -53,7 +54,7 @@ impl SymbolTable {
         }
     }
 
-    pub fn resolve_type(&mut self, type_arena: &mut TypeArena, parsed_type: &ParsedType) -> Option<TypeId> {
+    pub fn resolve_type(&mut self, type_arena: &TypeArena, parsed_type: &ParsedType) -> Option<TypeId> {
         Some(match parsed_type.parsed_type {
             ParsedTypeEnum::Void =>type_arena.void(),
             ParsedTypeEnum::Boolean => type_arena.bool(),
@@ -79,92 +80,66 @@ impl SymbolTable {
     }
 }
 
-pub struct GlobalTypeArena {
-    partial_arenas: Vec<TypeArena>
-}
-
 pub struct TypeArena {
-    types: Vec<Option<ResolvedType>>,
+    types: RwLock<Vec<Option<ResolvedType>>>,
 
-    ref_ids: HashMap<TypeId, TypeId>,
-    ptr_ids: HashMap<TypeId, TypeId>,
-    array_ids: HashMap<TypeId, TypeId>,
-    function_ids: HashMap<FunctionType, TypeId>,
+    ref_ids: DashMap<TypeId, TypeId>,
+    ptr_ids: DashMap<TypeId, TypeId>,
+    array_ids: DashMap<TypeId, TypeId>,
+    function_ids: DashMap<FunctionType, TypeId>,
 
-    int_type_id: Option<TypeId>,
-    double_type_id: Option<TypeId>,
-    bool_type_id: Option<TypeId>,
-    char_type_id: Option<TypeId>,
-    void_type_id: Option<TypeId>,
+    int_type_id: TypeId,
+    double_type_id: TypeId,
+    bool_type_id: TypeId,
+    char_type_id: TypeId,
+    void_type_id: TypeId,
 }
 
 impl TypeArena {
     pub fn new() -> Self {
+        let mut types = Vec::new();
+
+        types.push(Some(ResolvedType::Integer));
+        types.push(Some(ResolvedType::Double));
+        types.push(Some(ResolvedType::Boolean));
+        types.push(Some(ResolvedType::Char));
+        types.push(Some(ResolvedType::Void));
+
         Self {
-            types: Vec::new(),
-            ref_ids: HashMap::new(),
-            ptr_ids: HashMap::new(),
-            array_ids: HashMap::new(),
-            function_ids: HashMap::new(),
-            int_type_id: None,
-            double_type_id: None,
-            bool_type_id: None,
-            char_type_id: None,
-            void_type_id: None
+            types: RwLock::new(types),
+            ref_ids: DashMap::new(),
+            ptr_ids: DashMap::new(),
+            array_ids: DashMap::new(),
+            function_ids: DashMap::new(),
+            int_type_id: TypeId(0),
+            double_type_id: TypeId(1),
+            bool_type_id: TypeId(2),
+            char_type_id: TypeId(3),
+            void_type_id: TypeId(4),
         }
     }
 
-    pub fn int(&mut self) -> TypeId {
-        match self.int_type_id {
-            Some(id) => id,
-            None => {
-                self.int_type_id = Some(self.insert(ResolvedType::Integer));
-                self.int_type_id.unwrap()
-            }
-        }
+    pub fn int(&self) -> TypeId {
+        return self.int_type_id;
     }
 
-    pub fn double(&mut self) -> TypeId {
-        match self.double_type_id {
-            Some(id) => id,
-            None => {
-                self.double_type_id = Some(self.insert(ResolvedType::Double));
-                self.double_type_id.unwrap()
-            }
-        }
+    pub fn double(&self) -> TypeId {
+        return self.double_type_id;
     }
 
-    pub fn bool(&mut self) -> TypeId {
-        match self.bool_type_id {
-            Some(id) => id,
-            None => {
-                self.bool_type_id = Some(self.insert(ResolvedType::Boolean));
-                self.bool_type_id.unwrap()
-            }
-        }
+    pub fn bool(&self) -> TypeId {
+        return self.bool_type_id;
     }
 
-    pub fn char(&mut self) -> TypeId {
-        match self.char_type_id {
-            Some(id) => id,
-            None => {
-                self.char_type_id = Some(self.insert(ResolvedType::Char));
-                self.char_type_id.unwrap()
-            }
-        }
+    pub fn char(&self) -> TypeId {
+        return self.char_type_id;
     }
 
-    pub fn void(&mut self) -> TypeId {
-        match self.void_type_id {
-            Some(id) => id,
-            None => {
-                self.void_type_id = Some(self.insert(ResolvedType::Void));
-                self.void_type_id.unwrap()
-            }
-        }
+    pub fn void(&self) -> TypeId {
+        return self.void_type_id;
     }
 
-    pub fn make_ref(&mut self, type_id: TypeId) -> TypeId {
+    pub fn make_ref(&self, type_id: TypeId) -> TypeId {
         if let Some(ref_id) = self.ref_ids.get(&type_id) {
             return *ref_id;
         }
@@ -174,7 +149,7 @@ impl TypeArena {
         ref_id
     }
 
-    pub fn make_ptr(&mut self, type_id: TypeId) -> TypeId {
+    pub fn make_ptr(&self, type_id: TypeId) -> TypeId {
         if let Some(ptr_id) = self.ptr_ids.get(&type_id) {
             return *ptr_id;
         }
@@ -184,7 +159,7 @@ impl TypeArena {
         ptr_id
     }
 
-    pub fn make_array(&mut self, type_id: TypeId) -> TypeId {
+    pub fn make_array(&self, type_id: TypeId) -> TypeId {
         if let Some(array_id) = self.array_ids.get(&type_id) {
             return *array_id;
         }
@@ -194,7 +169,7 @@ impl TypeArena {
         array_id
     }
 
-    pub fn make_function(&mut self, function_type: FunctionType) -> TypeId {
+    pub fn make_function(&self, function_type: FunctionType) -> TypeId {
         if let Some(function_id) = self.function_ids.get(&function_type) {
             return *function_id;
         }
@@ -204,24 +179,29 @@ impl TypeArena {
         function_id
     }
 
-    pub fn reserve(&mut self) -> TypeId {
-        let type_id = TypeId(self.types.len());
-        self.types.push(None);
+    pub fn reserve(&self) -> TypeId {
+        let mut types_lock = self.types.write().unwrap();
+        let type_id = TypeId(types_lock.len());
+        types_lock.push(None);
         type_id
     }
 
-    pub fn set_type(&mut self, type_id: &TypeId, resolved_type: ResolvedType) {
-        self.types[type_id.0] = Some(resolved_type);
+    pub fn set_type(&self, type_id: &TypeId, resolved_type: ResolvedType) {
+        self.types.write().unwrap()[type_id.0] = Some(resolved_type);
     }
 
-    pub fn insert(&mut self, resolved_type: ResolvedType) -> TypeId {
-        let type_id = TypeId(self.types.len());
-        self.types.push(Some(resolved_type));
+    pub fn insert(&self, resolved_type: ResolvedType) -> TypeId {
+        let mut types_lock = self.types.write().unwrap();
+        let type_id = TypeId(types_lock.len());
+        types_lock.push(Some(resolved_type));
         type_id
     }
 
-    pub fn get(&self, type_id: &TypeId) -> &ResolvedType {
-        self.types.get(type_id.0).as_ref().unwrap().as_ref().unwrap()
+    pub fn get(&self, type_id: TypeId) -> MappedRwLockReadGuard<'_, ResolvedType> {
+        let types_lock = self.types.read().unwrap();
+        RwLockReadGuard::map(types_lock, |types| {
+            types[type_id.0].as_ref().unwrap()
+        })
     }
 }
 

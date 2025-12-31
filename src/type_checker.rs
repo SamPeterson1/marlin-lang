@@ -1,10 +1,12 @@
-use std::{any::Any, clone, rc::Rc};
+use std::{any::Any, clone, collections::HashMap, rc::Rc, sync::MutexGuard};
 
-use crate::{ast::*, diagnostic::{Diagnostic, ErrMsg}, lexer::token::Positioned, logger::Log, resolver::{FunctionType, ResolvedType, SymbolTable, TypeId}};
+use crate::{ast::*, diagnostic::{Diagnostic, ErrMsg}, lexer::token::Positioned, logger::Log, resolver::{FunctionType, GlobalSymbolTable, ResolvedType, SymbolTable, TypeArena, TypeId}};
 
 pub struct TypeChecker<'ctx> {
     diagnostics: &'ctx mut Vec<Diagnostic>,
+    global_table: &'ctx GlobalSymbolTable,
     symbol_table: &'ctx mut SymbolTable,
+    functions_to_resolve: HashMap<&'ctx Path, TypeId>,
 }
 
 impl Log for TypeChecker<'_> {
@@ -14,30 +16,36 @@ impl Log for TypeChecker<'_> {
 }
 
 impl<'ctx> TypeChecker<'ctx> {
-    pub fn new(diagnostics: &'ctx mut Vec<Diagnostic>, symbol_table: &'ctx mut SymbolTable) -> Self {
+    pub fn new(diagnostics: &'ctx mut Vec<Diagnostic>, global_table: &'ctx GlobalSymbolTable, symbol_table: &'ctx mut SymbolTable) -> Self {
         Self {
             diagnostics,
+            global_table,
             symbol_table,
+            functions_to_resolve: HashMap::new(),
         }
     }
 }
 
-impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
-    fn visit_binary(&mut self, node: &BinaryExpr) -> Option<TypeId> {
+impl<'ctx> ASTVisitor<'ctx, Option<TypeId>> for TypeChecker<'ctx> {
+    fn visit_binary(&mut self, node: &'ctx BinaryExpr) -> Option<TypeId> {
+
         let left_type_id = node.left.accept_visitor(self)?;
         let right_type_id = node.right.accept_visitor(self)?;
-        let left_type = self.symbol_table.type_arena.get(&left_type_id);
-        let right_type = self.symbol_table.type_arena.get(&right_type_id);
+
+        
+
+        let left_type = self.global_table.type_arena.get(left_type_id);
+        let right_type = self.global_table.type_arena.get(right_type_id);
 
         let mut valid = true;
 
         match node.operator {
             BinaryOperator::Plus | BinaryOperator::Minus | BinaryOperator::Times | BinaryOperator::Divide
             | BinaryOperator::Greater | BinaryOperator::GreaterEqual | BinaryOperator::Less | BinaryOperator::LessEqual => {
-                if left_type != right_type {
+                if *left_type != *right_type {
                     valid = false;
                 } else {
-                    match left_type {
+                    match *left_type {
                         ResolvedType::Integer | ResolvedType::Double | ResolvedType::Char => {
                             self.symbol_table.ast_types.insert(node.get_id(), left_type_id);
                         },
@@ -48,14 +56,14 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
                 }
             },
             BinaryOperator::NotEqual | BinaryOperator::Equal => {
-                if left_type != right_type {
+                if *left_type != *right_type {
                     valid = false;
                 } else {
-                    self.symbol_table.ast_types.insert(node.get_id(), self.symbol_table.type_arena.bool());
+                    self.symbol_table.ast_types.insert(node.get_id(), self.global_table.type_arena.bool());
                 }
             },
             BinaryOperator::And | BinaryOperator::Or => {
-                if left_type != right_type || left_type != &ResolvedType::Boolean {
+                if *left_type != *right_type || *left_type != ResolvedType::Boolean {
                     valid = false;
                 } else {
                     self.symbol_table.ast_types.insert(node.get_id(), left_type_id);
@@ -63,7 +71,7 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
             },
             BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOr | BinaryOperator::BitwiseXor
             | BinaryOperator::LeftShift | BinaryOperator::RightShift | BinaryOperator::Modulo => {
-                if left_type != right_type || left_type != &ResolvedType::Integer {
+                if *left_type != *right_type || *left_type != ResolvedType::Integer {
                     valid = false;
                 } else {
                     self.symbol_table.ast_types.insert(node.get_id(), left_type_id);
@@ -73,11 +81,11 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
 
         if !valid {
             // We get the type references again because we have potentially mutated the type arena
-            let left_type = self.symbol_table.type_arena.get(&left_type_id);
-            let right_type = self.symbol_table.type_arena.get(&right_type_id);
+            let left_type = self.global_table.type_arena.get(left_type_id);
+            let right_type = self.global_table.type_arena.get(right_type_id);
 
             self.diagnostics.push(
-                ErrMsg::IncompatibleBinaryTypes(left_type, right_type, node.operator)
+                ErrMsg::IncompatibleBinaryTypes(&left_type, &right_type, node.operator)
                 .make_diagnostic(*node.get_position())
             );
 
@@ -87,23 +95,27 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
         Some(*self.symbol_table.ast_types.get(&node.get_id()).unwrap())
     }
 
-    fn visit_cast(&mut self, node: &CastExpr) -> Option<TypeId> {
+    fn visit_cast(&mut self, node: &'ctx CastExpr) -> Option<TypeId> {
         node.expr.accept_visitor(self);
-        let type_id = self.symbol_table.resolve_type(&node.cast_type)?;
+
+        
+        let type_id = self.symbol_table.resolve_type(&self.global_table.type_arena, &node.cast_type)?;
 
         self.symbol_table.ast_types.insert(node.get_id(), type_id);
 
         Some(type_id)
     }
 
-    fn visit_unary(&mut self, node: &UnaryExpr) -> Option<TypeId> { 
+    fn visit_unary(&mut self, node: &'ctx UnaryExpr) -> Option<TypeId> { 
         let expr_type_id = node.expr.accept_visitor(self)?;
-        let expr_type = self.symbol_table.type_arena.get(&expr_type_id);
+        
+
+        let expr_type = self.global_table.type_arena.get(expr_type_id);
         let mut valid = true;
 
         match node.operator {
             UnaryOperator::Negative => {
-                match expr_type {
+                match *expr_type {
                     ResolvedType::Integer | ResolvedType::Double => {
                         self.symbol_table.ast_types.insert(node.get_id(), expr_type_id);
                     },
@@ -113,27 +125,27 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
                 }
             },
             UnaryOperator::Not => {
-                if expr_type != &ResolvedType::Boolean {
+                if *expr_type != ResolvedType::Boolean {
                     valid = false;
                 } else {
                     self.symbol_table.ast_types.insert(node.get_id(), expr_type_id);
                 }
             },
             UnaryOperator::BitwiseNot => {
-                if expr_type != &ResolvedType::Integer {
+                if *expr_type != ResolvedType::Integer {
                     valid = false;
                 } else {
                     self.symbol_table.ast_types.insert(node.get_id(), expr_type_id);
                 }
             },
             UnaryOperator::AddressOf => {
-                let ptr_type_id = self.symbol_table.type_arena.make_ptr(expr_type_id);
+                let ptr_type_id = self.global_table.type_arena.make_ptr(expr_type_id);
                 self.symbol_table.ast_types.insert(node.get_id(), ptr_type_id);
             },
             UnaryOperator::Deref => {
-                match expr_type {
+                match *expr_type {
                     ResolvedType::Pointer(inner_type_id) => {
-                        self.symbol_table.ast_types.insert(node.get_id(), *inner_type_id);
+                        self.symbol_table.ast_types.insert(node.get_id(), inner_type_id);
                     },
                     _ => {
                         valid = false;
@@ -144,9 +156,9 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
 
         if !valid {
             // We get the type references again because we have potentially mutated the type arena
-            let expr_type = self.symbol_table.type_arena.get(&expr_type_id);
+            let expr_type = self.global_table.type_arena.get(expr_type_id);
             self.diagnostics.push(
-                ErrMsg::IncompatibleUnaryType(expr_type, node.operator)
+                ErrMsg::IncompatibleUnaryType(&expr_type, node.operator)
                 .make_diagnostic(*node.get_position())
             )
         }
@@ -154,27 +166,29 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
         Some(*self.symbol_table.ast_types.get(&node.get_id()).unwrap())
     }
 
-    fn visit_literal(&mut self, node: &LiteralExpr) -> Option<TypeId> {
+    fn visit_literal(&mut self, node: &'ctx LiteralExpr) -> Option<TypeId> {
+        
+
         match &node.value {
             Literal::Int(_) => {
-                let int_type_id = self.symbol_table.type_arena.int();
+                let int_type_id = self.global_table.type_arena.int();
                 self.symbol_table.ast_types.insert(node.get_id(), int_type_id);
             },
             Literal::Double(_) => {
-                let double_type_id = self.symbol_table.type_arena.double();
+                let double_type_id = self.global_table.type_arena.double();
                 self.symbol_table.ast_types.insert(node.get_id(), double_type_id);
             },
             Literal::Bool(_) => {
-                let bool_type_id = self.symbol_table.type_arena.bool();
+                let bool_type_id = self.global_table.type_arena.bool();
                 self.symbol_table.ast_types.insert(node.get_id(), bool_type_id);
             },
             Literal::Char(_) => {
-                let char_type_id = self.symbol_table.type_arena.char();
+                let char_type_id = self.global_table.type_arena.char();
                 self.symbol_table.ast_types.insert(node.get_id(), char_type_id);
             },
             Literal::String(_) => {
-                let char_type_id = self.symbol_table.type_arena.char();
-                let string_type_id = self.symbol_table.type_arena.make_ptr(char_type_id);
+                let char_type_id = self.global_table.type_arena.char();
+                let string_type_id = self.global_table.type_arena.make_ptr(char_type_id);
                 self.symbol_table.ast_types.insert(node.get_id(), string_type_id);
             },
         }
@@ -182,15 +196,16 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
         Some(*self.symbol_table.ast_types.get(&node.get_id()).unwrap())
     }
 
-    fn visit_member_access(&mut self, node: &MemberAccess) -> Option<TypeId> {
+    fn visit_member_access(&mut self, node: &'ctx MemberAccess) -> Option<TypeId> {
         let expr_type_id = node.expr.accept_visitor(self)?;
+        
 
         for member_access in &node.member_accesses {
             match member_access {
                 AccessType::Direct(field_name) => {
-                    match self.symbol_table.type_arena.get(&expr_type_id) {
+                    match &*self.global_table.type_arena.get(expr_type_id) {
                         ResolvedType::Struct(struct_type) => {
-                            if let Some(field_type) = (*struct_type).members.get(&field_name.data) {
+                            if let Some(field_type) = (struct_type).members.get(&field_name.data) {
                                 self.symbol_table.ast_types.insert(node.get_id(), *field_type);
                             } else {
                                 self.diagnostics.push(
@@ -202,7 +217,7 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
                         },
                         expr_type => {
                             self.diagnostics.push(
-                                ErrMsg::IncompatibleMemberAccessType(expr_type)
+                                ErrMsg::IncompatibleMemberAccessType(&expr_type)
                                 .make_diagnostic(*node.get_position())
                             );
                             return None;
@@ -210,10 +225,10 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
                     }
                 },
                 AccessType::Indirect(field_name) => {
-                    let expr_type = self.symbol_table.type_arena.get(&expr_type_id);
-                    match expr_type {
+                    let expr_type = self.global_table.type_arena.get(expr_type_id);
+                    match &*expr_type {
                         ResolvedType::Pointer(inner_type) => {
-                            match self.symbol_table.type_arena.get(inner_type) {
+                            match &*self.global_table.type_arena.get(*inner_type) {
                                 ResolvedType::Struct(struct_type) => {
                                     if let Some(field_type) = struct_type.members.get(&field_name.data) {
                                         self.symbol_table.ast_types.insert(node.get_id(), *field_type);
@@ -228,7 +243,7 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
                                 },
                                 _ => {
                                     self.diagnostics.push(
-                                        ErrMsg::IncompatibleMemberAccessType(expr_type)
+                                        ErrMsg::IncompatibleMemberAccessType(&expr_type)
                                         .make_diagnostic(*node.get_position())
                                     );
 
@@ -238,7 +253,7 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
                         },
                         _ => {
                             self.diagnostics.push(
-                                ErrMsg::IncompatibleMemberAccessType(expr_type)
+                                ErrMsg::IncompatibleMemberAccessType(&expr_type)
                                 .make_diagnostic(*node.get_position())
                             );
 
@@ -247,18 +262,18 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
                     }
                 },
                 AccessType::Array(index_expr) => {
-                    match self.symbol_table.type_arena.get(&expr_type_id) {
+                    match *self.global_table.type_arena.get(expr_type_id) {
                         ResolvedType::Array(inner_type) => {
-                            self.symbol_table.ast_types.insert(node.get_id(), *inner_type);
+                            self.symbol_table.ast_types.insert(node.get_id(), inner_type);
                         },
                         ResolvedType::Pointer(inner_type) => {
-                            self.symbol_table.ast_types.insert(node.get_id(), *inner_type);
+                            self.symbol_table.ast_types.insert(node.get_id(), inner_type);
                         }
                         _ => {
-                            let expr_type = self.symbol_table.type_arena.get(&expr_type_id);
+                            let expr_type = self.global_table.type_arena.get(expr_type_id);
 
                             self.diagnostics.push(
-                                ErrMsg::IncompatibleMemberAccessType(expr_type)
+                                ErrMsg::IncompatibleMemberAccessType(&expr_type)
                                 .make_diagnostic(*node.get_position())
                             );
                             return None;
@@ -266,18 +281,18 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
                     }
 
                     let index_type_id = index_expr.accept_visitor(self)?;
-                    let index_type = self.symbol_table.type_arena.get(&index_type_id);
+                    let index_type = self.global_table.type_arena.get(index_type_id);
 
-                    if index_type != &ResolvedType::Integer {
+                    if *index_type != ResolvedType::Integer {
                         self.diagnostics.push(
-                            ErrMsg::ArrayIndexNotInteger(index_type)
+                            ErrMsg::ArrayIndexNotInteger(&index_type)
                             .make_diagnostic(*index_expr.get_position())
                         );
                         return None;
                     }
                 },
                 AccessType::Function(arguments) => {
-                    match self.symbol_table.type_arena.get(&expr_type_id) {
+                    match &*self.global_table.type_arena.get(expr_type_id) {
                         ResolvedType::Function(func_sig) => {
                             if func_sig.param_types.len() != arguments.args.len() {
                                 self.diagnostics.push(
@@ -294,11 +309,11 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
                                 let arg_type_id = arg.accept_visitor(self)?;
             
                                 if arg_type_id != param_type_id {
-                                    let arg_type = self.symbol_table.type_arena.get(&arg_type_id);
-                                    let param_type = self.symbol_table.type_arena.get(&param_type_id);
+                                    let arg_type = self.global_table.type_arena.get(arg_type_id);
+                                    let param_type = self.global_table.type_arena.get(param_type_id);
             
                                     self.diagnostics.push(
-                                        ErrMsg::FunctionArgumentTypeMismatch(i, param_type, arg_type)
+                                        ErrMsg::FunctionArgumentTypeMismatch(i, &param_type, &arg_type)
                                         .make_diagnostic(*arg.get_position())
                                     );
                                     return None;
@@ -309,7 +324,7 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
                         },
                         expr_type => {
                             self.diagnostics.push(
-                                ErrMsg::CallOnNonFunctionType(expr_type.clone())
+                                ErrMsg::CallOnNonFunctionType(&expr_type)
                                 .make_diagnostic(*node.get_position())
                             );
                         }
@@ -321,46 +336,50 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
         Some(*self.symbol_table.ast_types.get(&node.get_id()).unwrap())
     }
 
-    fn visit_var(&mut self, node: &VarExpr) -> Option<TypeId> {
+    fn visit_var(&mut self, node: &'ctx VarExpr) -> Option<TypeId> {
         if let Some(decl_id) = self.symbol_table.variables.get(&node.get_id()) {
             let decl_type_id = *self.symbol_table.declaration_types.get(decl_id).unwrap();
             self.symbol_table.ast_types.insert(node.get_id(), decl_type_id);
 
             return Some(decl_type_id);
-        } else if let Some(function_type_id) = self.symbol_table.functions.get(&node.identifier.data) {
-            self.symbol_table.ast_types.insert(node.get_id(), *function_type_id);
-
-            return Some(*function_type_id);
         } else {
-            panic!("variable or function '{}' not found in symbol table", node.identifier.data);
+            let path_vec = node.path.segments[0..node.path.segments.len() - 1]
+                .iter()
+                .map(|s| s.data.clone())
+                .collect::<Vec<_>>();
+
+            let symbol_table = self.global_table.scopes.get(&path_vec)?.lock().unwrap();
+            return symbol_table.functions.get(&node.path.segments.last().unwrap().data).cloned();
         }
     }
 
-    fn visit_if(&mut self, node: &IfExpr) -> Option<TypeId> { 
+    fn visit_if(&mut self, node: &'ctx IfExpr) -> Option<TypeId> {
         let condition_type_id = node.condition.accept_visitor(self)?;
-        let condition_type = self.symbol_table.type_arena.get(&condition_type_id);
+        
+        let condition_type = self.global_table.type_arena.get(condition_type_id);
 
-        if condition_type != &ResolvedType::Boolean {
+        if *condition_type != ResolvedType::Boolean {
             self.diagnostics.push(
-                ErrMsg::IncompatibleUnaryType(condition_type, UnaryOperator::Not)
+                ErrMsg::IncompatibleUnaryType(&condition_type, UnaryOperator::Not)
                 .make_diagnostic(*node.condition.get_position())
             );
             return None;
         }
 
         let then_type_id = node.success.accept_visitor(self)?;
+
         let else_type_id = if let Some(fail) = &node.fail {
             fail.accept_visitor(self)?
         } else {
-            self.symbol_table.type_arena.void()
-        };
+            self.global_table.type_arena.void()
+        };   
 
         if then_type_id != else_type_id {
-            let then_type = self.symbol_table.type_arena.get(&then_type_id);
-            let else_type = self.symbol_table.type_arena.get(&else_type_id);
+            let then_type = self.global_table.type_arena.get(then_type_id);
+            let else_type = self.global_table.type_arena.get(else_type_id);
 
             self.diagnostics.push(
-                ErrMsg::MismatchedIfBranches(then_type, else_type)
+                ErrMsg::MismatchedIfBranches(&then_type, &else_type)
                 .make_diagnostic(*node.get_position())
             );
             return None;
@@ -370,16 +389,18 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
         Some(then_type_id)
     }
 
-    fn visit_assignment(&mut self, node: &AssignmentExpr) -> Option<TypeId> { 
+    fn visit_assignment(&mut self, node: &'ctx AssignmentExpr) -> Option<TypeId> {
         let assignee_type_id = node.assignee.accept_visitor(self)?;
         let expr_type_id = node.expr.accept_visitor(self)?;
 
+        
+
         if assignee_type_id != expr_type_id {
-            let assignee_type = self.symbol_table.type_arena.get(&assignee_type_id);
-            let expr_type = self.symbol_table.type_arena.get(&expr_type_id);
+            let assignee_type = self.global_table.type_arena.get(assignee_type_id);
+            let expr_type = self.global_table.type_arena.get(expr_type_id);
 
             self.diagnostics.push(
-                ErrMsg::IncompatibleAssignment(assignee_type, expr_type)
+                ErrMsg::IncompatibleAssignment(&assignee_type, &expr_type)
                 .make_diagnostic(*node.get_position())
             );
             return None;
@@ -389,21 +410,23 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
         Some(assignee_type_id)
     }
 
-    fn visit_delete(&mut self, _node: &DeleteExpr) -> Option<TypeId> { 
+    fn visit_delete(&mut self, _node: &'ctx DeleteExpr) -> Option<TypeId> { 
         unimplemented!();
     }
 
-    fn visit_declaration(&mut self, node: &DeclarationExpr) -> Option<TypeId> {
+    fn visit_declaration(&mut self, node: &'ctx DeclarationExpr) -> Option<TypeId> {
+
         if let Some(expr) = &node.expr {
             let init_type_id = expr.accept_visitor(self)?;
+            
             let declaration_type_id = *self.symbol_table.declaration_types.get(&node.get_id()).unwrap();
     
             if init_type_id != declaration_type_id {
-                let init_type = self.symbol_table.type_arena.get(&init_type_id);
-                let declaration_type = self.symbol_table.type_arena.get(&declaration_type_id);
+                let init_type = self.global_table.type_arena.get(init_type_id);
+                let declaration_type = self.global_table.type_arena.get(declaration_type_id);
     
                 self.diagnostics.push(
-                    ErrMsg::IncompatibleAssignment(declaration_type, init_type)
+                    ErrMsg::IncompatibleAssignment(&declaration_type, &init_type)
                     .make_diagnostic(*node.get_position())
                 );
             }
@@ -412,7 +435,7 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
         None
     }
 
-    fn visit_block(&mut self, node: &BlockExpr) -> Option<TypeId> { 
+    fn visit_block(&mut self, node: &'ctx BlockExpr) -> Option<TypeId> { 
         for expr in &node.exprs {
             expr.accept_visitor(self);
         }
@@ -420,7 +443,7 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
         None
     }
 
-    fn visit_loop(&mut self, node: &LoopExpr) -> Option<TypeId> {
+    fn visit_loop(&mut self, node: &'ctx LoopExpr) -> Option<TypeId> {
         node.initial.as_ref().map(|init_expr| init_expr.accept_visitor(self));
         node.condition.as_ref().map(|cond_expr| cond_expr.accept_visitor(self));
         node.increment.as_ref().map(|inc_expr| inc_expr.accept_visitor(self));
@@ -430,62 +453,69 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
         None
     }
 
-    fn visit_exit(&mut self, node: &ExitExpr) -> Option<TypeId> {
+    fn visit_exit(&mut self, node: &'ctx ExitExpr) -> Option<TypeId> {
         if let Some(expr) = &node.expr {
             expr.accept_visitor(self)
         } else {
-            Some(self.symbol_table.type_arena.void())
+            Some(self.global_table.type_arena.void())
         }
     }
 
-    fn visit_constructor_call(&mut self, node: &ConstructorCallExpr) -> Option<TypeId> {
+    fn visit_constructor_call(&mut self, node: &'ctx ConstructorCallExpr) -> Option<TypeId> {
         let mut arg_types = Vec::new();
         
         for arg in &node.arguments.args {
             arg_types.push(arg.accept_visitor(self)?);
         }
 
-        let resolved_type = self.symbol_table.types.get(&node.type_name.data)?;
+        let resolved_type = *self.symbol_table.types.get(&node.type_name.data)?;
 
         let fn_type = FunctionType {
             param_types: arg_types,
-            return_type: *resolved_type
+            return_type: resolved_type
         };
 
-        let fn_type_id = self.symbol_table.type_arena.make_function(fn_type);
+        
+        let fn_type_id = self.global_table.type_arena.make_function(fn_type);
 
-        if let ResolvedType::Struct(struct_type) = self.symbol_table.type_arena.get(resolved_type) {
+        if let ResolvedType::Struct(struct_type) = &*self.global_table.type_arena.get(resolved_type) {
             if struct_type.constructors.contains(&fn_type_id) {
-                self.symbol_table.ast_types.insert(node.get_id(), *resolved_type);
-                return Some(*resolved_type);
+                self.symbol_table.ast_types.insert(node.get_id(), resolved_type);
+                return Some(resolved_type);
             } else {
+                let resolved_type = self.global_table.type_arena.get(resolved_type);
+
                 self.diagnostics.push(
-                    ErrMsg::ConstructorNotFound(self.symbol_table.type_arena.get(resolved_type))
+                    ErrMsg::ConstructorNotFound(&resolved_type)
                     .make_diagnostic(*node.get_position())
                 );
                 return None;
             }
         } else {
+            let resolved_type = self.global_table.type_arena.get(resolved_type);
+
             self.diagnostics.push(
-                ErrMsg::ConstructorNotFound(self.symbol_table.type_arena.get(resolved_type))
+                ErrMsg::ConstructorNotFound(&resolved_type)
                 .make_diagnostic(*node.get_position())
             );
+
             return None;
         }
     }
 
-    fn visit_new_array(&mut self, node: &NewArrayExpr) -> Option<TypeId> {
-        let mut resolved_type_id = self.symbol_table.resolve_type(&node.array_type)?;
+    fn visit_new_array(&mut self, node: &'ctx NewArrayExpr) -> Option<TypeId> {
+        
+        let mut resolved_type_id = self.symbol_table.resolve_type(&self.global_table.type_arena, &node.array_type)?;
 
         for _ in 0..node.dimension {
-            resolved_type_id = self.symbol_table.type_arena.make_ptr(resolved_type_id);
+            resolved_type_id = self.global_table.type_arena.make_ptr(resolved_type_id);
         }
 
         self.symbol_table.ast_types.insert(node.get_id(), resolved_type_id);
         Some(resolved_type_id)
     }
 
-    fn visit_impl(&mut self, node: &ImplItem) -> Option<TypeId> { 
+    fn visit_impl(&mut self, node: &'ctx ImplItem) -> Option<TypeId> { 
         for function in &node.functions {
             function.accept_visitor(self);
         }
@@ -493,11 +523,11 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
         None
     }
 
-    fn visit_function(&mut self, node: &FunctionItem) -> Option<TypeId> { 
-        node.body.accept_visitor(self)
+    fn visit_function(&mut self, node: &'ctx FunctionItem) -> Option<TypeId> { 
+        node.body.as_ref()?.accept_visitor(self)
     }
 
-    fn visit_struct(&mut self, node: &StructItem) -> Option<TypeId> { 
+    fn visit_struct(&mut self, node: &'ctx StructItem) -> Option<TypeId> { 
         for constructor in &node.constructors {
             constructor.accept_visitor(self);
         }
@@ -505,15 +535,11 @@ impl ASTVisitor<'_, Option<TypeId>> for TypeChecker<'_> {
         None
     }
 
-    fn visit_constructor(&mut self, node: &ConstructorItem) -> Option<TypeId> { 
+    fn visit_constructor(&mut self, node: &'ctx ConstructorItem) -> Option<TypeId> { 
         node.body.accept_visitor(self)
     }
 
-    fn visit_main(&mut self, node: &MainItem) -> Option<TypeId> { 
-        node.body.accept_visitor(self)
-    }
-
-    fn visit_program(&mut self, node: &Program) -> Option<TypeId> {
+    fn visit_scope(&mut self, node: &'ctx Scope) -> Option<TypeId> {
         for item in &node.items {
             item.accept_visitor(self);
         }

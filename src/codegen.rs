@@ -1,9 +1,9 @@
 use core::str;
-use std::{collections::{HashMap, VecDeque}, f32::consts::E, hash::Hash, path::Path, process::Command};
+use std::{collections::{HashMap, VecDeque}, f32::consts::E, hash::Hash, path::Path, process::Command, sync::MutexGuard};
 
 use inkwell::{AddressSpace, basic_block::BasicBlock, builder::Builder, context::Context, llvm_sys::prelude::LLVMValueRef, module::Module, types::BasicTypeEnum, values::{AnyValueEnum, AsValueRef, BasicValue, BasicValueEnum, FunctionValue, IntValue, PointerValue}};
 
-use crate::{ast::*, logger::Log, resolver::{ResolvedType, SymbolTable}};
+use crate::{ast::*, logger::Log, resolver::{GlobalSymbolTable, ResolvedType, SymbolTable, TypeArena}};
 
 pub struct CodeGen<'ctx> {
     context: &'ctx Context,
@@ -13,7 +13,9 @@ pub struct CodeGen<'ctx> {
     local_vars: HashMap<AstId, PointerValue<'ctx>>,
     break_block: HashMap<String, BasicBlock<'ctx>>,
     result_block: Option<BasicBlock<'ctx>>,
+    global_table: &'ctx GlobalSymbolTable,
     symbol_table: &'ctx SymbolTable,
+    type_arena: Option<MutexGuard<'ctx, TypeArena>>,
     break_values: HashMap<String, Vec<(BasicBlock<'ctx>, LLVMValueRef)>>,
     functions: HashMap<String, FunctionValue<'ctx>>,
     struct_types: HashMap<String, inkwell::types::StructType<'ctx>>,
@@ -65,7 +67,7 @@ impl<'ctx> CodeGen<'ctx> {
 }
 
 impl<'ctx> CodeGen<'ctx> {
-    pub fn new(context: &'ctx Context, symbol_table: &'ctx SymbolTable) -> Self {
+    pub fn new(context: &'ctx Context, global_table: &'ctx GlobalSymbolTable, symbol_table: &'ctx SymbolTable) -> Self {
         let module = context.create_module("main_module");
         let builder = context.create_builder();
         
@@ -89,7 +91,9 @@ impl<'ctx> CodeGen<'ctx> {
             local_vars: HashMap::new(),
             break_block: HashMap::new(),
             result_block: None,
+            global_table,
             symbol_table,
+            type_arena: None,
             break_values: HashMap::new(),
             functions,
             struct_types: HashMap::new(),
@@ -263,7 +267,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
     fn visit_cast(&mut self, node: &CastExpr) {
         node.expr.accept_visitor(self);
 
-        let target_type = self.symbol_table.type_arena.get(self.symbol_table.ast_types.get(&node.get_id()).unwrap());
+        let target_type = self.type_arena.as_ref().unwrap().get(self.symbol_table.ast_types.get(&node.get_id()).unwrap());
         let int_val = unsafe { IntValue::new(self.value) };
 
         self.value = self.builder.build_int_cast(int_val, self.get_int_type(target_type), "casttmp").unwrap().as_value_ref();
@@ -337,7 +341,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
     }
 
     fn visit_member_access(&mut self, node: &MemberAccess) {
-        let mut current_type_id = self.symbol_table.ast_types.get(&node.expr.get_id()).unwrap();
+        let mut current_type_id = *self.symbol_table.ast_types.get(&node.expr.get_id()).unwrap();
 
         for access in &node.member_accesses {
             match &access {
@@ -351,7 +355,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
                         let arg_type = self.symbol_table.ast_types.get(&arg.get_id()).unwrap();
                         arg.accept_visitor(self);
 
-                        match self.symbol_table.type_arena.get(arg_type) {
+                        match self.type_arena.as_ref().unwrap().get(arg_type) {
                             ResolvedType::Boolean | ResolvedType::Integer | ResolvedType::Char => {
                                 let int_value = unsafe { IntValue::new(self.value) };
                                 arg_values.push(int_value.into());
@@ -385,13 +389,13 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
 
                     let index_value = unsafe { IntValue::new(self.value) };
 
-                    current_type_id = match self.symbol_table.type_arena.get(current_type_id) {
+                    current_type_id = *match self.type_arena.as_ref().unwrap().get(&current_type_id) {
                         ResolvedType::Pointer(pointee_type_id) => pointee_type_id,
                         ResolvedType::Array(element_type_id) => element_type_id,
                         _ => panic!("Expected pointer or array type for array access"),
                     };
 
-                    let pointee_ty = self.get_type(&self.symbol_table.type_arena.get(current_type_id));
+                    let pointee_ty = self.get_type(&self.type_arena.as_ref().unwrap().get(&current_type_id));
                     println!("GEP pointee type: {:?}, index value {:?}", pointee_ty, index_value);
 
 
@@ -424,7 +428,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
                     let struct_ptr = unsafe { PointerValue::new(self.value) };
                     self.lvalue_mode = lvalue_mode_backup;
 
-                    let struct_type = self.symbol_table.type_arena.get(current_type_id);
+                    let struct_type = self.type_arena.as_ref().unwrap().get(&current_type_id);
                     let struct_field_map = match struct_type {
                         ResolvedType::Struct(struct_type) => {
                             self.struct_field_maps.get(&struct_type.name).unwrap()
@@ -458,7 +462,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
                         _ => panic!("Expected struct type for member access"),
                     };
 
-                    let pointee_ty = self.get_type(&self.symbol_table.type_arena.get(member_type_id));
+                    let pointee_ty = self.get_type(&self.type_arena.as_ref().unwrap().get(member_type_id));
 
                     let loaded = self.builder.build_load(
                         pointee_ty,
@@ -468,7 +472,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
 
                     self.value = loaded.as_value_ref();
 
-                    current_type_id = member_type_id;
+                    current_type_id = *member_type_id;
                 },
                 AccessType::Indirect(member_name) => {
                     let lvalue_mode_backup = self.lvalue_mode;
@@ -483,10 +487,10 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
                         "indirectstructptrload",
                     ).unwrap().as_value_ref()) };
 
-                    let struct_type = self.symbol_table.type_arena.get(current_type_id);
+                    let struct_type = self.type_arena.as_ref().unwrap().get(&current_type_id);
                     let struct_field_map = match struct_type {
                         ResolvedType::Pointer(struct_type) => {
-                            match self.symbol_table.type_arena.get(struct_type) {
+                            match self.type_arena.as_ref().unwrap().get(struct_type) {
                                 ResolvedType::Struct(struct_type) => {
                                     self.struct_field_maps.get(&struct_type.name).unwrap()
                                 },
@@ -501,7 +505,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
                     let gep = unsafe {
                         if let ResolvedType::Pointer(struct_type) = struct_type {
                             self.builder.build_in_bounds_gep(
-                                self.get_type(self.symbol_table.type_arena.get(struct_type)),
+                                self.get_type(self.type_arena.as_ref().unwrap().get(struct_type)),
                                 struct_ptr,
                                 &[
                                     self.context.i32_type().const_int(0, false),
@@ -522,7 +526,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
 
                     let member_type_id = match struct_type {
                         ResolvedType::Pointer(struct_type) => {
-                            match self.symbol_table.type_arena.get(struct_type) {
+                            match self.type_arena.as_ref().unwrap().get(struct_type) {
                                 ResolvedType::Struct(struct_type) => {
                                     struct_type.members.get(&member_name.data).unwrap()
                                 },
@@ -532,7 +536,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
                         _ => panic!("Expected pointer to struct type for indirect member access"),
                     };
 
-                    let pointee_ty = self.get_type(&self.symbol_table.type_arena.get(member_type_id));
+                    let pointee_ty = self.get_type(&self.type_arena.as_ref().unwrap().get(member_type_id));
 
                     let loaded = self.builder.build_load(
                         pointee_ty,
@@ -542,7 +546,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
 
                     self.value = loaded.as_value_ref();
 
-                    current_type_id = member_type_id;
+                    current_type_id = *member_type_id;
                 },
                 _ => unimplemented!("Member access type not implemented"),
             }
@@ -550,7 +554,8 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
     }
 
     fn visit_var(&mut self, node: &VarExpr) {
-        println!("Visiting variable: {}", node.identifier.data);
+        let identifier = &node.path.segments.first().unwrap().data;
+        println!("Visiting variable: {}", identifier);
         if let Some(declaration_id) = self.symbol_table.variables.get(&node.get_id()) {
             let ptr = self.local_vars.get(declaration_id).unwrap();
             if self.lvalue_mode {
@@ -558,7 +563,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
                 return;
             } else {
                 let declaration_type = self.symbol_table.declaration_types.get(declaration_id).unwrap();
-                let pointee_ty = self.get_type(&self.symbol_table.type_arena.get(declaration_type));
+                let pointee_ty = self.get_type(&self.type_arena.as_ref().unwrap().get(declaration_type));
 
                 println!("Loading type: {:?}", pointee_ty);
 
@@ -572,8 +577,8 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
                 return;
             }
         } else {
-            println!("Looking up function: {}", node.identifier.data);
-            self.value = self.functions.get(&node.identifier.data).unwrap().as_value_ref();
+            println!("Looking up function: {}", identifier);
+            self.value = self.functions.get(identifier).unwrap().as_value_ref();
         }
     }
 
@@ -644,7 +649,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
 
     fn visit_declaration(&mut self, node: &DeclarationExpr) {
         let declaration_type_id = self.symbol_table.declaration_types.get(&node.get_id()).unwrap();
-        let declaration_type = self.symbol_table.type_arena.get(declaration_type_id);
+        let declaration_type = self.type_arena.as_ref().unwrap().get(declaration_type_id);
         let llvm_type = self.get_type(declaration_type); 
 
         let ptr_value = self.builder.build_alloca(
@@ -763,7 +768,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
             expr.accept_visitor(self);
 
             let expr_type_id = self.symbol_table.ast_types.get(&expr.get_id()).unwrap();
-            let expr_type = self.symbol_table.type_arena.get(expr_type_id);
+            let expr_type = self.type_arena.as_ref().unwrap().get(expr_type_id);
 
             value = Some(unsafe { self.get_basic_value(expr_type, self.value) });
         }
@@ -802,9 +807,9 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
         node.sizes[0].accept_visitor(self);
         let size_value = unsafe { IntValue::new(self.value) };
 
-        let array_type = self.symbol_table.type_arena.get(self.symbol_table.ast_types.get(&node.get_id()).unwrap());
+        let array_type = self.type_arena.as_ref().unwrap().get(self.symbol_table.ast_types.get(&node.get_id()).unwrap());
         if let ResolvedType::Pointer(element_type_id) = array_type {
-            let element_type = self.symbol_table.type_arena.get(element_type_id);
+            let element_type = self.type_arena.as_ref().unwrap().get(element_type_id);
             let llvm_element_type = self.get_type(element_type);
 
             let array_ptr = self.builder.build_array_alloca(
@@ -825,13 +830,13 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
 
     fn visit_function(&mut self, node: &FunctionItem) {
         let fn_type_id = self.symbol_table.functions.get(&node.name.data).unwrap();
-        let fn_type = self.symbol_table.type_arena.get(fn_type_id);
+        let fn_type = self.type_arena.as_ref().unwrap().get(fn_type_id);
 
         if let ResolvedType::Function(fn_type) = fn_type {
             let mut param_types = Vec::new();
 
             for parameter in &fn_type.param_types {
-                let param_type = self.symbol_table.type_arena.get(parameter);
+                let param_type = self.type_arena.as_ref().unwrap().get(parameter);
                 match param_type {
                     ResolvedType::Integer => param_types.push(self.context.i32_type().into()),
                     ResolvedType::Char => param_types.push(self.context.i32_type().into()),
@@ -840,7 +845,8 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
                 }
             }
 
-            let ret_type = self.symbol_table.type_arena.get(&fn_type.return_type);
+            let ret_type_id = fn_type.return_type;
+            let ret_type = self.type_arena.as_ref().unwrap().get(&fn_type.return_type);
             let fn_type = match ret_type {
                 ResolvedType::Integer => self.context.i32_type().fn_type(&param_types, false),
                 ResolvedType::Void => self.context.void_type().fn_type(&param_types, false),
@@ -866,8 +872,9 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
                 self.local_vars.insert(parameter.get_id(), param_ptr);
             }
 
-            node.body.accept_visitor(self);
+            node.body.as_ref().unwrap().accept_visitor(self);
 
+            let ret_type = self.type_arena.as_ref().unwrap().get(&ret_type_id);
             if ret_type == &ResolvedType::Void {
                 self.builder.build_return(None).unwrap();
             } else {
@@ -883,7 +890,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
         let mut field_types = Vec::new();
 
         let struct_type_id = self.symbol_table.types.get(&node.name.data).unwrap();
-        let struct_type = self.symbol_table.type_arena.get(struct_type_id);
+        let struct_type = self.type_arena.as_ref().unwrap().get(struct_type_id);
 
         let mut struct_field_map = HashMap::new();
 
@@ -891,7 +898,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
             for (field_name, field_type_id) in &struct_type.members {
                 struct_field_map.insert(field_name.clone(), field_types.len() as u32);
 
-                let field_type = self.symbol_table.type_arena.get(field_type_id);
+                let field_type = self.type_arena.as_ref().unwrap().get(field_type_id);
                 match field_type {
                     ResolvedType::Integer => field_types.push(self.context.i32_type().into()),
                     ResolvedType::Char => field_types.push(self.context.i8_type().into()),
@@ -915,22 +922,13 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
         
     }
 
-    fn visit_main(&mut self, node: &MainItem) {
-        let void_type = self.context.void_type();
-        let fn_type = void_type.fn_type(&[], false);
-        let function = self.module.add_function("main", fn_type, None);
-        let entry = self.context.append_basic_block(function, "entry");
+    fn visit_scope(&mut self, node: &Scope) -> () {
+        self.type_arena = Some(self.global_table.type_arena.lock().unwrap());
 
-        self.builder.position_at_end(entry);
-
-        node.body.accept_visitor(self);
-
-        self.builder.build_return(None).unwrap();
-    }
-
-    fn visit_program(&mut self, node: &Program) {
         for item in &node.items {
             item.accept_visitor(self);
         }
+
+        self.type_arena = None;
     }
 }

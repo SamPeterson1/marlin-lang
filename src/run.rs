@@ -1,16 +1,16 @@
 use std::collections::HashSet;
-use std::sync::{Arc, Mutex, MutexGuard};
-use std::{env, path, thread};
+use std::sync::{Arc, Mutex};
+use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-use crate::ast::Scope;
-use crate::diagnostic::Diagnostic;
-use crate::lexer::Lexer;
-use crate::logger::{CONSOLE_LOGGER, FileLogger, Log, LogTarget};
+use crate::ast::ASTVisitor;
+use crate::logger::{CONSOLE_LOGGER, FileLogger, Log};
 use crate::parser::ExprParser;
-use crate::resolver::{GlobalSymbolTable, SymbolTable, VarResolver};
+use crate::resolver::{GlobalSymbolTable, TypeResolver, VarResolver};
+use crate::type_checker::TypeChecker;
+use crate::lexer::Lexer;
 
 fn read_file(file: &Path, contents: &mut String) {
     let working_dir = env::current_dir().expect("Error reading working directory");
@@ -38,9 +38,9 @@ impl Runner {
         }
     }
 
-    pub fn run_files(self, files: Vec<String>) {
+    pub async fn run_files(self, files: Vec<String>) {
         let thread_handles = files.into_iter().map(|file| {
-            thread::spawn(|| {
+            tokio::spawn(async {
                 let mut contents = String::new();
                 let file_path = Path::new(&file);
 
@@ -69,8 +69,8 @@ impl Runner {
 
         let mut scopes = Vec::new();
 
-        thread_handles.for_each(|handle| {
-            match handle.join().unwrap() {
+        for handle in thread_handles {
+            match handle.await.unwrap() {
                 Ok(file_scopes) => {
                     scopes.extend(file_scopes);
                 },
@@ -82,7 +82,7 @@ impl Runner {
                     self.log_error(&CONSOLE_LOGGER, "Aborting due to previous errors.");
                 }
             }
-        });
+        }
 
         let mut flattened_scopes = Vec::new();
         let mut path_set = HashSet::new();
@@ -107,15 +107,11 @@ impl Runner {
         let global_table_arc = Arc::new(global_table);
 
         let mut thread_handles = Vec::new();
-        
-        let resolver_finished = Arc::new((Mutex::new(0), std::sync::Condvar::new()));
-        let n_scopes = flattened_scopes.len();
 
         for scope in flattened_scopes {
             let global_table_ref = Arc::clone(&global_table_arc);
-            let resolver_finished_ref = Arc::clone(&resolver_finished);
 
-            thread_handles.push(thread::spawn(move || {
+            thread_handles.push(tokio::spawn(async move {
                 let mut symbol_table = global_table_ref.get_symbol_table(&scope).unwrap();
 
                 let path = scope.path.segments.iter().map(|s| s.data.clone()).collect::<Vec<_>>();
@@ -127,25 +123,43 @@ impl Runner {
                 let mut var_resolver = VarResolver::new(&log_target, &global_table_ref, &mut symbol_table, &mut diagnostics);
                 var_resolver.resolve_vars(&scope);
 
-                let (lock, cvar) = &*resolver_finished_ref;
-                let mut finished = lock.lock().unwrap();
-                *finished = *finished + 1;
-
-                cvar.notify_all();
-
-                let _unused = cvar.wait_while(finished, |finished| *finished < n_scopes);
-                drop(_unused);
 
                 var_resolver.finish_resolving();
 
-                for diagnostic in diagnostics {
-                    self.log_error(&CONSOLE_LOGGER, &format!("In scope {}: {}", scope.path.to_string(), diagnostic));
+                println!("Finished variable resolution for scope {}", scope.path.to_string());
+
+                for diagnostic in &diagnostics {
+                    println!("In scope {}: {}", scope.path.to_string(), diagnostic);
+                }
+
+                let mut diagnostics = Vec::new();
+                let type_resolver = TypeResolver::new(&log_target, &global_table_ref, &mut symbol_table, &mut diagnostics);
+
+                println!("Starting type resolution for scope {}", scope.path.to_string());
+
+                type_resolver.resolve(&scope);
+
+                for diagnostic in &diagnostics {
+                    println!("In scope {}: {}", scope.path.to_string(), diagnostic);
+                }
+
+                println!("Finished type resolution for scope {}", scope.path.to_string());
+
+                let mut diagnostics = Vec::new();
+                let mut type_checker = TypeChecker::new(&mut diagnostics, &global_table_ref, &mut symbol_table);
+                println!("Starting type checking for scope {}", scope.path.to_string());
+                type_checker.visit_scope(&scope);
+
+                drop(type_checker);
+
+                for diagnostic in &diagnostics {
+                    println!("In scope {}: {}", scope.path.to_string(), diagnostic);
                 }
             }));
         }
 
         for handle in thread_handles {
-            let _ = handle.join();
+            let _ = handle.await;
         }
     }
 }

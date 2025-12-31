@@ -1,5 +1,5 @@
 scope Math {
-    fn sum_squares(int n) {
+    fn sum_squares(int n) -> int {
         let int sum = 0;
 
         for (let int i = 1; i <= n; i = i + 1) {

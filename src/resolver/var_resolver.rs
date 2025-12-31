@@ -144,8 +144,7 @@ impl<'ast> ASTVisitor<'ast, ()> for VarResolver<'ast> {
 
         let scope = self.scopes.back_mut().unwrap();
 
-        let mut type_arena = self.global_table.type_arena.lock().unwrap();
-        let resolved_type_id = self.symbol_table.resolve_type(&mut type_arena, &node.declaration_type);
+        let resolved_type_id = self.symbol_table.resolve_type(&self.global_table.type_arena, &node.declaration_type);
 
         self.symbol_table.declaration_types.insert(node.get_id(), resolved_type_id.unwrap());
 

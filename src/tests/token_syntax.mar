@@ -1,0 +1,46 @@
+scope Main {
+    struct IntReference with 'a {
+        &'a num;
+    }
+
+    fn main() {
+        let int foo = 10;
+        let int b = 20;
+
+        let &'IntReference smallest = if getchar() == 'Y' {
+            let int a = 10;
+
+            let IntReference a_ref = IntReference {
+                .num = &a
+            };
+
+            let IntReference b_ref = IntReference {
+                .num = &b
+            };
+
+            smallest = get_smallest(a, b);
+
+            //a gets freed here
+        } else {
+            smallest = &foo;
+        }
+
+        //smallest will be invalid here because of dependency on a
+    }
+
+    fn get_smallest(a: &'a int, b: &'b int) -> &'('a | 'b) int {
+        if *a < *b {
+            return a;
+        } else {
+            return b;
+        }
+    }
+
+    fn get_smallest(a: IntReference with 'a, b: IntReference with 'a) -> IntReference with 'a = a.'a | b.'a {
+        if *a.num < *b.num {
+            return IntReference { .num = a.num};
+        } else {
+            return IntReference { .num = b.num};
+        }
+    }
+}
