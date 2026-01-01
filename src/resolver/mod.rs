@@ -1,16 +1,16 @@
 mod type_resolver;
 mod var_resolver;
 
-use dashmap::DashMap;
+use dashmap::{DashMap, DashSet};
 use serde::Serialize;
 pub use type_resolver::TypeResolver;
 pub use var_resolver::VarResolver;
 
-use std::{collections::{HashMap, HashSet}, hash::Hash, sync::{Mutex, MutexGuard, RwLock, RwLockReadGuard, MappedRwLockReadGuard}};
+use std::{collections::{HashMap, HashSet}, hash::Hash, sync::{RwLock, RwLockReadGuard, MappedRwLockReadGuard}};
 use crate::ast::{AstId, ParsedType, ParsedTypeEnum, Scope};
 
 pub struct GlobalSymbolTable {
-    pub scopes: HashMap<Vec<String>, Mutex<SymbolTable>>,
+    pub scopes: HashMap<Vec<String>, SymbolTable>,
     pub type_arena: TypeArena,
 }
 
@@ -22,39 +22,39 @@ impl GlobalSymbolTable {
         }
     }
 
-    pub fn get_symbol_table(&self, scope: &Scope) -> Option<MutexGuard<'_, SymbolTable>> {
+    pub fn get_symbol_table(&self, scope: &Scope) -> Option<&SymbolTable> {
         let path_string: Vec<String> = scope.path.segments.iter().map(|s| s.data.clone()).collect::<Vec<_>>();
-        self.scopes.get(&path_string).map(|mutex| mutex.lock().unwrap())
+        self.scopes.get(&path_string)
     }
 
     pub fn add_scope(&mut self, scope: &Scope) {
         let path_string: Vec<String> = scope.path.segments.iter().map(|s| s.data.clone()).collect::<Vec<_>>();
-        self.scopes.insert(path_string, Mutex::new(SymbolTable::new()));
+        self.scopes.insert(path_string, SymbolTable::new());
     }
 }
 
 pub struct SymbolTable {
-    pub types: HashMap<String, TypeId>,
-    pub function_names: HashSet<String>,
-    pub functions: HashMap<String, TypeId>,
-    pub ast_types: HashMap<AstId, TypeId>,
-    pub declaration_types: HashMap<AstId, TypeId>,
-    pub variables: HashMap<AstId, AstId>,
+    pub types: DashMap<String, TypeId>,
+    pub function_names: DashSet<String>,
+    pub functions: DashMap<String, TypeId>,
+    pub ast_types: DashMap<AstId, TypeId>,
+    pub declaration_types: DashMap<AstId, TypeId>,
+    pub variables: DashMap<AstId, AstId>,
 }
 
 impl SymbolTable {
     pub fn new() -> Self {        
         Self {
-            types: HashMap::new(),
-            function_names: HashSet::new(),
-            functions: HashMap::new(),
-            ast_types: HashMap::new(),
-            declaration_types: HashMap::new(),
-            variables: HashMap::new(),
+            types: DashMap::new(),
+            function_names: DashSet::new(),
+            functions: DashMap::new(),
+            ast_types: DashMap::new(),
+            declaration_types: DashMap::new(),
+            variables: DashMap::new(),
         }
     }
 
-    pub fn resolve_type(&mut self, type_arena: &TypeArena, parsed_type: &ParsedType) -> Option<TypeId> {
+    pub fn resolve_type(&self, type_arena: &TypeArena, parsed_type: &ParsedType) -> Option<TypeId> {
         Some(match parsed_type.parsed_type {
             ParsedTypeEnum::Void =>type_arena.void(),
             ParsedTypeEnum::Boolean => type_arena.bool(),
@@ -238,7 +238,7 @@ impl PartialEq for ResolvedType {
 
 impl Eq for ResolvedType {}
 
-#[derive(Serialize, Debug, PartialEq, Eq)]
+#[derive(Serialize, Debug, PartialEq, Eq, Clone)]
 pub struct StructType {
     pub name: String,
     pub members: HashMap<String, TypeId>,

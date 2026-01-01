@@ -5,7 +5,11 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-use crate::ast::ASTVisitor;
+use inkwell::context::Context;
+use tokio::sync::Barrier;
+
+use crate::ast::{ASTVisitor, AcceptsASTVisitor};
+use crate::codegen::CodeGen;
 use crate::logger::{CONSOLE_LOGGER, FileLogger, Log};
 use crate::parser::ExprParser;
 use crate::resolver::{GlobalSymbolTable, TypeResolver, VarResolver};
@@ -105,11 +109,15 @@ impl Runner {
         }
 
         let global_table_arc = Arc::new(global_table);
+        let barrier = Arc::new(Barrier::new(flattened_scopes.len()));
+        let barrier_2 = Arc::new(Barrier::new(flattened_scopes.len()));
 
         let mut thread_handles = Vec::new();
 
         for scope in flattened_scopes {
             let global_table_ref = Arc::clone(&global_table_arc);
+            let barrier_ref = Arc::clone(&barrier);
+            let barrier_2_ref = Arc::clone(&barrier_2);
 
             thread_handles.push(tokio::spawn(async move {
                 let mut symbol_table = global_table_ref.get_symbol_table(&scope).unwrap();
@@ -120,9 +128,11 @@ impl Runner {
                 
                 let mut diagnostics = Vec::new();
 
-                let mut var_resolver = VarResolver::new(&log_target, &global_table_ref, &mut symbol_table, &mut diagnostics);
+                let mut var_resolver = VarResolver::new(&log_target, &global_table_ref, symbol_table, &mut diagnostics);
                 var_resolver.resolve_vars(&scope);
 
+                // Wait for all tasks to finish resolve_vars before any can proceed to finish_resolving
+                barrier_ref.wait().await;
 
                 var_resolver.finish_resolving();
 
@@ -133,7 +143,7 @@ impl Runner {
                 }
 
                 let mut diagnostics = Vec::new();
-                let type_resolver = TypeResolver::new(&log_target, &global_table_ref, &mut symbol_table, &mut diagnostics);
+                let type_resolver = TypeResolver::new(&log_target, &global_table_ref, &symbol_table, &mut diagnostics);
 
                 println!("Starting type resolution for scope {}", scope.path.to_string());
 
@@ -145,8 +155,11 @@ impl Runner {
 
                 println!("Finished type resolution for scope {}", scope.path.to_string());
 
+                // Wait for all tasks to finish type resolution before any can proceed to type checking
+                barrier_2_ref.wait().await;
+
                 let mut diagnostics = Vec::new();
-                let mut type_checker = TypeChecker::new(&mut diagnostics, &global_table_ref, &mut symbol_table);
+                let mut type_checker = TypeChecker::new(&log_target, &mut diagnostics, &global_table_ref, &symbol_table);
                 println!("Starting type checking for scope {}", scope.path.to_string());
                 type_checker.visit_scope(&scope);
 
@@ -155,6 +168,13 @@ impl Runner {
                 for diagnostic in &diagnostics {
                     println!("In scope {}: {}", scope.path.to_string(), diagnostic);
                 }
+
+                let context = Context::create();
+                let mut codegen = CodeGen::new(&log_target, &context, &global_table_ref, &symbol_table);
+                scope.accept_visitor(&mut codegen);
+
+                println!("Finished code generation for scope {}", scope.path.to_string());
+                codegen.output_ll(&format!("{}.ll", scope.path.to_string().replace("::", "_")));
             }));
         }
 

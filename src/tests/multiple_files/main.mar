@@ -1,31 +1,48 @@
 scope Main {
     fn main() {
-        let int add = Main::SubScope::add(2, 3);
-        let int subtract = subtract(4, 5);
+        CharUtil::println("Marlin Calculator!!", 19);
 
-        let int multiply = Secondary::multiply(add, subtract);
+        let char op = ' ';
 
-        //25 + 16 + 9 + 4 + 1 = 41 + 14 = 55
-        let int sum_squares = Math::sum_squares(5);
+        loop {
+            CharUtil::print("Type one of '+', '-', '*', '/': ", 32);
 
-        CharUtil::println_int(multiply);
-        CharUtil::println_int(sum_squares);
-        CharUtil::println("DONE!!", 6);
-    }
+            op = std::getchar();
+            std::getchar();
 
-    fn subtract(int a, int b) -> int {
-        return a - b;
-    }
-
-    scope SubScope {
-        fn add(int a, int b) -> int {
-            return a + b;
+            if op == '+' or op == '-' or op == '*' or op == '/' {
+                break;
+            } else {
+                CharUtil::println("Invalid input.", 14);
+            }
         }
-    }
-}
 
-scope Secondary {
-    fn multiply(int a, int b) -> int {
-        return a * b;
+        CharUtil::print("Enter first number: ", 20);
+        let int a = CharUtil::read_int();
+
+        CharUtil::print("Enter second number: ", 21);
+
+        let int b = CharUtil::read_int();
+        let int ans = 0;
+
+        if op == '+' {
+            ans = a + b;
+        } else if op == '-' {
+            ans = a - b;
+        } else if op == '*' {
+            ans = a * b;
+        } else if op == '/' {
+            ans = a / b;
+        }
+
+        CharUtil::print_int(a);
+        std::putchar(' ');
+        std::putchar(op);
+        std::putchar(' ');
+        CharUtil::print_int(b);
+        std::putchar(' ');
+        std::putchar('=');
+        std::putchar(' ');
+        CharUtil::print_int(ans);
     }
 }

@@ -1,5 +1,4 @@
 use std::collections::{HashMap, VecDeque};
-use std::sync::Arc;
 
 use crate::ast::*;
 use crate::diagnostic::{Diagnostic, ErrMsg};
@@ -10,7 +9,7 @@ use crate::resolver::{GlobalSymbolTable, SymbolTable};
 pub struct VarResolver<'ctx> {
     log_target: &'ctx dyn LogTarget,
     global_table: &'ctx GlobalSymbolTable,
-    symbol_table: &'ctx mut SymbolTable,
+    symbol_table: &'ctx SymbolTable,
     diagnostics: &'ctx mut Vec<Diagnostic>,
     scopes: VecDeque<HashMap<&'ctx str, AstId>>,
     unknown_variables: Vec<&'ctx Path>
@@ -23,7 +22,7 @@ impl Log for VarResolver<'_> {
 }
 
 impl<'ctx> VarResolver<'ctx> {
-    pub fn new(log_target: &'ctx dyn LogTarget, global_table: &'ctx GlobalSymbolTable, symbol_table: &'ctx mut SymbolTable, diagnostics: &'ctx mut Vec<Diagnostic>) -> Self {
+    pub fn new(log_target: &'ctx dyn LogTarget, global_table: &'ctx GlobalSymbolTable, symbol_table: &'ctx SymbolTable, diagnostics: &'ctx mut Vec<Diagnostic>) -> Self {
         Self {
             log_target,
             global_table,
@@ -51,8 +50,7 @@ impl<'ctx> VarResolver<'ctx> {
                 self.log_debug(self.log_target, &format!("Checking for function '{}' in scope '{:?}'", path.to_string(), &scope_vec));
 
                 if let Some(symbol_table) = self.global_table.scopes.get(&scope_vec) {
-                    self.log_debug(self.log_target, &format!("Found scope '{:?} with functions: {:?}'", &scope_vec, symbol_table.lock().unwrap().function_names.iter().collect::<Vec<_>>()));
-                    symbol_table.lock().unwrap().function_names.contains(&path.segments.last().unwrap().data)
+                    symbol_table.function_names.contains(&path.segments.last().unwrap().data)
                 } else {
                     self.log_debug(self.log_target, &format!("Scope '{:?}' not found", &scope_vec));
                     false

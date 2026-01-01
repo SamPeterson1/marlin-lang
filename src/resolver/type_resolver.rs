@@ -1,11 +1,11 @@
-use std::{collections::{HashMap, HashSet}, sync::MutexGuard};
+use std::collections::{HashMap, HashSet};
 
 use crate::{ast::*, diagnostic::{Diagnostic, ErrMsg}, lexer::token::{Located, PositionRange, Positioned}, logger::{Log, LogTarget}, resolver::{FunctionType, GlobalSymbolTable, ResolvedType, StructType, SymbolTable, TypeArena, TypeId}};
 
 pub struct TypeResolver<'ctx> {
     log_target: &'ctx dyn LogTarget,
     global_table: &'ctx GlobalSymbolTable,
-    symbol_table: &'ctx mut SymbolTable,
+    symbol_table: &'ctx SymbolTable,
     diagnostics: &'ctx mut Vec<Diagnostic>,
     unresolved_types: HashMap<String, (TypeId, PositionRange)>,
     partial_structs: HashMap<String, (StructType, TypeId)>,
@@ -19,7 +19,7 @@ impl Log for TypeResolver<'_> {
 }
 
 impl<'ctx> TypeResolver<'ctx> {
-    pub fn new(log_target: &'ctx dyn LogTarget, global_table: &'ctx GlobalSymbolTable, symbol_table: &'ctx mut SymbolTable, diagnostics: &'ctx mut Vec<Diagnostic>) -> Self {
+    pub fn new(log_target: &'ctx dyn LogTarget, global_table: &'ctx GlobalSymbolTable, symbol_table: &'ctx SymbolTable, diagnostics: &'ctx mut Vec<Diagnostic>) -> Self {
         Self { 
             log_target,
             global_table,
@@ -113,8 +113,6 @@ impl<'ast> ASTVisitor<'ast, ()> for TypeResolver<'ast> {
     }
 
     fn visit_function(&mut self, node: &FunctionItem) { 
-        
-
         let fn_type = self.get_fn_type(node);
         let fn_type_id = self.global_table.type_arena.make_function(fn_type);
         self.symbol_table.functions.insert(node.name.data.to_string(), fn_type_id);

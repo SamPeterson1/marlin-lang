@@ -7,7 +7,7 @@ use std::process;
 use crate::run::Runner;
 
 mod ast;
-//mod codegen;
+mod codegen;
 mod diagnostic;
 mod lexer;
 mod logger;
@@ -31,8 +31,4 @@ async fn main() {
     } else {
         Runner::new().run_files(args).await;
     }
-}
-
-fn get_mut(foo: &mut i32) -> &mut i32 {
-    foo
 }
