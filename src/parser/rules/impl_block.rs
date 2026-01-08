@@ -38,11 +38,11 @@ impl ParseRule<ImplItem> for ImplBlockRule {
     }
 }
 
-use crate::logger::CONSOLE_LOGGER;
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::lexer::token::{Token, TokenType, PositionRange};
+    use crate::logger::CONSOLE_LOGGER;
     use crate::parser::ExprParser;
 
     fn create_token(token_type: TokenType) -> Token {
@@ -126,7 +126,7 @@ mod tests {
         assert!(result.is_some());
         let impl_item = result.unwrap();
         assert_eq!(impl_item.functions.len(), 1);
-        assert_eq!(impl_item.functions[0].name.data, "get_value");
+        assert_eq!(*impl_item.functions[0].name, "get_value");
     }
 
     #[test]
@@ -184,8 +184,8 @@ mod tests {
         assert!(result.is_some());
         let impl_item = result.unwrap();
         assert_eq!(impl_item.functions.len(), 2);
-        assert_eq!(impl_item.functions[0].name.data, "add");
-        assert_eq!(impl_item.functions[1].name.data, "multiply");
+        assert_eq!(*impl_item.functions[0].name, "add");
+        assert_eq!(*impl_item.functions[1].name, "multiply");
     }
 
     #[test]

@@ -49,11 +49,11 @@ impl ParseRule<FunctionItem> for FunctionRule {
     }
 }
 
-use crate::logger::CONSOLE_LOGGER;
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::lexer::token::{Token, TokenType, PositionRange};
+    use crate::logger::CONSOLE_LOGGER;
     use crate::parser::ExprParser;
 
     fn create_parser_with_tokens(tokens: Vec<TokenType>) -> ExprParser<'static> {
@@ -119,7 +119,7 @@ mod tests {
         
         assert!(result.is_some());
         let function = result.unwrap();
-        assert_eq!(function.name.data, "test");
+        assert_eq!(*function.name, "test");
     }
 
     #[test]
@@ -150,7 +150,7 @@ mod tests {
         
         assert!(result.is_some());
         let function = result.unwrap();
-        assert_eq!(function.name.data, "add");
+        assert_eq!(*function.name, "add");
     }
 
     #[test]

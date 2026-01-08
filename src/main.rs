@@ -4,17 +4,16 @@ use dotenv::dotenv;
 use std::env;
 use std::process;
 
-use crate::run::Runner;
-
 mod ast;
-mod codegen;
+//mod codegen;
+mod compiler;
 mod diagnostic;
 mod lexer;
 mod logger;
 mod parser;
-mod resolver;
+//mod resolver;
 mod run;
-mod type_checker;
+//mod type_checker;
 
 #[tokio::main]
 async fn main() {
@@ -29,6 +28,6 @@ async fn main() {
         println!("Usage: untitled [script]");
         process::exit(1);
     } else {
-        Runner::new().run_files(args).await;
+        run::run_files(args).await;
     }
 }

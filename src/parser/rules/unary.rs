@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::ast::{ASTNode, UnaryExpr, UnaryOperator};
+use crate::ast::{ASTEnum, UnaryExpr, UnaryOperator};
 use crate::parser::rules::member_access::MemberAccessRule;
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
 use crate::lexer::token::TokenType;
@@ -13,18 +13,18 @@ impl fmt::Display for UnaryRule {
     }
 }
 
-impl ParseRule<Box<dyn ASTNode>> for UnaryRule {
+impl ParseRule<ASTEnum> for UnaryRule {
     fn check_match(&self,  _cursor: ParserCursor) -> bool {
         true
     }
 
-    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTEnum> {
         parser.begin_range();
 
         if let Some(operator) = parser.try_consume_match(&[TokenType::Not, TokenType::Minus, TokenType::Star, TokenType::Ampersand, TokenType::Tilda]) {
             let unary_operator: UnaryOperator = operator.value.try_into().unwrap();
             let unary = parser.apply_rule(UnaryRule {}, "unary expression", None)?;
-            Some(Box::new(UnaryExpr::new(unary, unary_operator, parser.end_range())))
+            Some(Box::new(UnaryExpr::new(unary, unary_operator, parser.end_range())).into())
         } else {
             parser.apply_rule(MemberAccessRule {}, "member access expression", None)
         }

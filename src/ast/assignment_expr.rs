@@ -1,27 +1,27 @@
 use serde::Serialize;
 
-use crate::ast::{ASTNode, AstId};
-use crate::{impl_ast_node, impl_positioned, new_ast_id};
+use crate::ast::{ASTEnum, ASTNode, AstId};
+use crate::compiler::stages::{Parsed, Phase};
+use crate::{impl_ast_node, new_ast_id};
 use crate::lexer::token::PositionRange;
 
 #[derive(Serialize)]
-pub struct AssignmentExpr {
-    pub assignee: Box<dyn ASTNode>,
-    pub expr: Box<dyn ASTNode>,
+pub struct AssignmentExpr<P: Phase = Parsed> {
+    pub assignee: ASTEnum<P>,
+    pub expr: ASTEnum<P>,
     position: PositionRange,
-    id: AstId
+    id: AstId,
 }
 
 impl AssignmentExpr {
-    pub fn new(assignee: Box<dyn ASTNode>, expr: Box<dyn ASTNode>, position: PositionRange) -> Self {
+    pub fn new(assignee: ASTEnum, expr: ASTEnum, position: PositionRange) -> Self {
         Self {
             assignee,
             expr,
             position,
             id: new_ast_id!(),
         } 
-    }    
+    }
 }
 
-impl_positioned!(AssignmentExpr);
 impl_ast_node!(AssignmentExpr, visit_assignment);

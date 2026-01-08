@@ -45,7 +45,7 @@ impl<'ctx> Lexer<'ctx> {
 
         while self.peek().is_some() {
             if let Some(token) = self.next_token() {
-                self.log_debug(self.log_target, &format!("Parsed token: {:?}", token));
+                self.log_debug(self.log_target, format!("Parsed token: {:?}", token));
                 tokens.push(token);
             }
         }
@@ -56,7 +56,7 @@ impl<'ctx> Lexer<'ctx> {
         ));
 
         self.log_debug(self.log_target, "Reached end of file");
-        self.log_info(self.log_target, &format!("Parsed {} tokens", tokens.len()));
+        self.log_info(self.log_target, format!("Parsed {} tokens", tokens.len()));
 
         tokens
     }
@@ -186,7 +186,7 @@ impl<'ctx> Lexer<'ctx> {
                 self.log_debug(self.log_target, "Parsing comment");
                 while let Some(c) = self.next_char() {
                     if c == '\n' { 
-                        self.log_debug(self.log_target, &format!("End of comment reached {}", c));
+                        self.log_debug(self.log_target, format!("End of comment reached {}", c));
                         break;
                     }
                 }

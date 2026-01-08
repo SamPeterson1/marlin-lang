@@ -34,11 +34,11 @@ impl ParseRule<ConstructorCallExpr> for ConstructorCallRule {
     }
 }
 
-use crate::logger::CONSOLE_LOGGER;
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::lexer::token::{Token, TokenType, PositionRange};
+    use crate::logger::CONSOLE_LOGGER;
 
     fn create_token(token_type: TokenType) -> Token {
         Token::new(token_type, PositionRange::zero())
@@ -104,7 +104,7 @@ mod tests {
         assert!(result.is_some());
         let constructor_call = result.unwrap();
         assert!(constructor_call.is_heap);
-        assert_eq!(constructor_call.type_name.data, "Person");
+        assert_eq!(constructor_call.type_name.as_ref(), "Person");
         assert!(diagnostics.is_empty(), "Expected no diagnostics for valid heap constructor call");
     }
 
@@ -129,7 +129,7 @@ mod tests {
         assert!(result.is_some());
         let constructor_call = result.unwrap();
         assert!(!constructor_call.is_heap);
-        assert_eq!(constructor_call.type_name.data, "Point");
+        assert_eq!(constructor_call.type_name.as_ref(), "Point");
         assert!(diagnostics.is_empty(), "Expected no diagnostics for valid stack constructor call");
     }
 
@@ -150,7 +150,7 @@ mod tests {
         
         assert!(result.is_some());
         let constructor_call = result.unwrap();
-        assert_eq!(constructor_call.arguments.args.len(), 0);
+        assert_eq!(constructor_call.arguments.len(), 0);
         assert!(diagnostics.is_empty(), "Expected no diagnostics for valid empty constructor call");
     }
 
@@ -318,8 +318,8 @@ mod tests {
         // Should succeed because parser can recover from missing closing paren
         assert!(result.is_some());
         let constructor_call = result.unwrap();
-        assert_eq!(constructor_call.type_name.data, "Test");
-        assert_eq!(constructor_call.arguments.args.len(), 1);
+        assert_eq!(constructor_call.type_name.as_ref(), "Test");
+        assert_eq!(constructor_call.arguments.len(), 1);
         // Should have diagnostic for missing closing paren, but not fatal
         assert!(!diagnostics.is_empty(), "Expected diagnostic for missing closing paren");
         assert!(diagnostics.iter().any(|d| d.message.contains("')'")));
@@ -349,8 +349,8 @@ mod tests {
         assert!(result.is_some());
         let constructor_call = result.unwrap();
         assert!(constructor_call.is_heap);
-        assert_eq!(constructor_call.type_name.data, "Container");
-        assert_eq!(constructor_call.arguments.args.len(), 1);
+        assert_eq!(constructor_call.type_name.as_ref(), "Container");
+        assert_eq!(constructor_call.arguments.len(), 1);
         assert!(diagnostics.is_empty(), "Expected no diagnostics for valid nested constructor calls");
     }
 }

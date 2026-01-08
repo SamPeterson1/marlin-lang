@@ -1,7 +1,8 @@
 use serde::Serialize;
 
-use crate::ast::AstId;
-use crate::{impl_ast_node, impl_positioned, new_ast_id};
+use crate::ast::{ASTNode, AstId};
+use crate::compiler::stages::{Parsed, Phase};
+use crate::{impl_ast_node, new_ast_id};
 use crate::lexer::token::PositionRange;
 
 #[derive(Serialize)]
@@ -14,10 +15,13 @@ pub enum Literal {
 }
 
 #[derive(Serialize)]
-pub struct LiteralExpr {
+pub struct LiteralExpr<P: Phase = Parsed> {
     pub value: Literal,
     position: PositionRange,
     id: AstId,
+
+    #[serde(skip)]
+    _phase: std::marker::PhantomData<P>,
 }
 
 impl LiteralExpr {
@@ -26,9 +30,9 @@ impl LiteralExpr {
             value,
             position,
             id: new_ast_id!(),
+            _phase: std::marker::PhantomData,
         }
     }
 }
 
-impl_positioned!(LiteralExpr);
 impl_ast_node!(LiteralExpr, visit_literal);

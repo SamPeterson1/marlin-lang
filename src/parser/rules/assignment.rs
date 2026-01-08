@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::ast::{AssignmentExpr, ASTNode};
+use crate::ast::{ASTEnum, AssignmentExpr};
 use crate::diagnostic::ErrMsg;
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
 use crate::parser::rules::expr::ExprRule;
@@ -14,30 +14,30 @@ impl fmt::Display for AssignmentRule {
     }
 }
 
-impl ParseRule<Box<dyn ASTNode>> for AssignmentRule {
+impl ParseRule<ASTEnum> for AssignmentRule {
     fn check_match(&self, _cursor: ParserCursor) -> bool {
         true
     }
     
-    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTEnum> {
         parser.begin_range();
 
         let assignee = parser.apply_rule(ExprRule {}, "assignee expression", Some(ErrMsg::ExpectedExpression))?;
         
         if parser.try_consume(TokenType::Assignment).is_some() {
             let expr = parser.apply_rule(ExprRule {}, "assignment expression", Some(ErrMsg::ExpectedExpression))?;
-            Some(Box::new(AssignmentExpr::new(assignee, expr, parser.end_range())))
+            Some(Box::new(AssignmentExpr::new(assignee, expr, parser.end_range())).into())
         } else {
             Some(assignee)
         }
     }
 }
 
-use crate::logger::CONSOLE_LOGGER;
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::lexer::token::{Token, TokenType, PositionRange};
+    use crate::logger::CONSOLE_LOGGER;
 
     fn create_token(token_type: TokenType) -> Token {
         Token::new(token_type, PositionRange::zero())

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::ast::ASTNode;
+use crate::ast::ASTEnum;
 use crate::parser::{ExprParser, ParseRule, ParserCursor};
 use crate::parser::rules::{impl_block::ImplBlockRule};
 
@@ -14,14 +14,14 @@ impl fmt::Display for ItemRule {
     }
 }
 
-impl ParseRule<Box<dyn ASTNode>> for ItemRule {
+impl ParseRule<ASTEnum> for ItemRule {
     fn check_match(&self, cursor: ParserCursor) -> bool {
         (FunctionRule {}).check_match(cursor)
             || (StructRule {}).check_match(cursor)
             || (ImplBlockRule {}).check_match(cursor)
     }
 
-    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTEnum> {
         if (FunctionRule {}).check_match(parser.get_cursor()) {
             return parser.apply_rule_boxed( FunctionRule {}, "function item", None);
         }

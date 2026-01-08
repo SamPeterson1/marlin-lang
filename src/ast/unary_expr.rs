@@ -2,8 +2,9 @@ use std::fmt::Display;
 
 use serde::Serialize;
 
-use crate::ast::{ASTNode, AstId};
-use crate::{impl_ast_node, impl_positioned, new_ast_id};
+use crate::ast::{ASTEnum, ASTNode, AstId};
+use crate::compiler::stages::{Parsed, Phase};
+use crate::{impl_ast_node, new_ast_id};
 use crate::lexer::token::{PositionRange, TokenType};
 
 #[derive(Serialize, Clone, Copy)]
@@ -44,15 +45,15 @@ impl TryFrom<TokenType> for UnaryOperator {
 }
 
 #[derive(Serialize)]
-pub struct UnaryExpr {
-    pub expr: Box<dyn ASTNode>,
+pub struct UnaryExpr<P: Phase = Parsed> {
+    pub expr: ASTEnum<P>,
     pub operator: UnaryOperator,
     position: PositionRange,
     id: AstId,
 }
 
 impl UnaryExpr {
-    pub fn new(expr: Box<dyn ASTNode>, operator: UnaryOperator, position: PositionRange) -> Self {
+    pub fn new(expr: ASTEnum, operator: UnaryOperator, position: PositionRange) -> Self {
         Self {
             expr,
             operator,
@@ -60,7 +61,6 @@ impl UnaryExpr {
             id: new_ast_id!(),
         }
     }
-}    
+}
 
-impl_positioned!(UnaryExpr);
 impl_ast_node!(UnaryExpr, visit_unary);

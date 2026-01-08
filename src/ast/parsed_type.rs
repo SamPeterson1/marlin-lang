@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use serde::Serialize;
 
 use crate::impl_positioned;
@@ -12,19 +10,6 @@ pub enum ParsedTypeEnum {
     Pointer(Box<ParsedType>),
     Reference(Box<ParsedType>),
     Array(Box<ParsedType>),
-}
-
-impl ParsedTypeEnum {
-    pub fn inner_type_name(&self) -> Option<&str> {
-        match self {
-            Self::Array(t) => t.parsed_type.inner_type_name(),
-            Self::Pointer(t) => t.parsed_type.inner_type_name(),
-            Self::Reference(t) => t.parsed_type.inner_type_name(),
-            Self::Boolean | Self::Integer | 
-            Self::Double | Self::Char | Self::Void => None,
-            Self::TypeName(type_name) => Some(type_name.as_str())
-        }
-    }
 }
 
 #[derive(Serialize, Clone, Debug)]

@@ -29,11 +29,3 @@ impl ParseRule<ConstructorItem> for ConstructorRule {
         Some(ConstructorItem::new(parameters, body, parser.end_range()))
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::lexer::token::{Token, TokenType, PositionRange};
-    use crate::parser::ExprParser;
-
-}

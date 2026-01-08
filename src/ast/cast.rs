@@ -1,19 +1,20 @@
 use serde::Serialize;
 
-use crate::ast::{ASTNode, ParsedType, AstId};
+use crate::ast::{ASTEnum, ASTNode, AstId, ParsedType};
+use crate::compiler::stages::{Parsed, Phase};
 use crate::lexer::token::PositionRange;
-use crate::{impl_ast_node, impl_positioned, new_ast_id};
+use crate::{impl_ast_node, new_ast_id};
 
 #[derive(Serialize)]
-pub struct CastExpr {
-    pub expr: Box<dyn ASTNode>,
+pub struct CastExpr<P: Phase = Parsed> {
+    pub expr: ASTEnum<P>,
     pub cast_type: ParsedType,
     position: PositionRange,
     id: AstId,
 }
 
 impl CastExpr {
-    pub fn new(expr: Box<dyn ASTNode>, cast_type: ParsedType, position: PositionRange) -> Self {
+    pub fn new(expr: ASTEnum, cast_type: ParsedType, position: PositionRange) -> Self {
         Self {
             expr,
             cast_type,
@@ -23,5 +24,4 @@ impl CastExpr {
     }    
 }
 
-impl_positioned!(CastExpr);
 impl_ast_node!(CastExpr, visit_cast);

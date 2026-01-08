@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::ast::Path;
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
-use crate::lexer::token::TokenType;
+use crate::lexer::token::{Located, TokenType};
 
 pub struct PathRule {}
 
@@ -12,12 +12,13 @@ impl fmt::Display for PathRule {
     }
 }
 
-impl ParseRule<Path> for PathRule {
+impl ParseRule<Located<Path>> for PathRule {
     fn check_match(&self, _cursor: ParserCursor) -> bool {
         true
     }
     
-    fn parse(&self, parser: &mut ExprParser) -> Option<Path> {        
+    fn parse(&self, parser: &mut ExprParser) -> Option<Located<Path>> {
+        parser.begin_range(); 
         let mut path = Vec::new();
 
         let identifier = parser.consume_or_diagnostic(TokenType::AnyIdentifier)?.unwrap_identifier();
@@ -28,13 +29,6 @@ impl ParseRule<Path> for PathRule {
             path.push(identifier);
         }
 
-        Some(Path::new(path))
+        Some(Located::new(Path::new(path), parser.end_range()))
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::lexer::token::{Token, TokenType, PositionRange};
-
 }

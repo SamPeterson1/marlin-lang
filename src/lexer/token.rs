@@ -1,4 +1,4 @@
-use std::{cmp, fmt};
+use std::{borrow::{Borrow, BorrowMut}, cmp, fmt, ops::{Deref, DerefMut}};
 use serde::Serialize;
 use std::mem::discriminant;
 
@@ -19,13 +19,67 @@ macro_rules! impl_positioned {
 
 #[derive(Serialize, Clone)]
 pub struct Located<T> {
-    pub data: T,
+    data: T,
     position: PositionRange,
+}
+
+impl<T> ToString for Located<T>
+    where T: ToString
+{
+    fn to_string(&self) -> String {
+        self.data.to_string()
+    }
+}
+
+impl<T> AsMut<T> for Located<T> {
+    fn as_mut(&mut self) -> &mut T {
+        &mut self.data
+    }
+}
+
+impl<T> BorrowMut<T> for Located<T> {
+    fn borrow_mut(&mut self) -> &mut T {
+        &mut self.data
+    }
+}
+
+impl<T> AsRef<T> for Located<T> {
+    fn as_ref(&self) -> &T {
+        &self.data
+    }
+}
+
+impl<T> Borrow<T> for Located<T> {
+    fn borrow(&self) -> &T {
+        &self.data
+    }
+}
+
+impl<T> Deref for Located<T> {
+    type Target = T;
+
+    fn deref(&self) -> &T {
+        &self.data
+    }
+}
+
+impl<T> DerefMut for Located<T> {
+    fn deref_mut(&mut self) -> &mut T {
+        &mut self.data
+    }
 }
 
 impl<T> Located<T> {
     pub fn new(data: T, position: PositionRange) -> Self {
         Self { data, position }
+    }
+
+    pub fn into_inner(self) -> T {
+        self.data
+    }
+
+    pub fn into_parts(self) -> (T, PositionRange) {
+        (self.data, self.position)
     }
 }
 

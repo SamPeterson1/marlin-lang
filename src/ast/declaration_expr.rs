@@ -1,20 +1,21 @@
 use serde::Serialize;
 
-use crate::ast::{ASTNode, parsed_type::ParsedType, AstId};
-use crate::{impl_ast_node, impl_positioned, new_ast_id};
+use crate::ast::{ASTEnum, ASTNode, parsed_type::ParsedType, AstId};
+use crate::compiler::stages::{Parsed, Phase};
+use crate::{impl_ast_node, new_ast_id};
 use crate::lexer::token::{Located, PositionRange};
 
 #[derive(Serialize)]
-pub struct DeclarationExpr {
+pub struct DeclarationExpr<P: Phase = Parsed> {
     pub identifier: Located<String>,
     pub declaration_type: ParsedType,
-    pub expr: Option<Box<dyn ASTNode>>,
+    pub expr: Option<ASTEnum<P>>,
     position: PositionRange,
     id: AstId,
 }
 
 impl DeclarationExpr {
-    pub fn new(identifier: Located<String>, declaration_type: ParsedType, expr: Option<Box<dyn ASTNode>>, position: PositionRange) -> Self {
+    pub fn new(identifier: Located<String>, declaration_type: ParsedType, expr: Option<ASTEnum>, position: PositionRange) -> Self {
         Self {
             identifier,
             declaration_type,
@@ -25,5 +26,4 @@ impl DeclarationExpr {
     }
 }
 
-impl_positioned!(DeclarationExpr);
 impl_ast_node!(DeclarationExpr, visit_declaration);

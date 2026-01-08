@@ -1,20 +1,21 @@
 use serde::Serialize;
 
-use crate::ast::{arguments::Arguments, AstId};
-use crate::{impl_ast_node, impl_positioned, new_ast_id};
+use crate::ast::{ASTEnum, ASTNode, AstId};
+use crate::compiler::stages::{Parsed, Phase};
+use crate::{impl_ast_node, new_ast_id};
 use crate::lexer::token::{Located, PositionRange};
 
 #[derive(Serialize)]
-pub struct ConstructorCallExpr {
+pub struct ConstructorCallExpr<P: Phase = Parsed> {
     pub type_name: Located<String>,
-    pub arguments: Arguments,
+    pub arguments: Vec<ASTEnum<P>>,
     pub is_heap: bool,
     position: PositionRange,
     id: AstId,
 }
 
 impl ConstructorCallExpr {
-    pub fn new(type_name: Located<String>, arguments: Arguments, is_heap: bool, position: PositionRange) -> Self {        
+    pub fn new(type_name: Located<String>, arguments: Vec<ASTEnum>, is_heap: bool, position: PositionRange) -> Self {        
         Self {
             type_name,
             arguments,
@@ -25,5 +26,4 @@ impl ConstructorCallExpr {
     }    
 }
 
-impl_positioned!(ConstructorCallExpr);
 impl_ast_node!(ConstructorCallExpr, visit_constructor_call);

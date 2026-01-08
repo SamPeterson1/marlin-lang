@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::ast::{ASTNode, CastExpr};
+use crate::ast::{ASTEnum, CastExpr};
 use crate::diagnostic::ErrMsg;
 use crate::parser::rules::parsed_type::ParsedTypeRule;
 use crate::parser::rules::unary::UnaryRule;
@@ -15,19 +15,19 @@ impl fmt::Display for CastRule {
     }
 }
 
-impl ParseRule<Box<dyn ASTNode>> for CastRule {
+impl ParseRule<ASTEnum> for CastRule {
     fn check_match(&self, _cursor: ParserCursor) -> bool {
         true
     }
     
-    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTEnum> {
         parser.begin_range();
 
         let expr = parser.apply_rule(UnaryRule {}, "cast unary expression", Some(ErrMsg::ExpectedExpression))?;
         
         if parser.try_consume(TokenType::As).is_some() {
             let cast_type = parser.apply_rule(ParsedTypeRule {}, "cast type", Some(ErrMsg::ExpectedType))?;
-            Some(Box::new(CastExpr::new(expr, cast_type, parser.end_range())))
+            Some(Box::new(CastExpr::new(expr, cast_type, parser.end_range())).into())
         } else {
             Some(expr)
         }

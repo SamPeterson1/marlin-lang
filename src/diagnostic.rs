@@ -3,7 +3,6 @@ use core::fmt;
 use crate::ast::{BinaryOperator, UnaryOperator};
 use crate::logger::LogLevel;
 use crate::lexer::token::{PositionRange, TokenType};
-use crate::resolver::ResolvedType;
 
 #[derive(Clone, Copy)]
 pub enum DiagnosticSeverity {
@@ -44,7 +43,8 @@ impl fmt::Display for Diagnostic {
     }
 }
 
-pub enum ErrMsg<'ctx> {
+#[allow(dead_code)]
+pub enum ErrMsg {
     UnknownSymbol(char),
     UnterminatedString,
     DecimalLiteralAsInt,
@@ -62,20 +62,20 @@ pub enum ErrMsg<'ctx> {
     UnknownTypeName(String),
     UnknownVariable(String),
     DuplicateVariable(String),
-    IncompatibleBinaryTypes(&'ctx ResolvedType, &'ctx ResolvedType, BinaryOperator),
-    IncompatibleUnaryType(&'ctx ResolvedType, UnaryOperator),
+    IncompatibleBinaryTypes(String, String, BinaryOperator),
+    IncompatibleUnaryType(String, UnaryOperator),
     FieldNotFound(String),
-    IncompatibleMemberAccessType(&'ctx ResolvedType),
-    ArrayIndexNotInteger(&'ctx ResolvedType),
-    MismatchedIfBranches(&'ctx ResolvedType, &'ctx ResolvedType),
-    IncompatibleAssignment(&'ctx ResolvedType, &'ctx ResolvedType),
+    IncompatibleMemberAccessType(String),
+    ArrayIndexNotInteger(String),
+    MismatchedIfBranches(String, String),
+    IncompatibleAssignment(String, String),
     FunctionArgumentCountMismatch(usize, usize),
-    FunctionArgumentTypeMismatch(usize, &'ctx ResolvedType, &'ctx ResolvedType),
-    CallOnNonFunctionType(&'ctx ResolvedType),
-    ConstructorNotFound(&'ctx ResolvedType)
+    FunctionArgumentTypeMismatch(usize, String, String),
+    CallOnNonFunctionType(String),
+    ConstructorNotFound(String)
 }
 
-impl ErrMsg<'_> {
+impl ErrMsg {
     pub fn make_diagnostic(self, position: PositionRange) -> Diagnostic {
         Diagnostic {
             severity: DiagnosticSeverity::Error,
@@ -85,7 +85,7 @@ impl ErrMsg<'_> {
     }
 }
 
-impl fmt::Display for ErrMsg<'_> {
+impl fmt::Display for ErrMsg {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let msg = match self {
             Self::UnknownSymbol(x) => &format!("unknown symbol {}", x),
@@ -106,37 +106,37 @@ impl fmt::Display for ErrMsg<'_> {
             Self::UnknownVariable(name) => &format!("unknown variable: '{}'", name),
             Self::DuplicateVariable(name) => &format!("duplicate variable declaration: '{}'", name),
             Self::IncompatibleBinaryTypes(left, right, operator) => {
-                &format!("incompatible types for operator '{}': left is '{:?}', right is '{:?}'", operator, left, right)
+                &format!("incompatible types for operator '{}': left is '{}', right is '{}'", operator, left, right)
             },
             Self::IncompatibleUnaryType(ty, operator) => {
-                &format!("incompatible type for operator '{}': expression is of type '{:?}'", operator, ty)
+                &format!("incompatible type for operator '{}': expression is of type '{}'", operator, ty)
             },
             Self::FieldNotFound(field_name) => {
                 &format!("field '{}' not found in struct", field_name)
             },
             Self::IncompatibleMemberAccessType(ty) => {
-                &format!("cannot access member of type '{:?}'", ty)
+                &format!("cannot access member of type '{}'", ty)
             },
             Self::ArrayIndexNotInteger(ty) => {
-                &format!("array index must be of integer type, found '{:?}'", ty)
+                &format!("array index must be of integer type, found '{}'", ty)
             },
             Self::MismatchedIfBranches(then_type, else_type) => {
-                &format!("mismatched types in if branches: 'then' is '{:?}', 'else' is '{:?}'", then_type, else_type)
+                &format!("mismatched types in if branches: 'then' is '{}', 'else' is '{}'", then_type, else_type)
             },
             Self::IncompatibleAssignment(var_type, expr_type) => {
-                &format!("cannot assign expression of type '{:?}' to variable of type '{:?}'", expr_type, var_type)
+                &format!("cannot assign expression of type '{}' to variable of type '{}'", expr_type, var_type)
             },
             Self::FunctionArgumentCountMismatch(expected, found) => {
                 &format!("function expected {} arguments, but {} were provided", expected, found)
             },
             Self::FunctionArgumentTypeMismatch(index, expected, found) => {
-                &format!("function argument {} expected type '{:?}', but found type '{:?}'", index, expected, found)
+                &format!("function argument {} expected type '{}', but found type '{}'", index, expected, found)
             },
             Self::CallOnNonFunctionType(ty) => {
-                &format!("cannot call expression of non-function type '{:?}'", ty)
+                &format!("cannot call expression of non-function type '{}'", ty)
             },
             Self::ConstructorNotFound(ty) => {
-                &format!("constructor not found for type '{:?}'", ty)
+                &format!("constructor not found for type '{}'", ty)
             }
         };
 

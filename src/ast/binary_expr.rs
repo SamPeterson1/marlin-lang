@@ -2,11 +2,12 @@ use std::fmt::Display;
 
 use serde::Serialize;
 
-use crate::ast::{ASTNode, AstId};
-use crate::{impl_ast_node, impl_positioned, new_ast_id};
-use crate::lexer::token::{PositionRange, TokenType};
+use crate::ast::{ASTEnum, ASTNode, AstId};
+use crate::compiler::stages::{Parsed, Phase};
+use crate::{impl_ast_node, new_ast_id};
+use crate::lexer::token::{PositionRange, Positioned, TokenType};
 
-#[derive(Serialize, Clone, Copy)]
+#[derive(Serialize, Clone, Copy, Debug)]
 pub enum BinaryOperator {
     Plus,
     Minus,
@@ -83,16 +84,16 @@ impl TryFrom<TokenType> for BinaryOperator {
 }
 
 #[derive(Serialize)]
-pub struct BinaryExpr {
-    pub left: Box<dyn ASTNode>,
-    pub right: Box<dyn ASTNode>,
+pub struct BinaryExpr<P: Phase = Parsed> {
+    pub left: ASTEnum<P>,
+    pub right: ASTEnum<P>,
     pub operator: BinaryOperator,
     position: PositionRange,
     id: AstId,
 }
 
 impl BinaryExpr {
-    pub fn new(left: Box<dyn ASTNode>, right: Box<dyn ASTNode>, operator: BinaryOperator) -> Self {
+    pub fn new(left: ASTEnum, right: ASTEnum, operator: BinaryOperator) -> Self {
         let position = PositionRange::concat(&left.get_position(), &right.get_position());
 
         Self {
@@ -105,5 +106,4 @@ impl BinaryExpr {
     }
 }
 
-impl_positioned!(BinaryExpr);
 impl_ast_node!(BinaryExpr, visit_binary);

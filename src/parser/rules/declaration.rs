@@ -46,11 +46,3 @@ impl ParseRule<DeclarationExpr> for DeclarationRule {
         Some(DeclarationExpr::new(declaration_name, declaration_type, expr, parser.end_range()))
     }    
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::lexer::token::{Token, TokenType, PositionRange};
-
-    
-}

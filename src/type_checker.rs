@@ -1,6 +1,6 @@
-use std::{any::Any, clone, collections::HashMap, rc::Rc, sync::MutexGuard};
+use std::collections::HashMap;
 
-use crate::{ast::*, diagnostic::{Diagnostic, ErrMsg}, lexer::token::Positioned, logger::{Log, LogTarget}, resolver::{FunctionType, GlobalSymbolTable, ResolvedType, SymbolTable, TypeArena, TypeId}};
+use crate::{ast::*, diagnostic::{Diagnostic, ErrMsg}, lexer::token::Positioned, logger::{Log, LogTarget}, resolver::{FunctionType, GlobalSymbolTable, ResolvedType, SymbolTable, TypeId}};
 
 pub struct TypeChecker<'ctx> {
     diagnostics: &'ctx mut Vec<Diagnostic>,
@@ -199,21 +199,21 @@ impl<'ctx> ASTVisitor<'ctx, Option<TypeId>> for TypeChecker<'ctx> {
     }
 
     fn visit_member_access(&mut self, node: &'ctx MemberAccess) -> Option<TypeId> {
-        self.log_debug(self.log_target, &format!("Visiting member access for id {:?}", node.get_id()));
-        self.log_debug(self.log_target, &format!("Node expr is {}", serde_json::to_string(&node.expr).unwrap()));
+        self.log_debug(self.log_target, format!("Visiting member access for id {:?}", node.get_id()));
+        self.log_debug(self.log_target, format!("Node expr is {}", serde_json::to_string(&node.expr).unwrap()));
         let expr_type_id = node.expr.accept_visitor(self)?;
-        self.log_debug(self.log_target, &format!("Expression type id for member access: {:?}", expr_type_id));
+        self.log_debug(self.log_target, format!("Expression type id for member access: {:?}", expr_type_id));
 
         for member_access in &node.member_accesses {
             match member_access {
                 AccessType::Direct(field_name) => {
                     match &*self.global_table.type_arena.get(expr_type_id) {
                         ResolvedType::Struct(struct_type) => {
-                            if let Some(field_type) = (struct_type).members.get(&field_name.data) {
+                            if let Some(field_type) = (struct_type).members.get(field_name.as_ref()) {
                                 self.symbol_table.ast_types.insert(node.get_id(), *field_type);
                             } else {
                                 self.diagnostics.push(
-                                    ErrMsg::FieldNotFound(field_name.data.clone())
+                                    ErrMsg::FieldNotFound(field_name.to_string())
                                     .make_diagnostic(*field_name.get_position())
                                 );
                                 return None;
@@ -234,11 +234,11 @@ impl<'ctx> ASTVisitor<'ctx, Option<TypeId>> for TypeChecker<'ctx> {
                         ResolvedType::Pointer(inner_type) => {
                             match &*self.global_table.type_arena.get(*inner_type) {
                                 ResolvedType::Struct(struct_type) => {
-                                    if let Some(field_type) = struct_type.members.get(&field_name.data) {
+                                    if let Some(field_type) = struct_type.members.get(field_name.as_ref()) {
                                         self.symbol_table.ast_types.insert(node.get_id(), *field_type);
                                     } else {
                                         self.diagnostics.push(
-                                            ErrMsg::FieldNotFound(field_name.data.clone())
+                                            ErrMsg::FieldNotFound(field_name.to_string())
                                             .make_diagnostic(*field_name.get_position())
                                         );
 
@@ -298,9 +298,9 @@ impl<'ctx> ASTVisitor<'ctx, Option<TypeId>> for TypeChecker<'ctx> {
                 AccessType::Function(arguments) => {
                     match &*self.global_table.type_arena.get(expr_type_id) {
                         ResolvedType::Function(func_sig) => {
-                            if func_sig.param_types.len() != arguments.args.len() {
+                            if func_sig.param_types.len() != arguments.len() {
                                 self.diagnostics.push(
-                                    ErrMsg::FunctionArgumentCountMismatch(func_sig.param_types.len(), arguments.args.len())
+                                    ErrMsg::FunctionArgumentCountMismatch(func_sig.param_types.len(), arguments.len())
                                     .make_diagnostic(*node.get_position())
                                 );
                                 return None;
@@ -308,7 +308,7 @@ impl<'ctx> ASTVisitor<'ctx, Option<TypeId>> for TypeChecker<'ctx> {
                             
                            let func_sig = func_sig.clone();
             
-                            for (i, arg) in arguments.args.iter().enumerate() {
+                            for (i, arg) in arguments.iter().enumerate() {
                                 let param_type_id = func_sig.param_types[i];
                                 let arg_type_id = arg.accept_visitor(self)?;
             
@@ -337,44 +337,44 @@ impl<'ctx> ASTVisitor<'ctx, Option<TypeId>> for TypeChecker<'ctx> {
             }
         }
 
-        self.log_debug(self.log_target, &format!("Member access type id for id {:?} is {:?}", node.get_id(), self.symbol_table.ast_types.get(&node.get_id())));
+        self.log_debug(self.log_target, format!("Member access type id for id {:?} is {:?}", node.get_id(), self.symbol_table.ast_types.get(&node.get_id())));
 
         Some(*self.symbol_table.ast_types.get(&node.get_id()).unwrap())
     }
 
     fn visit_var(&mut self, node: &'ctx VarExpr) -> Option<TypeId> {
-        self.log_debug(self.log_target, &format!("Visiting variable expression {}", serde_json::to_string(&node).unwrap()));
+        self.log_debug(self.log_target, format!("Visiting variable expression {}", serde_json::to_string(&node).unwrap()));
 
         if let Some(decl_id) = self.symbol_table.variables.get(&node.get_id()) {
             let decl_type_id = *self.symbol_table.declaration_types.get(decl_id.value()).unwrap();
             self.symbol_table.ast_types.insert(node.get_id(), decl_type_id);
 
             return Some(decl_type_id);
-        } else if let Some(fn_type_id) = self.symbol_table.functions.get(node.path.segments.first().unwrap().data.as_str()) {
+        } else if let Some(fn_type_id) = self.symbol_table.functions.get(node.path.segments.first().unwrap().as_str()) {
             self.symbol_table.ast_types.insert(node.get_id(), *fn_type_id);
-            self.log_debug(self.log_target, &format!("Variable '{}' is a function with type id {:?}", node.path.segments.first().unwrap().data, fn_type_id));
+            self.log_debug(self.log_target, format!("Variable '{}' is a function with type id {:?}", node.path.segments.first().unwrap(), fn_type_id));
             return Some(*fn_type_id);
         } else {
             let path_vec = node.path.segments[0..node.path.segments.len() - 1]
                 .iter()
-                .map(|s| s.data.clone())
+                .map(|s| s.clone())
                 .collect::<Vec<_>>();
 
-            self.log_debug(self.log_target, &format!("Looking up symbol table for path {:?}", path_vec));
+            self.log_debug(self.log_target, format!("Looking up symbol table for path {:?}", path_vec));
 
             let symbol_table = self.global_table.scopes.get(&path_vec)?;
 
-            self.log_debug(self.log_target, &format!("Looking up function '{}' in symbol table", node.path.segments.last().unwrap().data));
+            self.log_debug(self.log_target, format!("Looking up function '{}' in symbol table", node.path.segments.last().unwrap()));
 
             // Print list of functions in symbol table
             let function_names: Vec<String> = symbol_table.functions.iter().map(|entry| entry.key().clone()).collect();
-            self.log_debug(self.log_target, &format!("Available functions in symbol table: {:?}", function_names));
+            self.log_debug(self.log_target, format!("Available functions in symbol table: {:?}", function_names));
 
-            self.symbol_table.ast_types.insert(node.get_id(), *symbol_table.functions.get(&node.path.segments.last().unwrap().data)?);
+            self.symbol_table.ast_types.insert(node.get_id(), *symbol_table.functions.get(node.path.segments.last().unwrap())?);
 
-            self.log_debug(self.log_target, &format!("Variable '{}' has type id {:?}", node.path.segments.last().unwrap().data, self.symbol_table.ast_types.get(&node.get_id())));
+            self.log_debug(self.log_target, format!("Variable '{}' has type id {:?}", node.path.segments.last().unwrap(), self.symbol_table.ast_types.get(&node.get_id())));
 
-            return symbol_table.functions.get(&node.path.segments.last().unwrap().data).map(|x| *x.value());
+            return symbol_table.functions.get(node.path.segments.last().unwrap()).map(|x| *x.value());
         }
     }
 
@@ -489,11 +489,11 @@ impl<'ctx> ASTVisitor<'ctx, Option<TypeId>> for TypeChecker<'ctx> {
     fn visit_constructor_call(&mut self, node: &'ctx ConstructorCallExpr) -> Option<TypeId> {
         let mut arg_types = Vec::new();
         
-        for arg in &node.arguments.args {
+        for arg in &node.arguments {
             arg_types.push(arg.accept_visitor(self)?);
         }
 
-        let resolved_type = *self.symbol_table.types.get(&node.type_name.data)?;
+        let resolved_type = *self.symbol_table.types.get(node.type_name.as_ref())?;
 
         let fn_type = FunctionType {
             param_types: arg_types,

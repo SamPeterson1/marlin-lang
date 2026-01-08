@@ -1,19 +1,34 @@
 use serde::Serialize;
 
-use crate::{ast::{ASTNode, AstId, Path, Require}, impl_ast_node, impl_positioned, lexer::token::PositionRange, new_ast_id};
+use crate::{ast::{ASTEnum, ASTNode, AstId, Path}, compiler::stages::{Parsed, Phase}, impl_ast_node, lexer::token::{Located, PositionRange}, new_ast_id};
 
 #[derive(Serialize)]
-pub struct Scope {
-    pub path: Path,
+pub struct Require {
+    pub path: Located<Path>,
+    pub alias: Option<Located<String>>, 
+}
+
+impl Require {
+    pub fn new(path: Located<Path>, alias: Option<Located<String>>) -> Self {
+        Self {
+            path,
+            alias,
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct Scope<P: Phase = Parsed> {
+    pub path: Located<Path>,
     pub requires: Vec<Require>,
-    pub child_scopes: Vec<Scope>,
-    pub items: Vec<Box<dyn ASTNode>>,
+    pub child_scopes: Vec<Scope<P>>,
+    pub items: Vec<ASTEnum<P>>,
     position: PositionRange,
     id: AstId,
 }
 
 impl Scope {
-    pub fn new(path: Path, requires: Vec<Require>, child_scopes: Vec<Scope>, items: Vec<Box<dyn ASTNode>>, position: PositionRange) -> Self {
+    pub fn new(path: Located<Path>, requires: Vec<Require>, child_scopes: Vec<Scope>, items: Vec<ASTEnum>, position: PositionRange) -> Self {
         Self {
             path,
             requires,
@@ -41,5 +56,4 @@ impl Scope {
     }
 }
 
-impl_positioned!(Scope);
 impl_ast_node!(Scope, visit_scope);

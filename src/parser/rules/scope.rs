@@ -1,15 +1,11 @@
-    use std::fmt;
+use std::fmt;
 
-use crate::ast::{DeclarationExpr, Scope};
-use crate::diagnostic::ErrMsg;
-use crate::logger::Log;
-use crate::parser::rules::declaration::DeclarationRule;
+use crate::ast::Scope;
 use crate::parser::rules::item::ItemRule;
 use crate::parser::rules::path::PathRule;
 use crate::parser::rules::require::RequireRule;
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
-use crate::parser::rules::parsed_type::ParsedTypeRule;
-use crate::lexer::token::{Located, TokenType};
+use crate::lexer::token::TokenType;
 
 pub struct ScopeRule {}
 
@@ -59,11 +55,4 @@ impl ParseRule<Scope> for ScopeRule {
 
         Some(Scope::new(path, requires, child_scopes, items, parser.end_range()))
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::lexer::token::{Token, TokenType, PositionRange};
-
 }

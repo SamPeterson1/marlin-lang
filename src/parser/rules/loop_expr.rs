@@ -34,11 +34,11 @@ impl ParseRule<LoopExpr> for LoopRule {
     }
 }
 
-use crate::logger::CONSOLE_LOGGER;
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::lexer::token::{Token, TokenType, PositionRange};
+    use crate::logger::CONSOLE_LOGGER;
 
     fn create_token(token_type: TokenType) -> Token {
         Token::new(token_type, PositionRange::zero())

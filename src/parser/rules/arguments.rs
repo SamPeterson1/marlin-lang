@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::ast::Arguments;
+use crate::ast::ASTEnum;
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
 use crate::parser::rules::expr::ExprRule;
 use crate::lexer::token::TokenType;
@@ -13,12 +13,12 @@ impl fmt::Display for ArgumentsRule {
     }
 }
 
-impl ParseRule<Arguments> for ArgumentsRule {
+impl ParseRule<Vec<ASTEnum>> for ArgumentsRule {
     fn check_match(&self, mut cursor: ParserCursor) -> bool {
         cursor.try_consume(TokenType::LeftParen).is_some()
     }
     
-    fn parse(&self, parser: &mut ExprParser) -> Option<Arguments> {
+    fn parse(&self, parser: &mut ExprParser) -> Option<Vec<ASTEnum>> {
         parser.begin_range();
         
         parser.try_consume(TokenType::LeftParen)?;
@@ -39,7 +39,7 @@ impl ParseRule<Arguments> for ArgumentsRule {
             parser.consume_or_diagnostic(TokenType::RightParen);
         }
         
-        Some(Arguments::new(arguments, parser.end_range()))
+        Some(arguments)
     }
 }
 
@@ -93,7 +93,7 @@ mod tests {
         
         assert!(result.is_some());
         let arguments = result.unwrap();
-        assert_eq!(arguments.args.len(), 0);
+        assert_eq!(arguments.len(), 0);
         assert!(diagnostics.is_empty(), "Expected no diagnostics for valid empty arguments");
     }
 
@@ -113,7 +113,7 @@ mod tests {
         
         assert!(result.is_some());
         let arguments = result.unwrap();
-        assert_eq!(arguments.args.len(), 1);
+        assert_eq!(arguments.len(), 1);
         assert!(diagnostics.is_empty(), "Expected no diagnostics for valid single argument");
     }
 
@@ -136,7 +136,6 @@ mod tests {
         let result = rule.parse(&mut parser);
         
         assert!(result.is_some());
-        let arguments = result.unwrap();
         assert!(diagnostics.is_empty(), "Expected no diagnostics for valid multiple arguments");
     }
 
@@ -156,7 +155,7 @@ mod tests {
         // Should still return Some but with diagnostics
         assert!(result.is_some());
         let arguments = result.unwrap();
-        assert_eq!(arguments.args.len(), 1);
+        assert_eq!(arguments.len(), 1);
         
         // Should have diagnostic for missing right paren
         assert!(!diagnostics.is_empty(), "Expected diagnostic for missing right paren");
@@ -201,7 +200,7 @@ mod tests {
         // Should return empty arguments since first expression fails
         assert!(result.is_some());
         let arguments = result.unwrap();
-        assert_eq!(arguments.args.len(), 0);
+        assert_eq!(arguments.len(), 0);
         
         // May have diagnostics from failed expression parsing
         // The exact diagnostic depends on the ExprRule implementation
@@ -249,7 +248,7 @@ mod tests {
         // Should return empty arguments since no valid expressions
         assert!(result.is_some());
         let arguments = result.unwrap();
-        assert_eq!(arguments.args.len(), 0);
+        assert_eq!(arguments.len(), 0);
         
         // Should have diagnostics for invalid comma usage
         assert!(!diagnostics.is_empty(), "Expected diagnostics for invalid comma sequence");
@@ -279,7 +278,7 @@ mod tests {
         
         assert!(result.is_some());
         let arguments = result.unwrap();
-        assert_eq!(arguments.args.len(), 5);
+        assert_eq!(arguments.len(), 5);
         assert!(diagnostics.is_empty(), "Expected no diagnostics for valid argument structure");
     }
 }

@@ -1,11 +1,8 @@
 use std::fmt;
 
 use crate::ast::DeclarationExpr;
-use crate::diagnostic::ErrMsg;
-use crate::logger::Log;
 use crate::parser::rules::declaration::DeclarationRule;
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
-use crate::parser::rules::parsed_type::ParsedTypeRule;
 use crate::lexer::token::TokenType;
 
 pub struct ParametersRule {}
@@ -41,11 +38,4 @@ impl ParseRule<Vec<DeclarationExpr>> for ParametersRule {
 
         Some(parameters)
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::lexer::token::{Token, TokenType, PositionRange};
-
 }

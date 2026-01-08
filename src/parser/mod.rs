@@ -4,7 +4,7 @@ use std::collections::VecDeque;
 
 use serde::Serialize;
 
-use crate::ast::{ASTNode, Scope};
+use crate::ast::{ASTEnum, Scope};
 
 use crate::logger::Log;
 use crate::diagnostic::{Diagnostic, ErrMsg};
@@ -141,7 +141,7 @@ impl<'ctx> ExprParser<'ctx> {
     fn push_diagnostic(&mut self, diagnostic: Diagnostic) {
         let log_severity = diagnostic.severity.into();
 
-        self.log(log_severity, self.log_target, &format!("Pushing diagnostic: {}", diagnostic));
+        self.log(log_severity, self.log_target, format!("Pushing diagnostic: {}", diagnostic));
         self.diagnostics.push(diagnostic);
     }
 
@@ -176,30 +176,34 @@ impl<'ctx> ExprParser<'ctx> {
         }
     }
 
-    fn apply_rule_boxed<T: ASTNode + Serialize + 'static>(&mut self, rule: impl ParseRule<T>, purpose: &str, err_msg: Option<ErrMsg>) -> Option<Box<dyn ASTNode>> {
-        Some(Box::new(self.apply_rule(rule, purpose, err_msg)?))
+    fn apply_rule_boxed<T>(&mut self, rule: impl ParseRule<T>, purpose: &str, err_msg: Option<ErrMsg>) -> Option<ASTEnum> 
+    where
+        ASTEnum: From<Box<T>>,
+        T: Serialize
+    {
+        Some(Box::new(self.apply_rule(rule, purpose, err_msg)?).into())
     }
 
     fn apply_rule<T: Serialize>(&mut self, rule: impl ParseRule<T>, purpose: &str, err_msg: Option<ErrMsg>) -> Option<T> {
         self.position_stack.push_front(*self.cur().get_position());
-        self.log_debug(self.log_target, &format!("Entering rule {} for {}. Current token {:?}", rule, purpose, self.cur()));
+        self.log_debug(self.log_target, format!("Entering rule {} for {}. Current token {:?}", rule, purpose, self.cur()));
 
         if rule.check_match(self.get_cursor()) {
-            self.log_debug(self.log_target, &format!("Initial match satisfied for {}", purpose));
+            self.log_debug(self.log_target, format!("Initial match satisfied for {}", purpose));
             
             self.rule_stack.push_front(format!("{}", rule));
             let result = rule.parse(self);
             self.rule_stack.pop_front();
 
             match &result {
-                Some(result) => self.log_debug(self.log_target, &format!("Match succeeded for {}, result {}", purpose, serde_json::to_string(&result).unwrap())),
-                _ => self.log_error(self.log_target, &format!("Match failed for {}", purpose))
+                Some(result) => self.log_debug(self.log_target, format!("Match succeeded for {}, result {}", purpose, serde_json::to_string(&result).unwrap())),
+                _ => self.log_error(self.log_target, format!("Match failed for {}", purpose))
             }
 
 
             result
         } else {
-            self.log_debug(self.log_target, &format!("Initial match not satisfied for {}", purpose));
+            self.log_debug(self.log_target, format!("Initial match not satisfied for {}", purpose));
 
             self.rule_stack.pop_front();
 

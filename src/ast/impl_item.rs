@@ -1,17 +1,17 @@
 use serde::Serialize;
 
-use crate::ast::{function_item::FunctionItem, AstId};
-use crate::{impl_ast_node, impl_positioned, new_ast_id};
+use crate::ast::{function_item::FunctionItem, ASTNode, AstId};
+use crate::compiler::stages::{Parsed, Phase};
+use crate::{impl_ast_node, new_ast_id};
 use crate::lexer::token::{Located, PositionRange};
 
 #[derive(Serialize)]
-pub struct ImplItem {
+pub struct ImplItem<P: Phase = Parsed> {
     pub identifier: Located<String>,
-    pub functions: Vec<FunctionItem>,
+    pub functions: Vec<FunctionItem<P>>,
     position: PositionRange,
     id: AstId,
 }
-
 
 impl ImplItem {
     pub fn new(identifier: Located<String>, functions: Vec<FunctionItem>, position: PositionRange) -> Self {
@@ -24,5 +24,4 @@ impl ImplItem {
     }
 }
 
-impl_positioned!(ImplItem);
 impl_ast_node!(ImplItem, visit_impl);

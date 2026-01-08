@@ -14,7 +14,7 @@ impl fmt::Display for RequireRule {
 }
 
 impl RequireRule {
-    fn parse_path_alias(&self, prefix: Option<Path>, parser: &mut ExprParser) -> Option<(Path, Option<Located<String>>)> {
+    fn parse_path_alias(&self, prefix: Option<Located<Path>>, parser: &mut ExprParser) -> Option<(Located<Path>, Option<Located<String>>)> {
         let path = parser.apply_rule(PathRule {}, "require path", None)?;
         
         let path = if let Some(mut prefix) = prefix {
@@ -58,17 +58,7 @@ impl ParseRule<Vec<Require>> for RequireRule {
         parser.consume_or_diagnostic(TokenType::Semicolon);
 
         Some(requires.into_iter().map(|(path, alias)| {
-            Require {
-                path,
-                alias,
-            }
+            Require::new(path, alias)
         }).collect::<Vec<Require>>())
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::lexer::token::{Token, TokenType, PositionRange};
-
 }

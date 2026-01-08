@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::ast::ASTNode;
+use crate::ast::ASTEnum;
 use crate::parser::rules::delete_expr::DeleteRule;
 use crate::parser::{ExprParser, ParseRule, ParserCursor};
 use crate::parser::rules::{assignment::AssignmentRule, block::BlockRule, declaration::DeclarationRule, exit_expr::ExitRule, for_loop::ForLoopRule, if_block::IfBlockRule, loop_expr::LoopRule, while_loop::WhileLoopRule};
@@ -14,12 +14,12 @@ impl fmt::Display for StatementRule {
     }
 }
 
-impl ParseRule<Box<dyn ASTNode>> for StatementRule {
+impl ParseRule<ASTEnum> for StatementRule {
     fn check_match(&self, _cursor: ParserCursor) -> bool {
         true
     }
 
-    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTEnum> {
         if (LoopRule {}).check_match(parser.get_cursor()) {
             return parser.apply_rule_boxed(LoopRule {}, "statement loop", None);
         }
@@ -64,11 +64,11 @@ impl ParseRule<Box<dyn ASTNode>> for StatementRule {
     }
 }
 
-use crate::logger::CONSOLE_LOGGER;
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::lexer::token::{Token, TokenType, PositionRange};
+    use crate::logger::CONSOLE_LOGGER;
 
     fn create_token(token_type: TokenType) -> Token {
         Token::new(token_type, PositionRange::zero())

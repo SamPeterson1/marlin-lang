@@ -49,11 +49,11 @@ impl ParseRule<StructItem> for StructRule {
     }
 }
 
-use crate::logger::CONSOLE_LOGGER;
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::lexer::token::{Token, TokenType, PositionRange};
+    use crate::logger::CONSOLE_LOGGER;
 
     fn create_token(token_type: TokenType) -> Token {
         Token::new(token_type, PositionRange::zero())
@@ -100,7 +100,7 @@ mod tests {
         
         assert!(result.is_some());
         let struct_item = result.unwrap();
-        assert_eq!(struct_item.name.data, "Person");
+        assert_eq!(*struct_item.name, "Person");
         assert_eq!(struct_item.members.len(), 0);
         assert_eq!(struct_item.constructors.len(), 0);
         assert!(diagnostics.is_empty(), "Expected no diagnostics for valid empty struct");
@@ -126,9 +126,9 @@ mod tests {
         
         assert!(result.is_some());
         let struct_item = result.unwrap();
-        assert_eq!(struct_item.name.data, "Point");
+        assert_eq!(*struct_item.name, "Point");
         assert_eq!(struct_item.members.len(), 1);
-        assert_eq!(struct_item.members[0].1.data, "x");
+        assert_eq!(*struct_item.members[0].1, "x");
         assert_eq!(struct_item.constructors.len(), 0);
         assert!(diagnostics.is_empty(), "Expected no diagnostics for struct with single member");
     }
@@ -159,11 +159,11 @@ mod tests {
         
         assert!(result.is_some());
         let struct_item = result.unwrap();
-        assert_eq!(struct_item.name.data, "Rectangle");
+        assert_eq!(*struct_item.name, "Rectangle");
         assert_eq!(struct_item.members.len(), 3);
-        assert_eq!(struct_item.members[0].1.data, "width");
-        assert_eq!(struct_item.members[1].1.data, "height");
-        assert_eq!(struct_item.members[2].1.data, "visible");
+        assert_eq!(*struct_item.members[0].1, "width");
+        assert_eq!(*struct_item.members[1].1, "height");
+        assert_eq!(*struct_item.members[2].1, "visible");
         assert_eq!(struct_item.constructors.len(), 0);
         assert!(diagnostics.is_empty(), "Expected no diagnostics for struct with multiple members");
     }
@@ -195,7 +195,7 @@ mod tests {
         
         assert!(result.is_some());
         let struct_item = result.unwrap();
-        assert_eq!(struct_item.name.data, "Person");
+        assert_eq!(*struct_item.name, "Person");
         assert_eq!(struct_item.members.len(), 1);
         assert_eq!(struct_item.constructors.len(), 1);
         assert!(diagnostics.is_empty(), "Expected no diagnostics for struct with constructor");
@@ -239,7 +239,7 @@ mod tests {
         
         assert!(result.is_some());
         let struct_item = result.unwrap();
-        assert_eq!(struct_item.name.data, "Point");
+        assert_eq!(*struct_item.name, "Point");
         assert_eq!(struct_item.members.len(), 2);
         assert_eq!(struct_item.constructors.len(), 2);
         assert!(diagnostics.is_empty(), "Expected no diagnostics for struct with multiple constructors");
@@ -270,10 +270,10 @@ mod tests {
         
         assert!(result.is_some());
         let struct_item = result.unwrap();
-        assert_eq!(struct_item.name.data, "Vehicle");
+        assert_eq!(*struct_item.name, "Vehicle");
         assert_eq!(struct_item.members.len(), 2);
-        assert_eq!(struct_item.members[0].1.data, "engine");
-        assert_eq!(struct_item.members[1].1.data, "tires");
+        assert_eq!(*struct_item.members[0].1, "engine");
+        assert_eq!(*struct_item.members[1].1, "tires");
         assert!(diagnostics.is_empty(), "Expected no diagnostics for struct with custom types");
     }
 
@@ -436,7 +436,7 @@ mod tests {
         
         assert!(result.is_some());
         let struct_item = result.unwrap();
-        assert_eq!(struct_item.name.data, "GameState");
+        assert_eq!(*struct_item.name, "GameState");
         assert_eq!(struct_item.members.len(), 3);
         assert_eq!(struct_item.constructors.len(), 1);
         assert!(diagnostics.is_empty(), "Expected no diagnostics for complex struct");

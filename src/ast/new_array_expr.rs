@@ -1,20 +1,21 @@
 use serde::Serialize;
 
-use crate::ast::{ASTNode, ParsedType, AstId};
-use crate::{impl_ast_node, impl_positioned, new_ast_id};
+use crate::ast::{ASTEnum, ASTNode, AstId, ParsedType};
+use crate::compiler::stages::{Parsed, Phase};
+use crate::{impl_ast_node, new_ast_id};
 use crate::lexer::token::PositionRange;
 
 #[derive(Serialize)]
-pub struct NewArrayExpr {
+pub struct NewArrayExpr<P: Phase = Parsed> {
     pub dimension: usize,
-    pub sizes: Vec<Box<dyn ASTNode>>,
+    pub sizes: Vec<ASTEnum<P>>,
     pub array_type: ParsedType,
     position: PositionRange,
     id: AstId,
 }
 
 impl NewArrayExpr {
-    pub fn new(sizes: Vec<Box<dyn ASTNode>>, array_type: ParsedType, position: PositionRange) -> Self {
+    pub fn new(sizes: Vec<ASTEnum>, array_type: ParsedType, position: PositionRange) -> Self {
         Self {
             dimension: sizes.len(),
             sizes,
@@ -25,5 +26,4 @@ impl NewArrayExpr {
     }
 }
 
-impl_positioned!(NewArrayExpr);
 impl_ast_node!(NewArrayExpr, visit_new_array);

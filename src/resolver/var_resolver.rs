@@ -11,7 +11,7 @@ pub struct VarResolver<'ctx> {
     global_table: &'ctx GlobalSymbolTable,
     symbol_table: &'ctx SymbolTable,
     diagnostics: &'ctx mut Vec<Diagnostic>,
-    scopes: VecDeque<HashMap<&'ctx str, AstId>>,
+    scopes: VecDeque<HashMap<&'ctx String, AstId>>,
     unknown_variables: Vec<&'ctx Path>
 }
 
@@ -38,28 +38,21 @@ impl<'ctx> VarResolver<'ctx> {
     }
 
     pub fn finish_resolving(self) {
-        self.log_debug(self.log_target, &format!("Global scope list: {:?}", self.global_table.scopes.keys().collect::<Vec<_>>()));
-
         for path in &self.unknown_variables {
             let is_known = if path.segments.len() == 1 {
-                self.symbol_table.function_names.contains(&path.to_string())
+                self.symbol_table.function_names.contains(path.segments.first().unwrap())
             } else {
                 let parent_scope = &path.segments[0..path.segments.len() - 1];
-                let scope_vec = parent_scope.iter().map(|s| s.data.clone()).collect::<Vec<_>>();
+                let scope_vec = parent_scope.iter().map(|s| s.clone()).collect::<Vec<_>>();
 
-                self.log_debug(self.log_target, &format!("Checking for function '{}' in scope '{:?}'", path.to_string(), &scope_vec));
-
-                if let Some(symbol_table) = self.global_table.scopes.get(&scope_vec) {
-                    symbol_table.function_names.contains(&path.segments.last().unwrap().data)
+                if let Some(symbol_table) = self.global_table.scopes.get(scope_vec.as_slice()) {
+                    symbol_table.function_names.contains(path.segments.last().unwrap())
                 } else {
-                    self.log_debug(self.log_target, &format!("Scope '{:?}' not found", &scope_vec));
                     false
                 }
             };
 
             if !is_known {
-                self.log_error(self.log_target, &format!("Unknown variable '{}'", path.to_string()));
-
                 self.diagnostics.push(
                     ErrMsg::UnknownVariable(path.to_string())
                         .make_diagnostic(*path.get_position())
@@ -75,7 +68,7 @@ impl<'ast> ASTVisitor<'ast, ()> for VarResolver<'ast> {
         node.right.accept_visitor(self);
     }
 
-    fn visit_cast(&mut self, node: &'ast CastExpr) -> () {
+    fn visit_cast(&mut self, node: &'ast CastExpr) {
         node.expr.accept_visitor(self);
     }
 
@@ -92,7 +85,7 @@ impl<'ast> ASTVisitor<'ast, ()> for VarResolver<'ast> {
                     index_expr.accept_visitor(self);
                 },
                 AccessType::Function(arguments) => {
-                    for arg in &arguments.args {
+                    for arg in arguments {
                         arg.accept_visitor(self);
                     }
                 }
@@ -106,9 +99,9 @@ impl<'ast> ASTVisitor<'ast, ()> for VarResolver<'ast> {
     fn visit_var(&mut self, node: &'ast VarExpr) {
         if node.path.segments.len() == 1 {
             for scope in self.scopes.iter().rev() {
-                let identifier = node.path.segments.first().unwrap().data.as_str();
+                let identifier = node.path.segments.first().unwrap();
                 if let Some(decl) = scope.get(identifier) {
-                    self.log_info(self.log_target, &format!("Resolved variable '{}' to declaration ID {:?}", identifier, decl));
+                    self.log_info(self.log_target, format!("Resolved variable '{}' to declaration ID {:?}", identifier, decl));
                     self.symbol_table.variables.insert(node.get_id(), *decl);
                     return;
                 }
@@ -146,15 +139,15 @@ impl<'ast> ASTVisitor<'ast, ()> for VarResolver<'ast> {
 
         self.symbol_table.declaration_types.insert(node.get_id(), resolved_type_id.unwrap());
 
-        if scope.contains_key(&node.identifier.data.as_str()) {
-            self.log_error(self.log_target, &format!("Duplicate variable declaration: '{}'", node.identifier.data));
+        if scope.contains_key(node.identifier.as_ref()) {
+            self.log_error(self.log_target, format!("Duplicate variable declaration: '{}'", *node.identifier));
 
             self.diagnostics.push(
-                ErrMsg::DuplicateVariable(node.identifier.data.clone())
+                ErrMsg::DuplicateVariable(node.identifier.to_string())
                     .make_diagnostic(*node.get_position())
             );
         } else {
-            self.scopes.back_mut().unwrap().insert(&node.identifier.data, node.get_id());
+            self.scopes.back_mut().unwrap().insert(node.identifier.as_ref(), node.get_id());
         }
     }
     
@@ -191,7 +184,7 @@ impl<'ast> ASTVisitor<'ast, ()> for VarResolver<'ast> {
     }
     
     fn visit_constructor_call(&mut self, node: &'ast ConstructorCallExpr) {
-        for arg in &node.arguments.args {
+        for arg in &node.arguments {
             arg.accept_visitor(self);
         }
     }
@@ -209,7 +202,7 @@ impl<'ast> ASTVisitor<'ast, ()> for VarResolver<'ast> {
     }
     
     fn visit_function(&mut self, node: &'ast FunctionItem) {
-        self.symbol_table.function_names.insert(node.name.data.to_string());
+        self.symbol_table.function_names.insert(node.name.to_string());
 
         if let Some(body) = &node.body {
             self.scopes.push_back(HashMap::new());

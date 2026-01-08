@@ -1,13 +1,14 @@
 use serde::Serialize;
 
-use crate::ast::{AstId, BlockExpr, DeclarationExpr};
-use crate::{impl_ast_node, impl_positioned, new_ast_id};
+use crate::ast::{ASTNode, AstId, BlockExpr, DeclarationExpr};
+use crate::compiler::stages::{Parsed, Phase};
+use crate::{impl_ast_node, new_ast_id};
 use crate::lexer::token::PositionRange;
 
 #[derive(Serialize)]
-pub struct ConstructorItem {
-    pub parameters: Vec<DeclarationExpr>,
-    pub body: BlockExpr,
+pub struct ConstructorItem<P: Phase = Parsed> {
+    pub parameters: Vec<DeclarationExpr<P>>,
+    pub body: BlockExpr<P>,
     position: PositionRange,
     id: AstId,
 }
@@ -23,5 +24,4 @@ impl ConstructorItem {
     }
 }
 
-impl_positioned!(ConstructorItem);
 impl_ast_node!(ConstructorItem, visit_constructor);

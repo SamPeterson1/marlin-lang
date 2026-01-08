@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::ast::{ASTNode, Literal, LiteralExpr};
+use crate::ast::{ASTEnum, Literal, LiteralExpr};
 use crate::diagnostic::ErrMsg;
 use crate::parser::{ExprParser, ParseRule, TokenCursor};
 use crate::parser::rules::{block::BlockRule, constructor_call::ConstructorCallRule, expr::ExprRule, for_loop::ForLoopRule, if_block::IfBlockRule, loop_expr::LoopRule, new_array::NewArrayRule, var::VarRule, while_loop::WhileLoopRule};
@@ -14,12 +14,12 @@ impl fmt::Display for PrimaryRule {
     }
 }
 
-impl ParseRule<Box<dyn ASTNode>> for PrimaryRule {
+impl ParseRule<ASTEnum> for PrimaryRule {
     fn check_match(&self, _cursor: crate::parser::ParserCursor) -> bool {
         true
     }
 
-    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTEnum> {
         if (ConstructorCallRule {}).check_match(parser.get_cursor()) {
             return parser.apply_rule_boxed(ConstructorCallRule {}, "primary constructor call", None);
         }
@@ -75,15 +75,15 @@ impl ParseRule<Box<dyn ASTNode>> for PrimaryRule {
 
         parser.next();
 
-        return Some(Box::new(literal));
+        return Some(Box::new(literal).into());
     }
 }
 
-use crate::logger::CONSOLE_LOGGER;
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::lexer::token::{Token, TokenType, PositionRange};
+    use crate::logger::CONSOLE_LOGGER;
 
     fn create_token(token_type: TokenType) -> Token {
         Token::new(token_type, PositionRange::zero())

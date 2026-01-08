@@ -1,14 +1,15 @@
 use serde::Serialize;
 
 use crate::ast::{constructor_item::ConstructorItem, parsed_type::ParsedType, AstId};
-use crate::{impl_ast_node, impl_positioned, new_ast_id};
+use crate::compiler::stages::{Parsed, Phase};
+use crate::{impl_ast_node, new_ast_id};
 use crate::lexer::token::{Located, PositionRange};
 
 #[derive(Serialize)]
-pub struct StructItem {
+pub struct StructItem<P: Phase = Parsed> {
     pub name: Located<String>,
     pub members: Vec<(ParsedType, Located<String>)>,
-    pub constructors: Vec<ConstructorItem>,
+    pub constructors: Vec<ConstructorItem<P>>,
     position: PositionRange,
     id: AstId,
 }
@@ -30,5 +31,4 @@ impl StructItem {
     }
 }
 
-impl_positioned!(StructItem);
 impl_ast_node!(StructItem, visit_struct);

@@ -39,40 +39,44 @@ impl fmt::Display for LogLevel {
     }
 }
 
-impl LogLevel {
-    pub fn at_or_under(&self, level: &LogLevel) -> bool {
-        *self <= *level
-    }
-}
-
 pub trait Log {
     fn get_source(&self) -> String;
 
-    fn log(&self, level: LogLevel, target: &dyn LogTarget, message: &str) {
+    fn log(&self, level: LogLevel, target: &dyn LogTarget, message: impl AsRef<str>) {
         let source = self.get_source();
-        target.log(level, &source, message);
+        target.log(level, &source, message.as_ref());
     }
     
-    fn log_error(&self, target: &dyn LogTarget, message: &str) {
-        self.log(LogLevel::Error, target, message);
+    fn log_error(&self, target: &dyn LogTarget, message: impl AsRef<str>) {
+        self.log(LogLevel::Error, target, message.as_ref());
     }
 
-    fn log_warning(&self, target: &dyn LogTarget, message: &str) {
-        self.log(LogLevel::Warning, target, message);
+    #[allow(dead_code)]
+    fn log_warning(&self, target: &dyn LogTarget, message: impl AsRef<str>) {
+        self.log(LogLevel::Warning, target, message.as_ref());
     }
 
-    fn log_info(&self, target: &dyn LogTarget, message: &str) {
-        self.log(LogLevel::Info, target, message);
+    fn log_info(&self, target: &dyn LogTarget, message: impl AsRef<str>) {
+        self.log(LogLevel::Info, target, message.as_ref());
     }
 
-    fn log_debug(&self, target: &dyn LogTarget, message: &str) {
-        self.log(LogLevel::Debug, target, message);
+    fn log_debug(&self, target: &dyn LogTarget, message: impl AsRef<str>) {
+        self.log(LogLevel::Debug, target, message.as_ref());
     }
 }
 
 // LogTarget stays dyn safe by not having any generic methods
 pub trait LogTarget: Send + Sync {
     fn log(&self, level: LogLevel, source: &str, message: &str);
+}
+
+impl<T> Log for T
+where
+    T: ToString,
+{
+    fn get_source(&self) -> String {
+        self.to_string()
+    }
 }
 
 pub static CONSOLE_LOGGER: ConsoleLogger = ConsoleLogger::new();
@@ -128,9 +132,14 @@ impl FileLogger {
         let log_file_handle = match Self::new_log_file_handle(file_name) {
             Ok(log_file_handle) => Some(Mutex::new(log_file_handle)),
             Err(e) => {
-                CONSOLE_LOGGER.log(
+                "FileLogger".log(
                     LogLevel::Error,
-                    "FileLogger",
+                    &CONSOLE_LOGGER,
+                    format!("Failed to create log file '{}': {}", file_name.display(), e)
+                );
+                "FileLogger".log(
+                    LogLevel::Error,
+                    &CONSOLE_LOGGER,
                     &format!("Failed to create log file '{}': {}", file_name.display(), e)
                 );
                 None

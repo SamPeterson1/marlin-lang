@@ -1,5 +1,5 @@
 use core::str;
-use std::{collections::{HashMap, VecDeque}, f32::consts::E, hash::Hash, path::Path, process::Command, sync::MutexGuard};
+use std::{collections::{HashMap, VecDeque}, f32::consts::E, ffi::OsStr, hash::Hash, path::Path, process::Command, sync::MutexGuard};
 
 use inkwell::{AddressSpace, basic_block::BasicBlock, builder::Builder, context::Context, llvm_sys::prelude::LLVMValueRef, module::Module, types::BasicTypeEnum, values::{AnyValueEnum, AsValueRef, BasicValue, BasicValueEnum, FunctionValue, IntValue, PointerValue}};
 
@@ -122,11 +122,11 @@ impl<'ctx> CodeGen<'ctx> {
         }
     }
 
-    pub fn output_ll(&self, file_name: &str) {
-        self.module.print_to_file(Path::new(file_name)).unwrap();
+    pub fn output_ll(&self, file_name: impl AsRef<OsStr>) {
+        self.module.print_to_file(Path::new(&file_name)).unwrap();
     }
 
-    pub fn compile_with_clang(&self, output_file: &str) -> Result<(), String> {
+    pub fn compile_with_clang(&self, output_file: impl AsRef<OsStr>) -> Result<(), String> {
         // First, write the LLVM IR to a file
         self.module.print_to_file(Path::new("output.ll"))
             .map_err(|e| format!("Failed to write LLVM IR: {}", e))?;
@@ -135,7 +135,7 @@ impl<'ctx> CodeGen<'ctx> {
         let output = Command::new("clang")
             .arg("output.ll")
             .arg("-o")
-            .arg(output_file)
+            .arg(&output_file)
             .output()
             .map_err(|e| format!("Failed to execute clang: {}", e))?;
 
@@ -144,7 +144,6 @@ impl<'ctx> CodeGen<'ctx> {
             return Err(format!("Clang compilation failed:\n{}", stderr));
         }
 
-        println!("Successfully compiled to: {}", output_file);
         Ok(())
     }
 }
@@ -362,11 +361,11 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
     }
 
     fn visit_member_access(&mut self, node: &MemberAccess) {
-        self.log_debug(self.log_target, &format!("Getting member access for id {:?}", node.get_id()));
+        self.log_debug(self.log_target, format!("Getting member access for id {:?}", node.get_id()));
         if let Some(type_id) = self.symbol_table.ast_types.get(&node.get_id()) {
-            self.log_debug(self.log_target, &format!("Found type id {:?} for member access", type_id));
+            self.log_debug(self.log_target, format!("Found type id {:?} for member access", type_id));
         } else {
-            self.log_error(self.log_target, &format!("No type id found for member access id {:?}", node.get_id()));
+            self.log_error(self.log_target, format!("No type id found for member access id {:?}", node.get_id()));
             return;
         }
         let mut current_type_id = *self.symbol_table.ast_types.get(&node.expr.get_id()).unwrap();
@@ -379,7 +378,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
                     let function = unsafe { FunctionValue::new(self.value).unwrap() };
                     let mut arg_values = Vec::new();
 
-                    for arg in &args.args {
+                    for arg in args {
                         let arg_type = *self.symbol_table.ast_types.get(&arg.get_id()).unwrap();
                         arg.accept_visitor(self);
 
@@ -463,7 +462,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
                         _ => panic!("Expected struct type for member access"),
                     };
 
-                    let member_index = *struct_field_map.get(&member_name.data).unwrap();
+                    let member_index = *struct_field_map.get(&**member_name).unwrap();
 
                     let gep = unsafe {
                         self.builder.build_in_bounds_gep(
@@ -484,7 +483,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
 
                     let member_type_id = *match &*struct_type {
                         ResolvedType::Struct(struct_type) => {
-                            struct_type.members.get(&member_name.data).unwrap()
+                            struct_type.members.get(member_name.as_ref()).unwrap()
                         },
                         _ => panic!("Expected struct type for member access"),
                     };
@@ -527,7 +526,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
                         _ => panic!("Expected pointer to struct type for indirect member access"),
                     };
 
-                    let member_index = *struct_field_map.get(&member_name.data).unwrap();
+                    let member_index = *struct_field_map.get(member_name.as_ref()).unwrap();
 
                     let gep = unsafe {
                         if let ResolvedType::Pointer(struct_type) = struct_type {
@@ -555,7 +554,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
                         ResolvedType::Pointer(struct_type) => {
                             match &*self.global_table.type_arena.get(*struct_type) {
                                 ResolvedType::Struct(struct_type) => {
-                                    *struct_type.members.get(&member_name.data).unwrap()
+                                    *struct_type.members.get(member_name.as_ref()).unwrap()
                                 },
                                 _ => panic!("Expected pointer to struct type for indirect member access"),
                             }
@@ -581,7 +580,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
     }
 
     fn visit_var(&mut self, node: &VarExpr) {
-        let identifier = &node.path.segments.first().unwrap().data;
+        let identifier = node.path.segments.first().unwrap();
         if let Some(declaration_id) = self.symbol_table.variables.get(&node.get_id()) {
             let ptr = self.local_vars.get(declaration_id.value()).unwrap();
             if self.lvalue_mode {
@@ -603,12 +602,12 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
         } else {
             if let Some(func_val) = self.functions.get(identifier) {
                 self.value = func_val.as_value_ref();
-            } else if let Some(func_val) = self.foreign_functions.get(node.path.segments.iter().map(|s| s.data.clone()).collect::<Vec<_>>().as_slice()) {
+            } else if let Some(func_val) = self.foreign_functions.get(node.path.segments.iter().map(|s| s.clone()).collect::<Vec<_>>().as_slice()) {
                 self.value = func_val.as_value_ref();
             } else {
-                let module_path = node.path.segments[0..node.path.segments.len() - 1].iter().map(|s| s.data.clone()).collect::<Vec<_>>();
-                let symbol_table = self.global_table.scopes.get(&module_path).unwrap();
-                let fn_name = &node.path.segments.last().as_ref().unwrap().data;
+                let module_path = node.path.segments[0..node.path.segments.len() - 1].iter().map(|s| s.clone()).collect::<Vec<_>>();
+                let symbol_table = self.global_table.scopes.get(module_path.as_slice()).unwrap();
+                let fn_name = node.path.segments.last().unwrap();
                 let fn_type_id = symbol_table.functions.get(fn_name).unwrap();
                 let fn_type = self.global_table.type_arena.get(*fn_type_id.value());
 
@@ -620,7 +619,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
                     );
 
                     self.foreign_functions.insert(
-                        node.path.segments.iter().map(|s| s.data.clone()).collect::<Vec<_>>(),
+                        node.path.segments.iter().map(|s| s.clone()).collect::<Vec<_>>(),
                         function,
                     );
 
@@ -745,7 +744,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
 
     fn visit_loop(&mut self, node: &LoopExpr) {
         let label = match &node.label {
-            Some(label) => label.data.clone(),
+            Some(label) => label.to_string(),
             None => format!("{}", self.loop_labels.len()),
         };
 
@@ -828,7 +827,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
         }
 
         let label = match &node.label {
-            Some(label) => Some(&label.data),
+            Some(label) => Some(label.as_ref()),
             None => self.loop_labels.back(),
         };
 
@@ -885,7 +884,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
     }
 
     fn visit_function(&mut self, node: &FunctionItem) {
-        let fn_type_id = self.symbol_table.functions.get(&node.name.data).unwrap();
+        let fn_type_id = self.symbol_table.functions.get(node.name.as_ref()).unwrap();
         let fn_type_outer = self.global_table.type_arena.get(*fn_type_id);
 
         if let ResolvedType::Function(fn_type) = &*fn_type_outer {
@@ -915,8 +914,8 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
 
             drop(ret_type);
 
-            let function = self.module.add_function(&node.name.data, fn_type, None);
-            self.functions.insert(node.name.data.clone(), function);
+            let function = self.module.add_function(node.name.as_ref(), fn_type, None);
+            self.functions.insert(node.name.to_string(), function);
 
             if let Some(body) = &node.body {
                 let entry = self.context.append_basic_block(function, "entry");
@@ -927,7 +926,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
 
                     let param_ptr = self.builder.build_alloca(
                         param.get_type(),
-                        &parameter.identifier.data,
+                        parameter.identifier.as_ref(),
                     ).unwrap();
 
                     self.builder.build_store(param_ptr, param).unwrap();
@@ -940,7 +939,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
                 if *ret_type == ResolvedType::Void || !node.body.is_some() {
                     self.builder.build_return(None).unwrap();
                 } else {
-                    println!("Generating return for function {}", node.name.data);
+                    println!("Generating return for function {}", *node.name);
                     let value = unsafe { self.get_basic_value(&ret_type, self.value) };
                     self.builder.build_return(Some(&value)).unwrap();
                 }
@@ -953,7 +952,7 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
     fn visit_struct(&mut self, node: &StructItem) {
         let mut field_types = Vec::new();
 
-        let struct_type_id = self.symbol_table.types.get(&node.name.data).unwrap();
+        let struct_type_id = self.symbol_table.types.get(node.name.as_ref()).unwrap();
         let struct_type_outer = self.global_table.type_arena.get(*struct_type_id);
 
         let mut struct_field_map = HashMap::new();
@@ -976,12 +975,12 @@ impl ASTVisitor<'_, ()> for CodeGen<'_> {
             panic!("Struct type expected");
         }
 
-        self.struct_field_maps.insert(node.name.data.clone(), struct_field_map);
+        self.struct_field_maps.insert(node.name.to_string(), struct_field_map);
 
-        let struct_type = self.context.opaque_struct_type(&node.name.data);
+        let struct_type = self.context.opaque_struct_type(&node.name.to_string());
         struct_type.set_body(&field_types, false);
 
-        self.struct_types.insert(node.name.data.clone(), struct_type);
+        self.struct_types.insert(node.name.to_string(), struct_type);
     }
 
     fn visit_constructor(&mut self, _node: &ConstructorItem) {

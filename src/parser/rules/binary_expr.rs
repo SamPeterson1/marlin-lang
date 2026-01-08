@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::ast::{ASTNode, BinaryExpr, BinaryOperator};
+use crate::ast::{ASTEnum, BinaryExpr, BinaryOperator};
 use crate::parser::rules::cast::CastRule;
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
 use crate::lexer::token::TokenType;
@@ -13,97 +13,97 @@ impl fmt::Display for BinaryExprRule {
     }
 }
 
-impl ParseRule<Box<dyn ASTNode>> for BinaryExprRule {
+impl ParseRule<ASTEnum> for BinaryExprRule {
     fn check_match(&self, _cursor: ParserCursor) -> bool {
         true
     }
 
-    fn parse(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
+    fn parse(&self, parser: &mut ExprParser) -> Option<ASTEnum> {
         self.parse_condition(parser)
     }
 }
 
 impl BinaryExprRule {
     // condition: boolean-factor ("or" boolean-factor)*
-    fn parse_condition(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
+    fn parse_condition(&self, parser: &mut ExprParser) -> Option<ASTEnum> {
         let mut expr = self.parse_boolean_factor(parser)?;
         
         while let Some(operator) = parser.try_consume(TokenType::Or) {
             let binary_operator: BinaryOperator = operator.value.try_into().unwrap();
             let right = self.parse_boolean_factor(parser)?;
-            expr = Box::new(BinaryExpr::new(expr, right, binary_operator));
+            expr = Box::new(BinaryExpr::new(expr, right, binary_operator)).into();
         }
         
         Some(expr)
     }
 
     // boolean-factor: bitwise-term ("and" bitwise-term)*
-    fn parse_boolean_factor(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
+    fn parse_boolean_factor(&self, parser: &mut ExprParser) -> Option<ASTEnum> {
         let mut expr = self.parse_bitwise_term(parser)?;
         
         while let Some(operator) = parser.try_consume(TokenType::And) {
             let binary_operator: BinaryOperator = operator.value.try_into().unwrap();
             let right = self.parse_bitwise_term(parser)?;
-            expr = Box::new(BinaryExpr::new(expr, right, binary_operator));
+            expr = Box::new(BinaryExpr::new(expr, right, binary_operator)).into();
         }
         
         Some(expr)
     }
 
     // bitwise-term: bitwise-xor ("|" bitwise-xor)*
-    fn parse_bitwise_term(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
+    fn parse_bitwise_term(&self, parser: &mut ExprParser) -> Option<ASTEnum> {
         let mut expr = self.parse_bitwise_xor(parser)?;
         
         while let Some(operator) = parser.try_consume(TokenType::Bar) {
             let binary_operator: BinaryOperator = operator.value.try_into().unwrap();
             let right = self.parse_bitwise_xor(parser)?;
-            expr = Box::new(BinaryExpr::new(expr, right, binary_operator));
+            expr = Box::new(BinaryExpr::new(expr, right, binary_operator)).into();
         }
         
         Some(expr)
     }
 
     // bitwise-xor: bitwise-factor ("^" bitwise-factor)*
-    fn parse_bitwise_xor(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
+    fn parse_bitwise_xor(&self, parser: &mut ExprParser) -> Option<ASTEnum> {
         let mut expr = self.parse_bitwise_factor(parser)?;
         
         while let Some(operator) = parser.try_consume(TokenType::Carat) {
             let binary_operator: BinaryOperator = operator.value.try_into().unwrap();
             let right = self.parse_bitwise_factor(parser)?;
-            expr = Box::new(BinaryExpr::new(expr, right, binary_operator));
+            expr = Box::new(BinaryExpr::new(expr, right, binary_operator)).into();
         }
         
         Some(expr)
     }
 
     // bitwise-factor: equality ("&" equality)*
-    fn parse_bitwise_factor(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
+    fn parse_bitwise_factor(&self, parser: &mut ExprParser) -> Option<ASTEnum> {
         let mut expr = self.parse_equality(parser)?;
         
         while let Some(operator) = parser.try_consume(TokenType::Ampersand) {
             let binary_operator: BinaryOperator = operator.value.try_into().unwrap();
             let right = self.parse_equality(parser)?;
-            expr = Box::new(BinaryExpr::new(expr, right, binary_operator));
+            expr = Box::new(BinaryExpr::new(expr, right, binary_operator)).into();
         }
         
         Some(expr)
     }
 
     // equality: comparison (("==" | "!=") comparison)*
-    fn parse_equality(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
+    fn parse_equality(&self, parser: &mut ExprParser) -> Option<ASTEnum> {
         let mut expr = self.parse_comparison(parser)?;
         
         while let Some(operator) = parser.try_consume_match(&[TokenType::Equal, TokenType::NotEqual]) {
             let binary_operator: BinaryOperator = operator.value.try_into().unwrap();
             let right = self.parse_comparison(parser)?;
-            expr = Box::new(BinaryExpr::new(expr, right, binary_operator));
+            expr = Box::new(BinaryExpr::new(expr, right, binary_operator)).into();
         }
         
         Some(expr)
     }
 
     // comparison: bitwise-shift (("<" | "<=" | ">" | ">=") bitwise-shift)*
-    fn parse_comparison(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
+    fn parse_comparison(&self, parser: &mut ExprParser) -> Option<ASTEnum> {
         let mut expr = self.parse_bitwise_shift(parser)?;
         
         while let Some(operator) = parser.try_consume_match(&[
@@ -114,57 +114,57 @@ impl BinaryExprRule {
         ]) {
             let binary_operator: BinaryOperator = operator.value.try_into().unwrap();
             let right = self.parse_bitwise_shift(parser)?;
-            expr = Box::new(BinaryExpr::new(expr, right, binary_operator));
+            expr = Box::new(BinaryExpr::new(expr, right, binary_operator)).into();
         }
         
         Some(expr)
     }
 
     // bitwise-shift: arithmetic-term (("<<" | ">>") arithmetic-term)*
-    fn parse_bitwise_shift(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
+    fn parse_bitwise_shift(&self, parser: &mut ExprParser) -> Option<ASTEnum> {
         let mut expr = self.parse_arithmetic_term(parser)?;
         
         while let Some(operator) = parser.try_consume_match(&[TokenType::LeftShift, TokenType::RightShift]) {
             let binary_operator: BinaryOperator = operator.value.try_into().unwrap();
             let right = self.parse_arithmetic_term(parser)?;
-            expr = Box::new(BinaryExpr::new(expr, right, binary_operator));
+            expr = Box::new(BinaryExpr::new(expr, right, binary_operator)).into();
         }
         
         Some(expr)
     }
 
     // arithmetic-term: arithmetic-factor (("-" | "+") arithmetic-factor)*
-    fn parse_arithmetic_term(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
+    fn parse_arithmetic_term(&self, parser: &mut ExprParser) -> Option<ASTEnum> {
         let mut expr = self.parse_arithmetic_factor(parser)?;
         
         while let Some(operator) = parser.try_consume_match(&[TokenType::Minus, TokenType::Plus]) {
             let binary_operator: BinaryOperator = operator.value.try_into().unwrap();
             let right = self.parse_arithmetic_factor(parser)?;
-            expr = Box::new(BinaryExpr::new(expr, right, binary_operator));
+            expr = Box::new(BinaryExpr::new(expr, right, binary_operator)).into();
         }
         
         Some(expr)
     }
 
     // arithmetic-factor: unary (("*" | "/" | "%") unary)*
-    fn parse_arithmetic_factor(&self, parser: &mut ExprParser) -> Option<Box<dyn ASTNode>> {
+    fn parse_arithmetic_factor(&self, parser: &mut ExprParser) -> Option<ASTEnum> {
         let mut expr = parser.apply_rule(CastRule {}, "cast expression", None)?;
         
         while let Some(operator) = parser.try_consume_match(&[TokenType::Star, TokenType::Slash, TokenType::Percentage]) {
             let binary_operator: BinaryOperator = operator.value.try_into().unwrap();
             let right = parser.apply_rule(CastRule {}, "cast expression", None)?;
-            expr = Box::new(BinaryExpr::new(expr, right, binary_operator));
+            expr = Box::new(BinaryExpr::new(expr, right, binary_operator)).into();
         }
         
         Some(expr)
     }
 }
 
-use crate::logger::CONSOLE_LOGGER;
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::lexer::token::{Token, PositionRange};
+    use crate::logger::CONSOLE_LOGGER;
 
     fn create_token(token_type: TokenType) -> Token {
         Token::new(token_type, PositionRange::zero())

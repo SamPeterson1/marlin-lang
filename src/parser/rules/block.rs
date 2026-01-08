@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::ast::{ASTNode, BlockExpr};
+use crate::ast::{ASTEnum, BlockExpr};
 use crate::diagnostic::ErrMsg;
 use crate::parser::{ExprParser, ParseRule, ParserCursor, TokenCursor};
 use crate::parser::rules::statement::StatementRule;
@@ -23,7 +23,7 @@ impl ParseRule<BlockExpr> for BlockRule {
         parser.begin_range();
         
         parser.consume_or_diagnostic(TokenType::LeftCurly);
-        let mut exprs: Vec<Box<dyn ASTNode>> = Vec::new();
+        let mut exprs: Vec<ASTEnum> = Vec::new();
 
         while parser.try_consume(TokenType::RightCurly).is_none() {
             let statement = parser.apply_rule(StatementRule {}, "block statement", Some(ErrMsg::ExpectedStatement));

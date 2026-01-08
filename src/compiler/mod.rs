@@ -1,37 +1,39 @@
-//mod type_resolver;
-mod var_resolver;
+pub mod local_resolver;
+pub mod stages;
+
+use std::{collections::{HashMap, HashSet}, sync::{MappedRwLockReadGuard, RwLock, RwLockReadGuard}};
 
 use dashmap::{DashMap, DashSet};
 use serde::Serialize;
-//pub use type_resolver::TypeResolver;
 
-use std::{collections::{HashMap, HashSet}, hash::Hash, sync::{RwLock, RwLockReadGuard, MappedRwLockReadGuard}};
-use crate::ast::{AstId, ParsedType, ParsedTypeEnum};
+use crate::{ast::{AstId, ParsedType, ParsedTypeEnum}, diagnostic::Diagnostic};
 
-pub struct GlobalSymbolTable {
-    pub scopes: HashMap<Vec<String>, SymbolTable>,
-    pub type_arena: TypeArena,
+pub struct Compiler<'ctx> {
+    type_arena: TypeArena,
+    symbol_tables: HashMap<Vec<String>, SymbolTable<'ctx>>,
+    diagnostics: Vec<Diagnostic>,
 }
 
-impl GlobalSymbolTable {
+impl Compiler<'_> {
     pub fn new() -> Self {
         Self {
-            scopes: HashMap::new(),
             type_arena: TypeArena::new(),
+            symbol_tables: HashMap::new(),
+            diagnostics: Vec::new(),
         }
     }
 }
 
-pub struct SymbolTable {
+pub struct SymbolTable<'ctx> {
     pub types: DashMap<String, TypeId>,
-    pub function_names: DashSet<String>,
+    pub function_names: DashSet<&'ctx String>,
     pub functions: DashMap<String, TypeId>,
     pub ast_types: DashMap<AstId, TypeId>,
     pub declaration_types: DashMap<AstId, TypeId>,
     pub variables: DashMap<AstId, AstId>,
 }
 
-impl SymbolTable {
+impl SymbolTable<'_> {
     pub fn new() -> Self {        
         Self {
             types: DashMap::new(),
