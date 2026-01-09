@@ -215,17 +215,13 @@ impl<'ctx> ExprParser<'ctx> {
         } 
     }
 
-    pub fn parse(mut self) -> Vec<Scope> {
+    pub fn parse(mut self) -> Option<Scope> {
         self.log_info(self.log_target, "Beginning parser");
 
-        let mut scopes = Vec::new();
-
-        while let Some(scope) = self.apply_rule(ScopeRule {}, "top-level scope", None) {
-            scopes.push(scope);
-        }
+        let scope = self.apply_rule(ScopeRule {}, "top-level scope", None);
 
         self.log_info(self.log_target, "Parser finished");
 
-        scopes
+        scope
     }
 }

@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 use crate::ast::{function_item::FunctionItem, ASTNode, AstId};
-use crate::compiler::stages::{Parsed, Phase};
+use crate::compiler::visit::{Parsed, Phase};
 use crate::{impl_ast_node, new_ast_id};
 use crate::lexer::token::{Located, PositionRange};
 

@@ -2,7 +2,7 @@ use serde::Serialize;
 
 use crate::ast::{ASTNode, DeclarationExpr};
 use crate::ast::{block_expr::BlockExpr, parsed_type::ParsedType, AstId};
-use crate::compiler::stages::{Parsed, Phase};
+use crate::compiler::visit::{Parsed, Phase};
 use crate::{impl_ast_node, new_ast_id};
 use crate::lexer::token::{Located, PositionRange};
 

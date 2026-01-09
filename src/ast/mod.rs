@@ -52,7 +52,7 @@ pub use var_expr::VarExpr;
 use serde::Serialize;
 use std::sync::Mutex;
 
-use crate::{compiler::stages::{Parsed, Phase}, lexer::token::Positioned};
+use crate::{compiler::visit::{Parsed, Phase}, lexer::token::Positioned};
 
 #[derive(Serialize, Clone, Copy, Hash, PartialEq, Eq, Debug)]
 pub struct AstId(usize);

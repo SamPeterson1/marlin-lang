@@ -3,7 +3,7 @@ use std::fmt::Display;
 use serde::Serialize;
 
 use crate::ast::{ASTEnum, ASTNode, AstId};
-use crate::compiler::stages::{Parsed, Phase};
+use crate::compiler::visit::{Parsed, Phase};
 use crate::{impl_ast_node, new_ast_id};
 use crate::lexer::token::{PositionRange, Positioned, TokenType};
 

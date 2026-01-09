@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 use crate::ast::{ASTEnum, ASTNode, AstId, ParsedType};
-use crate::compiler::stages::{Parsed, Phase};
+use crate::compiler::visit::{Parsed, Phase};
 use crate::lexer::token::PositionRange;
 use crate::{impl_ast_node, new_ast_id};
 

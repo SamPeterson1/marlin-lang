@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::{ast::{ASTEnum, ASTNode, AstId, Path}, compiler::stages::{Parsed, Phase}, impl_ast_node, lexer::token::{Located, PositionRange}, new_ast_id};
+use crate::{ast::{ASTEnum, ASTNode, AstId, Path}, compiler::visit::{Parsed, Phase}, impl_ast_node, lexer::token::{Located, PositionRange}, new_ast_id};
 
 #[derive(Serialize)]
 pub struct Require {

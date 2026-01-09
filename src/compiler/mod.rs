@@ -1,32 +1,38 @@
 pub mod local_resolver;
-pub mod stages;
+pub mod visit;
 
 use std::{collections::{HashMap, HashSet}, sync::{MappedRwLockReadGuard, RwLock, RwLockReadGuard}};
 
 use dashmap::{DashMap, DashSet};
 use serde::Serialize;
 
-use crate::{ast::{AstId, ParsedType, ParsedTypeEnum}, diagnostic::Diagnostic};
+use crate::{ast::{AstId, ParsedType, ParsedTypeEnum, Scope}, diagnostic::Diagnostic};
 
-pub struct Compiler<'ctx> {
-    type_arena: TypeArena,
-    symbol_tables: HashMap<Vec<String>, SymbolTable<'ctx>>,
-    diagnostics: Vec<Diagnostic>,
+pub struct Compiler<'ast> {
+    pub type_arena: TypeArena,
+    pub symbol_tables: HashMap<&'ast[String], SymbolTable<'ast>>,
+    pub diagnostics: Vec<Diagnostic>,
 }
 
-impl Compiler<'_> {
-    pub fn new() -> Self {
+impl<'ast> Compiler<'ast> {
+    pub fn new(scopes: impl Iterator<Item = &'ast Scope>) -> Self {
+        let mut symbol_tables = HashMap::new();
+
+        for scope in scopes {
+            symbol_tables.insert(scope.path.segments.as_slice(), SymbolTable::new());
+        }
+
         Self {
             type_arena: TypeArena::new(),
-            symbol_tables: HashMap::new(),
+            symbol_tables,
             diagnostics: Vec::new(),
         }
     }
 }
 
-pub struct SymbolTable<'ctx> {
+pub struct SymbolTable<'ast> {
     pub types: DashMap<String, TypeId>,
-    pub function_names: DashSet<&'ctx String>,
+    pub function_names: DashSet<&'ast String>,
     pub functions: DashMap<String, TypeId>,
     pub ast_types: DashMap<AstId, TypeId>,
     pub declaration_types: DashMap<AstId, TypeId>,

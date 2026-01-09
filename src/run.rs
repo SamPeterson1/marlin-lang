@@ -6,6 +6,8 @@ use std::path::Path;
 
 use crate::ast::Scope;
 use crate::compiler::Compiler;
+use crate::compiler::local_resolver::LocalResolver;
+use crate::compiler::visit::ASTVisitor;
 use crate::diagnostic::Diagnostic;
 use crate::logger::{CONSOLE_LOGGER, FileLogger, Log};
 use crate::parser::ExprParser;
@@ -26,10 +28,16 @@ fn log_diagnostics(scope: &Scope, diagnostics: &[Diagnostic]) -> bool {
     !diagnostics.is_empty()
 }
 
-async fn compile_scope(scope: Scope, compiler: Arc<Compiler<'_>>) {
+async fn compile_scope<'ast>(scope: &'ast Scope, compiler: &Compiler<'ast>) {
     let path = scope.path.segments.iter().map(|s| s.clone()).collect::<Vec<_>>();
     let log_target = FileLogger::new(&Path::new("modules").join(Path::new(&path.join("_"))).with_extension("log"));
- 
+    let symbol_table = compiler.symbol_tables.get(path.as_slice()).unwrap();
+    
+    let mut local_resolver: LocalResolver<'_, 'ast> = LocalResolver::new(&log_target, &compiler, symbol_table);
+
+    let resolve_confirmation = local_resolver.visit_scope(&scope);
+
+    let local_resolved = resolve_confirmation.transmute_scope(scope);
 }
 
 async fn read_file(file: impl AsRef<Path>) -> io::Result<String> {
@@ -39,7 +47,7 @@ async fn read_file(file: impl AsRef<Path>) -> io::Result<String> {
     Ok(tokio::fs::read_to_string(path).await?)
 }
 
-async fn parse_file(file_path: impl AsRef<Path>) -> Result<Vec<Scope>, ParseError> {
+async fn parse_file(file_path: impl AsRef<Path>) -> Result<Scope, ParseError> {
     let contents = match read_file(&file_path).await {
         Ok(c) => c,
         Err(e) => {
@@ -65,7 +73,7 @@ async fn parse_file(file_path: impl AsRef<Path>) -> Result<Vec<Scope>, ParseErro
         return Err(ParseError::Diagnostics(diagnostics));
     }
 
-    Ok(scopes)
+    Ok(scopes.unwrap())
 }  
 
 pub async fn get_scopes(files: &[String]) -> Option<Vec<Scope>> {
@@ -82,8 +90,8 @@ pub async fn get_scopes(files: &[String]) -> Option<Vec<Scope>> {
 
     for (file, thread_handle) in thread_handles {
         match thread_handle.await.unwrap() {
-            Ok(file_scopes) => {
-                scopes.extend(file_scopes);
+            Ok(scope) => {
+                scopes.push(scope);
             },
             Err(parse_error) => {
                 success = false;
@@ -124,18 +132,22 @@ pub async fn get_scopes(files: &[String]) -> Option<Vec<Scope>> {
 }
 
 pub async fn run_files(files: Vec<String>) {
+    // Leak the AST because we need it for the whole program lifetime
     let flattened_scopes = match get_scopes(&files).await {
         Some(scopes) => scopes,
         None => return,
-    };
+    }.leak();
     
-    let run_context = Arc::new(Compiler::new());
+    // Convert to & from &mut to allow Copy into async closure
+    // Leak the compiler because we need it for the whole program lifetime
+    let compiler = Box::leak(Box::new(Compiler::new(flattened_scopes.iter()))) as &Compiler;
 
     let mut thread_handles = Vec::new();
 
-    for scope in flattened_scopes.into_iter() {
-        let future = compile_scope(scope, run_context.clone());
-        let thread_handle = tokio::spawn(future); 
+    for scope in flattened_scopes.iter() {
+        let future = compile_scope(scope, compiler);
+        let thread_handle = tokio::spawn(future);
+        
         thread_handles.push(thread_handle);
     }
 

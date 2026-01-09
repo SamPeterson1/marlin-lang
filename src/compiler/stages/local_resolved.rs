@@ -1,4 +1,17 @@
-use crate::{ast::*, compiler::{SymbolTable, stages::{Parsed, VisitConfirmation}}};
+use std::collections::{HashMap, VecDeque};
+
+use crate::{ast::*, compiler::{Compiler, SymbolTable, stages::{Parsed, VisitResult}}, logger::LogTarget};
+
+
+
+impl LocalResolver<'_> {
+    pub fn resolve_array_access(&mut self, node: &ArrayAccess<Parsed>, expr: &VisitConfirmation<Parsed>, index: &VisitConfirmation<Parsed>) -> VisitConfirmation<Parsed> {
+        assert!(expr.verify(&node.expr));
+        assert!(index.verify(&node.index));
+
+        VisitConfirmation::new(node.get_id())
+    }
+}
 
 impl ArrayAccess<Parsed> {
     pub(in crate::compiler) fn local_resolved(&self, expr: &VisitConfirmation<Parsed>, index: &VisitConfirmation<Parsed>) -> VisitConfirmation<Parsed> {
